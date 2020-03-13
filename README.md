@@ -12,5 +12,13 @@ pytorch实现bert做seq2seq任务，使用unilm方案。注意本项目可以做
 4. 去train文件夹下面运行对应的trainer.py，针对不同任务，运行不同trainer.py文件。
 
 ### 效果
-想看效果，可以去我网站～ http://www.blog.zhxing.online/#/readBlog?blogId=315 
+效果感觉还是很不错的～ 
+
+![image.png](http://www.zhxing.online/image/42eec322d6cc419da0efdc45c02d9f25.png)
+![image.png](http://www.zhxing.online/image/25c1967ecfb14c5c9e68da7e3615ccf5.png)
+
+![image.png](http://www.zhxing.online/image/540a4f1be41d4a3cbd2ccf1b26895868.png)
+
+
+想看文章，可以去我网站～ http://www.blog.zhxing.online/#/readBlog?blogId=315 
 多谢支持。
