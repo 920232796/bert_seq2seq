@@ -155,7 +155,8 @@ class DreamTrainer:
             # 因为传入了target标签，因此会计算loss并且返回
             predictions, loss = self.bert_model(token_ids,
                                                 token_type_ids,
-                                                labels=target_ids
+                                                labels=target_ids,
+                                                device=self.device
                                                 )
             
             # 反向传播
@@ -204,8 +205,6 @@ if __name__ == '__main__':
     # print(sents_src[:5])
     # print(sents_tgt[:5])
     # print(tokenier.encode(sents_src[0]))
-
-  
 
     # # 测试一下自定义数据集
     # dataset = DreamDataset()

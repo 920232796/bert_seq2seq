@@ -33,15 +33,14 @@ class Seq2SeqModel(nn.Module):
         loss = nn.CrossEntropyLoss(ignore_index=0, reduction="none")
         return (loss(predictions, labels) * target_mask).sum() / target_mask.sum() ## 通过mask 取消 pad 和句子a部分预测的影响
     
-    def forward(self, input_tensor, token_type_id, position_enc=None, labels=None):
+    def forward(self, input_tensor, token_type_id, position_enc=None, labels=None, device="cpu"):
         ## 传入输入，位置编码，token type id ，还有句子a 和句子b的长度，注意都是传入一个batch数据
         ##  传入的几个值，在seq2seq 的batch iter 函数里面都可以返回
         input_shape = input_tensor.shape
         batch_size = input_shape[0]
         seq_len = input_shape[1]
         ## 构建特殊的mask
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        ones = torch.ones((1, 1, seq_len, seq_len), device=device)
+        ones = torch.ones((1, 1, seq_len, seq_len), dtype=torch.float32, device=device)
         a_mask = ones.tril() # 下三角矩阵
         s_ex12 = token_type_id.unsqueeze(1).unsqueeze(2)
         s_ex13 = token_type_id.unsqueeze(1).unsqueeze(3)
@@ -64,7 +63,7 @@ class Seq2SeqModel(nn.Module):
         else :
             return predictions
     
-    def generate(self, text, out_max_length=50, beam_size=1):
+    def generate(self, text, out_max_length=50, beam_size=1, device="cpu"):
         # 对 一个 句子生成相应的结果
         ## 通过输出最大长度得到输入的最大长度，这里问题不大，如果超过最大长度会进行截断
         self.out_max_length = out_max_length
@@ -73,11 +72,11 @@ class Seq2SeqModel(nn.Module):
         token_ids, token_type_ids = self.tokenizer.encode(text, max_length=input_max_length)
         token_ids = torch.tensor(token_ids).view(1, -1)
         token_type_ids = torch.tensor(token_type_ids).view(1, -1)
-        out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size)
+        out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
         # 解码 得到相应输出
         return self.tokenizer.decode(out_puts_ids)
 
-    def beam_search(self, token_ids, token_type_ids, word2ix, beam_size=1):
+    def beam_search(self, token_ids, token_type_ids, word2ix, beam_size=1, device="cpu"):
         """
         beam-search操作
         """
@@ -85,7 +84,7 @@ class Seq2SeqModel(nn.Module):
         # 用来保存输出序列
         output_ids = [[]]
         # 用来保存累计得分
-        output_scores = torch.zeros(token_ids.shape[0])
+        output_scores = torch.zeros(token_ids.shape[0], device=device)
         for step in range(self.out_max_length):
             
             scores = self.forward(token_ids, token_type_ids)
@@ -131,17 +130,18 @@ class Seq2SeqModel(nn.Module):
 
             output_ids = new_hype_ids
            
-            output_scores = torch.tensor(new_hype_scores, dtype=torch.float32)
+            output_scores = torch.tensor(new_hype_scores, dtype=torch.float32, device=device)
             # 现在需要重新构造输入数据了，用上一次输入连接上这次新输出的字符，再输入bert中预测新字符
             token_ids = token_ids[:len(output_ids)].contiguous() # 截取，因为要过滤掉已经完成预测的序列
             token_type_ids = token_type_ids[: len(output_ids)].contiguous()
 
-            next_chars = torch.tensor(next_chars, dtype=torch.long).view(-1, 1)
-            next_token_type_ids = torch.ones_like(next_chars)
+            next_chars = torch.tensor(next_chars, dtype=torch.long, device=device).view(-1, 1)
+            next_token_type_ids = torch.ones_like(next_chars, device=device)
             # 连接
             token_ids = torch.cat((token_ids, next_chars), dim=1)
-            
             token_type_ids = torch.cat((token_type_ids, next_token_type_ids), dim=1)
+            if beam_size < 1:
+                break
 
         # 如果达到最大长度的话 直接把得分最高的输出序列返回把
         return output_ids[output_scores.argmax().item()] 

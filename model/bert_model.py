@@ -426,7 +426,7 @@ class BertModel(BertPreTrainedModel):
     ):  
         
         
-        extended_attention_mask = (input_ids > 0).long()
+        extended_attention_mask = (input_ids > 0).float()
         # 注意力矩阵mask: [batch_size, 1, 1, seq_length]
         extended_attention_mask = extended_attention_mask.unsqueeze(1).unsqueeze(2)
         if attention_mask is not None :
