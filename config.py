@@ -17,3 +17,6 @@ auto_title_train_path = "./corpus/auto_title_data/data.txt"
 
 ## 对联数据文件夹路径
 duilian_corpus_dir = "./corpus/对联"
+
+## 古诗文件夹路径
+poem_corpus_dir = "./corpus/Poetry"
