@@ -139,7 +139,7 @@ class DreamTrainer:
     def iteration(self, epoch, dataloader, train=True):
         total_loss = 0
         start_time = time.time() ## 得到当前时间
-        ste = 0
+        step = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
             step += 1
             if step % 500 == 0:
