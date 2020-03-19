@@ -87,7 +87,7 @@ class Seq2SeqModel(nn.Module):
         output_scores = torch.zeros(token_ids.shape[0], device=device)
         for step in range(self.out_max_length):
             
-            scores = self.forward(token_ids, token_type_ids)
+            scores = self.forward(token_ids, token_type_ids, device=device)
             # print(scores.shape)
             if step == 0:
                 # 重复beam-size次 输入ids
