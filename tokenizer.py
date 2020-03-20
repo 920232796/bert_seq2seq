@@ -143,8 +143,8 @@ class Tokenizer(BasicTokenizer):
         for token in ['pad', 'cls', 'sep', 'unk', 'mask']:
             try:
                
-                _token_id = token_dict[getattr(self, f'_token_{token}')]
-                setattr(self, f'_token_{token}_id', _token_id)
+                _token_id = token_dict[getattr(self, "_token_"+str(token))]
+                setattr(self, "_token_"+str(token)+"_id", _token_id)
             except Exception as e :
                 
                 pass
@@ -237,7 +237,8 @@ if __name__ == "__main__":
     word2idx = load_chinese_base_vocab()
     # print(word2idx)
     tokenizer = Tokenizer(word2idx)
-    input_ids, segment_ids = tokenizer.encode("你好啊，今天过的怎么样？", "我很好，谢谢你啦")
-    text = tokenizer.decode(input_ids)
-    print(text)
-    print(segment_ids)
+    # input_ids, segment_ids = tokenizer.encode("你好啊，今天过的怎么样？", "我很好，谢谢你啦")
+    # text = tokenizer.decode(input_ids)
+    # print(text)
+    # print(segment_ids)
+    print(tokenizer.encode("今天天气真好啊"))

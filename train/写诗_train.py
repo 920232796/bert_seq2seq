@@ -22,7 +22,8 @@ def read_corpus(dir_path):
     """
     sents_src = []
     sents_tgt = []
-  
+    word2idx = load_chinese_base_vocab()
+    tokenizer = Tokenizer(word2idx)
     files= os.listdir(dir_path) #得到文件夹下的所有文件名称
     for file1 in files: #遍历文件夹
         if not os.path.isdir(file1): #判断是否是文件夹，不是文件夹才打开
@@ -35,6 +36,10 @@ def read_corpus(dir_path):
             for index, row in df.iterrows():
                 if type(row[0]) is not str or type(row[3]) is not str:
                     continue
+                encode_text = tokenizer.encode(row[3])[0]
+                if word2idx["[UNK]"] in encode_text:
+                  # 过滤unk字符
+                  continue
                 if len(row[3]) == 24:
                     # 五言绝句
                     sents_src.append(row[0] + "," + "五言绝句")
@@ -150,6 +155,12 @@ class PoemTrainer:
         model.load_state_dict(checkpoint, strict=False)
         torch.cuda.empty_cache()
         print("{} loaded!".format(pretrain_model_path))
+    
+    def load_recent_model(self, model, recent_model_path):
+        checkpoint = torch.load(recent_model_path)
+        model.load_state_dict(checkpoint)
+        torch.cuda.empty_cache()
+        print(str(recent_model_path) + "loaded!")
 
     def train(self, epoch):
         # 一个epoch的训练
@@ -162,9 +173,9 @@ class PoemTrainer:
         step = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
             step += 1
-            if step % 500 == 0:
+            if step % 2000 == 0:
                 self.bert_model.eval()
-                test_data = ["花海总涵功德水", "广汉飞霞诗似玉", "执政为民，德行天下"]
+                test_data = ["观棋,五言绝句", "长安早秋,七言绝句", "长安早春,五言律诗"]
                 for text in test_data:
                     print(self.bert_model.generate(text, beam_size=3,device=self.device))
                 self.bert_model.train()
@@ -194,16 +205,16 @@ class PoemTrainer:
         end_time = time.time()
         spend_time = end_time - start_time
         # 打印训练信息
-        print(f"epoch is {epoch}. loss is {loss:06}. spend time is {spend_time}")
+        print("epoch is " + str(epoch)+". loss is " + str(loss) + ". spend time is "+ str(spend_time))
         # 保存模型
         self.bert_model.eval()
-        test_data = ["花海总涵功德水", "广汉飞霞诗似玉", "执政为民，德行天下"]
+        test_data = ["观棋,五言绝句", "长安早秋,七言绝句", "长安早春,五言律诗"]
         for text in test_data:
             print(self.bert_model.generate(text, beam_size=3,device=self.device))
         self.bert_model.train()
         self.save_state_dict(self.bert_model, epoch)
 
-    def save_state_dict(self, model, epoch, file_path="bert_duilian.model"):
+    def save_state_dict(self, model, epoch, file_path="bert_poem.model"):
         """存储当前模型参数"""
         save_path = "./" + file_path + ".epoch.{}".format(str(epoch))
         torch.save(model.state_dict(), save_path)
@@ -214,11 +225,11 @@ if __name__ == '__main__':
     # word2idx = load_chinese_base_vocab()
     # tokenier = Tokenizer(word2idx)
 
-    # trainer = PoemTrainer()
-    # train_epoches = 10
-    # for epoch in range(train_epoches):
-    #     # 训练一个epoch
-    #     trainer.train(epoch)
+    trainer = PoemTrainer()
+    train_epoches = 10
+    for epoch in range(train_epoches):
+        # 训练一个epoch
+        trainer.train(epoch)
 
     ## 测试一下read corpus
     # sents_src, sents_tgt = read_corpus(duilian_corpus_dir)
@@ -243,5 +254,5 @@ if __name__ == '__main__':
 
 
     # 
-    read_corpus(poem_corpus_dir)
+    # read_corpus(poem_corpus_dir)
     

@@ -29,7 +29,7 @@ class Seq2SeqModel(nn.Module):
         """
         predictions = predictions.view(-1, self.vocab_size)
         labels = labels.view(-1)
-        target_mask = target_mask.view(-1)
+        target_mask = target_mask.view(-1).float()
         loss = nn.CrossEntropyLoss(ignore_index=0, reduction="none")
         return (loss(predictions, labels) * target_mask).sum() / target_mask.sum() ## 通过mask 取消 pad 和句子a部分预测的影响
     
@@ -42,9 +42,9 @@ class Seq2SeqModel(nn.Module):
         ## 构建特殊的mask
         ones = torch.ones((1, 1, seq_len, seq_len), dtype=torch.float32, device=device)
         a_mask = ones.tril() # 下三角矩阵
-        s_ex12 = token_type_id.unsqueeze(1).unsqueeze(2)
-        s_ex13 = token_type_id.unsqueeze(1).unsqueeze(3)
-        a_mask = (1 - s_ex12) * (1 - s_ex13) + s_ex13 * a_mask 
+        s_ex12 = token_type_id.unsqueeze(1).unsqueeze(2).float()
+        s_ex13 = token_type_id.unsqueeze(1).unsqueeze(3).float()
+        a_mask = (1.0 - s_ex12) * (1.0 - s_ex13) + s_ex13 * a_mask 
             
         enc_layers, _ = self.bert(input_tensor, position_ids=position_enc, token_type_ids=token_type_id, attention_mask=a_mask, 
                                     output_all_encoded_layers=True)
