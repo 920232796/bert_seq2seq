@@ -70,7 +70,7 @@ class Seq2SeqModel(nn.Module):
         input_max_length = max_length - out_max_length
         # print(text)
         token_ids, token_type_ids = self.tokenizer.encode(text, max_length=input_max_length)
-        token_ids = torch.tensor(token_ids, device=deivce).view(1, -1)
+        token_ids = torch.tensor(token_ids, device=device).view(1, -1)
         token_type_ids = torch.tensor(token_type_ids, device=device).view(1, -1)
         out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
         # 解码 得到相应输出
