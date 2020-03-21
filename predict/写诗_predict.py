@@ -10,7 +10,7 @@ if __name__ == "__main__":
     config = BertConfig(len(word2idx))
     bert_seq2seq = Seq2SeqModel(config)
     ## 加载参数文件
-    checkpoint = torch.load("./state_dict/bert_poem.model.epoch.1", map_location=torch.device("cpu"))
+    checkpoint = torch.load("./state_dict/bert_poem.model.epoch.0", map_location=torch.device("cpu"))
     ## 加载state dict参数
     bert_seq2seq.load_state_dict(checkpoint)
     bert_seq2seq.eval()
@@ -26,4 +26,4 @@ if __name__ == "__main__":
         if (in_str == "q"):
             print("bye~")
             break 
-        print(bert_seq2seq.generate(in_str.strip()))
+        print(bert_seq2seq.generate(in_str.strip(), beam_size=3))

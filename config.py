@@ -7,7 +7,7 @@ max_length=256
 ## 情感分析相关配置
 sentiment_train_corpus_dir = "./corpus/sentiment_data"
 sentiment_batch_size = 16
-sentiment_lr = 0.0001
+sentiment_lr = 1e-5
 
 ## 周公解梦数据路径
 dream_train_corpus_path = "./corpus/dream/周公解梦数据.csv"

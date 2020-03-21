@@ -119,6 +119,8 @@ class PoemTrainer:
     def __init__(self):
         # 加载情感分析数据
         self.pretrain_model_path = bert_chinese_model_path
+        # 这个最近模型的路径可以用来继续训练，而不是每次从头训练
+        self.recent_model_path = "./state_dict/bert_poem.model.epoch.5"
         self.batch_size = sentiment_batch_size
         self.lr = sentiment_lr
         # 加载字典
@@ -175,7 +177,7 @@ class PoemTrainer:
             step += 1
             if step % 2000 == 0:
                 self.bert_model.eval()
-                test_data = ["观棋,五言绝句", "长安早秋,七言绝句", "长安早春,五言律诗"]
+                test_data = ["观棋,五言绝句", "题西林壁,七言绝句", "长安早春,五言律诗"]
                 for text in test_data:
                     print(self.bert_model.generate(text, beam_size=3,device=self.device))
                 self.bert_model.train()
@@ -208,7 +210,7 @@ class PoemTrainer:
         print("epoch is " + str(epoch)+". loss is " + str(loss) + ". spend time is "+ str(spend_time))
         # 保存模型
         self.bert_model.eval()
-        test_data = ["观棋,五言绝句", "长安早秋,七言绝句", "长安早春,五言律诗"]
+        test_data = ["观棋,五言绝句", "题西林壁,七言绝句", "长安早春,五言律诗"]
         for text in test_data:
             print(self.bert_model.generate(text, beam_size=3,device=self.device))
         self.bert_model.train()
