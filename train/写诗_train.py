@@ -9,9 +9,9 @@ import pandas as pd
 import numpy as np
 import os
 import json
-from config import sentiment_batch_size, sentiment_lr, poem_corpus_dir, bert_chinese_model_path
+from config import sentiment_batch_size, sentiment_lr, poem_corpus_dir, roberta_chinese_model_path
 from model.seq2seq_model import Seq2SeqModel
-from model.bert_model import BertConfig
+from model.roberta_model import BertConfig
 import time
 from torch.utils.data import Dataset, DataLoader
 from tokenizer import Tokenizer, load_chinese_base_vocab
@@ -27,6 +27,7 @@ def read_corpus(dir_path):
     files= os.listdir(dir_path) #得到文件夹下的所有文件名称
     for file1 in files: #遍历文件夹
         if not os.path.isdir(file1): #判断是否是文件夹，不是文件夹才打开
+            
             file_path = dir_path + "/" + file1
             print(file_path)
             if file_path[-3:] != "csv":
@@ -40,21 +41,21 @@ def read_corpus(dir_path):
                 if word2idx["[UNK]"] in encode_text:
                   # 过滤unk字符
                   continue
-                if len(row[3]) == 24:
+                if len(row[3]) == 24 and (row[3][5] == "，" or row[3][5] == "。" or row[3][5] == "？" or row[3][5] == "！"):
                     # 五言绝句
-                    sents_src.append(row[0] + "," + "五言绝句")
+                    sents_src.append(row[0] + "##" + "五言绝句")
                     sents_tgt.append(row[3])
-                elif len(row[3]) == 32:
+                elif len(row[3]) == 32 and (row[3][7] == "，" or row[3][7] == "。" or row[3][7] == "？" or row[3][7] == "！"):
                     # 七言绝句
-                    sents_src.append(row[0] + "," + "七言绝句")
+                    sents_src.append(row[0] + "##" + "七言绝句")
                     sents_tgt.append(row[3])
-                elif len(row[3]) == 48:
+                elif len(row[3]) == 48 and (row[3][5] == "，" or row[3][5] == "。" or row[3][5] == "？" or row[3][5] == "！"):
                     # 五言律诗
-                    sents_src.append(row[0] + "," + "五言律诗")
+                    sents_src.append(row[0] + "##" + "五言律诗")
                     sents_tgt.append(row[3])
-                elif len(row[3]) == 64:
+                elif len(row[3]) == 64 and (row[3][7] == "，" or row[3][7] == "。" or row[3][7] == "？" or row[3][7] == "！"):
                     # 七言律诗
-                    sents_src.append(row[0] + "," + "七言律诗")
+                    sents_src.append(row[0] + "##" + "七言律诗")
                     sents_tgt.append(row[3])
 
     print("诗句共: " + str(len(sents_src)) + "篇")
@@ -118,7 +119,7 @@ def collate_fn(batch):
 class PoemTrainer:
     def __init__(self):
         # 加载情感分析数据
-        self.pretrain_model_path = bert_chinese_model_path
+        self.pretrain_model_path = roberta_chinese_model_path
         # 这个最近模型的路径可以用来继续训练，而不是每次从头训练
         self.recent_model_path = "./state_dict/bert_poem.model.epoch.5"
         self.batch_size = sentiment_batch_size
@@ -177,7 +178,7 @@ class PoemTrainer:
             step += 1
             if step % 2000 == 0:
                 self.bert_model.eval()
-                test_data = ["观棋,五言绝句", "题西林壁,七言绝句", "长安早春,五言律诗"]
+                test_data = ["观棋##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
                 for text in test_data:
                     print(self.bert_model.generate(text, beam_size=3,device=self.device))
                 self.bert_model.train()
@@ -207,10 +208,10 @@ class PoemTrainer:
         end_time = time.time()
         spend_time = end_time - start_time
         # 打印训练信息
-        print("epoch is " + str(epoch)+". loss is " + str(loss) + ". spend time is "+ str(spend_time))
+        print("epoch is " + str(epoch)+". loss is " + str(total_loss) + ". spend time is "+ str(spend_time))
         # 保存模型
         self.bert_model.eval()
-        test_data = ["观棋,五言绝句", "题西林壁,七言绝句", "长安早春,五言律诗"]
+        test_data = ["观棋##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
         for text in test_data:
             print(self.bert_model.generate(text, beam_size=3,device=self.device))
         self.bert_model.train()
@@ -240,7 +241,7 @@ if __name__ == '__main__':
     # print(tokenier.encode(sents_src[0]))
 
     # # 测试一下自定义数据集
-    # dataset = DreamDataset()
+    # dataset = PoemDataset()
     # word2idx = load_chinese_base_vocab()
     # tokenier = Tokenizer(word2idx)
     # dataloader =  DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=collate_fn)

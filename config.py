@@ -1,12 +1,15 @@
 ##通用配置
 bert_chinese_model_path = "./state_dict/bert-base-chinese-pytorch_model.bin"
 base_chinese_bert_vocab = "./state_dict/bert-base-chinese-vocab.txt"
+## roberta 模型路径跟字典路径
+roberta_chinese_model_path = "./state_dict/roberta_wwm_pytorch_model.bin"
+roberta_chinese_vocab = "./state_dict/roberta_wwm_vocab.txt"
 max_length=256
 
 
 ## 情感分析相关配置
 sentiment_train_corpus_dir = "./corpus/sentiment_data"
-sentiment_batch_size = 16
+sentiment_batch_size = 8
 sentiment_lr = 1e-5
 
 ## 周公解梦数据路径

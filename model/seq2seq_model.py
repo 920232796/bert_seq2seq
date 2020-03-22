@@ -4,7 +4,7 @@ sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/large_b
 import torch 
 import torch.nn as nn 
 import torch.nn.functional as F
-from model.bert_model import BertModel, BertConfig, BertLMPredictionHead
+from model.roberta_model import BertModel, BertConfig, BertLMPredictionHead
 from tokenizer import Tokenizer, load_chinese_base_vocab
 from config import max_length
 import time
