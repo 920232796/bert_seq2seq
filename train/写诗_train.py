@@ -27,7 +27,6 @@ def read_corpus(dir_path):
     files= os.listdir(dir_path) #得到文件夹下的所有文件名称
     for file1 in files: #遍历文件夹
         if not os.path.isdir(file1): #判断是否是文件夹，不是文件夹才打开
-            
             file_path = dir_path + "/" + file1
             print(file_path)
             if file_path[-3:] != "csv":
@@ -114,7 +113,6 @@ def collate_fn(batch):
     target_ids_padded = token_ids_padded[:, 1:].contiguous()
 
     return token_ids_padded, token_type_ids_padded, target_ids_padded
-
 
 class PoemTrainer:
     def __init__(self):
