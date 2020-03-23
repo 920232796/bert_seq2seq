@@ -36,23 +36,26 @@ def read_corpus(dir_path):
             for index, row in df.iterrows():
                 if type(row[0]) is not str or type(row[3]) is not str:
                     continue
+                if len(row[0]) > 4 or len(row[0]) < 2:
+                    # 过滤掉题目长度过长和过短的诗句
+                    continue
                 encode_text = tokenizer.encode(row[3])[0]
                 if word2idx["[UNK]"] in encode_text:
                   # 过滤unk字符
                   continue
-                if len(row[3]) == 24 and (row[3][5] == "，" or row[3][5] == "。" or row[3][5] == "？" or row[3][5] == "！"):
+                if len(row[3]) == 24 and (row[3][5] == "，" or row[3][5] == "。"):
                     # 五言绝句
                     sents_src.append(row[0] + "##" + "五言绝句")
                     sents_tgt.append(row[3])
-                elif len(row[3]) == 32 and (row[3][7] == "，" or row[3][7] == "。" or row[3][7] == "？" or row[3][7] == "！"):
+                elif len(row[3]) == 32 and (row[3][7] == "，" or row[3][7] == "。"):
                     # 七言绝句
                     sents_src.append(row[0] + "##" + "七言绝句")
                     sents_tgt.append(row[3])
-                elif len(row[3]) == 48 and (row[3][5] == "，" or row[3][5] == "。" or row[3][5] == "？" or row[3][5] == "！"):
+                elif len(row[3]) == 48 and (row[3][5] == "，" or row[3][5] == "。"):
                     # 五言律诗
                     sents_src.append(row[0] + "##" + "五言律诗")
                     sents_tgt.append(row[3])
-                elif len(row[3]) == 64 and (row[3][7] == "，" or row[3][7] == "。" or row[3][7] == "？" or row[3][7] == "！"):
+                elif len(row[3]) == 64 and (row[3][7] == "，" or row[3][7] == "。"):
                     # 七言律诗
                     sents_src.append(row[0] + "##" + "七言律诗")
                     sents_tgt.append(row[3])
