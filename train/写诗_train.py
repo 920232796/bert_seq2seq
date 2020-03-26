@@ -36,9 +36,12 @@ def read_corpus(dir_path):
             for index, row in df.iterrows():
                 if type(row[0]) is not str or type(row[3]) is not str:
                     continue
-                if len(row[0]) > 4 or len(row[0]) < 2:
+                if len(row[0]) > 8 or len(row[0]) < 2:
                     # 过滤掉题目长度过长和过短的诗句
                     continue
+                if len(row[0].split(" ")) > 1:
+                    # 说明题目里面存在空格，只要空格前面的数据
+                    row[0] = row[0].split(" ")[0]
                 encode_text = tokenizer.encode(row[3])[0]
                 if word2idx["[UNK]"] in encode_text:
                   # 过滤unk字符

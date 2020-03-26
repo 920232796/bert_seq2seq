@@ -63,7 +63,7 @@ class Seq2SeqModel(nn.Module):
         else :
             return predictions
     
-    def generate(self, text, out_max_length=50, beam_size=1, device="cpu"):
+    def generate(self, text, out_max_length=80, beam_size=1, device="cpu"):
         # 对 一个 句子生成相应的结果
         ## 通过输出最大长度得到输入的最大长度，这里问题不大，如果超过最大长度会进行截断
         self.out_max_length = out_max_length

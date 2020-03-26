@@ -9,9 +9,9 @@ import pandas as pd
 import numpy as np
 import os
 import json
-from config import sentiment_batch_size, sentiment_lr, duilian_corpus_dir, bert_chinese_model_path
+from config import sentiment_batch_size, sentiment_lr, duilian_corpus_dir, roberta_chinese_model_path
 from model.seq2seq_model import Seq2SeqModel
-from model.bert_model import BertConfig
+from model.roberta_model import BertConfig
 import time
 from torch.utils.data import Dataset, DataLoader
 from tokenizer import Tokenizer, load_chinese_base_vocab
@@ -94,13 +94,14 @@ def collate_fn(batch):
 class DreamTrainer:
     def __init__(self):
         # 加载情感分析数据
-        self.pretrain_model_path = bert_chinese_model_path
+        self.pretrain_model_path = roberta_chinese_model_path
         self.batch_size = sentiment_batch_size
         self.lr = sentiment_lr
         # 加载字典
         self.word2idx = load_chinese_base_vocab()
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print("device: " + str(self.device))
         # 定义模型超参数
         bertconfig = BertConfig(vocab_size=len(self.word2idx))
         # 初始化BERT模型
@@ -142,7 +143,7 @@ class DreamTrainer:
         step = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
             step += 1
-            if step % 500 == 0:
+            if step % 4000 == 0:
                 self.bert_model.eval()
                 test_data = ["花海总涵功德水", "广汉飞霞诗似玉", "执政为民，德行天下"]
                 for text in test_data:
@@ -174,7 +175,7 @@ class DreamTrainer:
         end_time = time.time()
         spend_time = end_time - start_time
         # 打印训练信息
-        print(f"epoch is {epoch}. loss is {loss:06}. spend time is {spend_time}")
+        print("epoch is " + str(epoch)+". loss is " + str(total_loss) + ". spend time is "+ str(spend_time))
         # 保存模型
         self.bert_model.eval()
         test_data = ["花海总涵功德水", "广汉飞霞诗似玉", "执政为民，德行天下"]
