@@ -23,3 +23,6 @@ duilian_corpus_dir = "./corpus/对联"
 
 ## 古诗文件夹路径
 poem_corpus_dir = "./corpus/Poetry"
+
+## 藏头诗文件路径
+poem_head_corpus_path = "./corpus/藏头诗/tang.npz"
