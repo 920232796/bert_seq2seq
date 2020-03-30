@@ -26,4 +26,4 @@ if __name__ == "__main__":
         if (in_str == "q"):
             print("bye~")
             break 
-        print(bert_seq2seq.generate(in_str.strip(), beam_size=5))
+        print(bert_seq2seq.generate(in_str.strip(), beam_size=3))

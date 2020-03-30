@@ -173,7 +173,7 @@ class PoemTrainer:
             step += 1
             if step % 2000 == 0:
                 self.bert_model.eval()
-                test_data = ["观棋##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
+                test_data = ["一##五言", "叶##五言", "知##五言", "秋##五言", "天##七言", "好##七言"]
                 for text in test_data:
                     print(self.bert_model.generate(text, beam_size=3,device=self.device))
                 self.bert_model.train()
@@ -206,13 +206,13 @@ class PoemTrainer:
         print("epoch is " + str(epoch)+". loss is " + str(total_loss) + ". spend time is "+ str(spend_time))
         # 保存模型
         self.bert_model.eval()
-        test_data = ["观棋##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
+        test_data = ["一##五言", "叶##五言", "知##五言", "秋##五言", "天##七言", "好##七言"]
         for text in test_data:
             print(self.bert_model.generate(text, beam_size=3,device=self.device))
         self.bert_model.train()
         self.save_state_dict(self.bert_model, epoch)
 
-    def save_state_dict(self, model, epoch, file_path="bert_poem.model"):
+    def save_state_dict(self, model, epoch, file_path="bert_head_poem.model"):
         """存储当前模型参数"""
         save_path = "./" + file_path + ".epoch.{}".format(str(epoch))
         torch.save(model.state_dict(), save_path)
@@ -235,23 +235,24 @@ if __name__ == '__main__':
     # print(sents_tgt[:5])
     # print(tokenier.encode(sents_src[0]))
 
-    # 测试一下自定义数据集
-    dataset = PoemDataset()
-    word2idx = load_chinese_base_vocab()
-    tokenier = Tokenizer(word2idx)
-    dataloader =  DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=collate_fn)
-    for token_ids, token_type_ids, target_ids in dataloader:
-        print(token_ids.shape)
-        print(tokenier.decode(token_ids[0].tolist()))
-        print(tokenier.decode(token_ids[1].tolist()))
-        print(token_type_ids)
-        print(target_ids.shape)
-        print(tokenier.decode(target_ids[0].tolist()))
-        print(tokenier.decode(target_ids[1].tolist()))
-        break
+    # # 测试一下自定义数据集
+    # dataset = PoemDataset()
+    # word2idx = load_chinese_base_vocab()
+    # tokenier = Tokenizer(word2idx)
+    # dataloader =  DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=collate_fn)
+    # for token_ids, token_type_ids, target_ids in dataloader:
+    #     print(token_ids.shape)
+    #     print(tokenier.decode(token_ids[0].tolist()))
+    #     print(tokenier.decode(token_ids[1].tolist()))
+    #     print(token_type_ids)
+    #     print(target_ids.shape)
+    #     print(tokenier.decode(target_ids[0].tolist()))
+    #     print(tokenier.decode(target_ids[1].tolist()))
+    #     break
 
 
     # 
-    # read_corpus(poem_corpus_dir)
-    
+    sents_src, tgt = read_corpus(poem_corpus_dir)
+    print(len(sents_src))
+    print(len(tgt))
 

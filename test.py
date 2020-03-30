@@ -29,10 +29,16 @@ if __name__ == "__main__":
     # t3 = t2.unsqueeze(1).unsqueeze(2)
     # print(t3.shape)
 
-    t1 = torch.tensor([[1, 1,   1, 0]])
-    t3 = torch.tensor([[1], [1], [1], [0]])
-    print(t1 * t3)
-    print(t1.shape)
-    t2 = torch.tensor([[1, 1, 0, 1], [1, 1, 0, 1], [1, 1, 1, 1], [1, 1, 1, 1]])
+    # t1 = torch.tensor([[1, 1,   1, 0]])
+    # t3 = torch.tensor([[1], [1], [1], [0]])
+    # print(t1 * t3)
+    # print(t1.shape)
+    # t2 = torch.tensor([[1, 1, 0, 1], [1, 1, 0, 1], [1, 1, 1, 1], [1, 1, 1, 1]])
 
-    print(t1 * t3 * t2 )
+    # print(t1 * t3 * t2 )
+
+    str1 = "躺汤糖堂"
+    l1 = [word for word in str1]
+    print(l1)
+    if "糖" in l1:
+        print("hah")
