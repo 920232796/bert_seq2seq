@@ -129,8 +129,8 @@ class Seq2SeqModel(nn.Module):
                         word_list.append(i_2)
                     else :
                         # 加惩罚
-                        score -= 15
-                        hype_score[index] -= 15
+                        score -= 8
+                        hype_score[index] -= 8
                 if flag == 0 and i_2 == douhao_id:
                     # 第一次遇到逗号 记住押韵
                     flag += 1
@@ -139,7 +139,6 @@ class Seq2SeqModel(nn.Module):
                         if word in each_yayun:
                             yayun_save = i
                             break
-                    
                 if i_2 == juhao_id:
                     word = ix2word[last_chars[index]]
                     # 找押韵 给奖励

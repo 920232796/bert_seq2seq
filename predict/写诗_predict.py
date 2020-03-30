@@ -22,6 +22,7 @@ if __name__ == "__main__":
     
     # print(bert_seq2seq.generate("前程似锦", beam_size=3))
 
+    # print(bert_seq2seq.generate("归园田居##七言绝句", beam_size=3, is_poem=True))
     while (True):
         in_str = input("请输入古诗:")
         if (in_str == "q"):
