@@ -16,7 +16,7 @@ if __name__ == "__main__":
     bert_seq2seq.load_state_dict(checkpoint)
     bert_seq2seq.eval()
 
-    # test_data = [ "国色天香，姹紫嫣红，碧水青云欣共赏", " 一帆风顺年年好", "落花因蝶舞", "三千世界笙歌里", "前程似锦"]
+    # test_data = ["国色天香，姹紫嫣红，碧水青云欣共赏", " 一帆风顺年年好", "落花因蝶舞", "三千世界笙歌里", "前程似锦"]
     # for text in test_data:
     #     print(bert_seq2seq.generate(text, beam_size=3))
     

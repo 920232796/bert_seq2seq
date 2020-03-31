@@ -91,7 +91,7 @@ class Seq2SeqModel(nn.Module):
         juhao_id = word2ix["。"]# 句号
         # 用来保存输出序列
         output_ids = [[]]
-        word_list = [] # 保证不重复生成
+        word_list = {} # 保证不重复生成
         last_chars = []
         yayun_save = -1
         # 用来保存累计得分
@@ -106,7 +106,10 @@ class Seq2SeqModel(nn.Module):
                 token_type_ids = token_type_ids.view(1, -1).repeat(beam_size, 1)
             ## 计算log 分值 (beam_size, vocab_size)
             logit_score = torch.log_softmax(scores, dim=-1)[:, -1]
+            # print(logit_score.shape)
             logit_score = output_scores.view(-1, 1) + logit_score # 累计得分
+            # print(logit_score.shape)
+            # print(output_scores.view(-1, 1).shape)
             ## 取topk的时候我们是展平了然后再去调用topk函数
             # 展平
             logit_score = logit_score.view(-1)
@@ -125,12 +128,14 @@ class Seq2SeqModel(nn.Module):
                 i_2 = i_2.item()
                 score = score.item()
                 if i_2 != douhao_id and i_2 != juhao_id:
-                    if i_2 not in word_list:
-                        word_list.append(i_2)
+                    if i_2 not in word_list.keys():
+                        word_list[i_2] = 1
                     else :
                         # 加惩罚
-                        score -= 8
-                        hype_score[index] -= 8
+                        # word_list[i_2] += 1
+                        score -= 8 * word_list[i_2]
+                        # print("惩罚分数：" + str(score))
+                        hype_score[index] -= 8 * word_list[i_2]
                 if flag == 0 and i_2 == douhao_id:
                     # 第一次遇到逗号 记住押韵
                     flag += 1
@@ -143,19 +148,21 @@ class Seq2SeqModel(nn.Module):
                     word = ix2word[last_chars[index]]
                     # 找押韵 给奖励
                     if word in yayun_list[yayun_save]:
-                        score += 12
-                        hype_score[index] += 12
+                        score += 15
+                        hype_score[index] += 15
                     else:
-                        score -= 10
-                        hype_score[index] -= 10
+                        score -= 15
+                        hype_score[index] -= 15
                 # print(yayun_save)
-                index += 1
                 hype_id = output_ids[i_1] + [i_2] # 保存所有输出的序列，而不仅仅是新预测的单个字符
 
                 if i_2 == sep_id:
                     # 说明解码到最后了
                     if score == torch.max(hype_score).item():
                         # 说明找到得分最大的那个序列了 直接返回即可
+                        # print({ix2word[k]: v for k, v in word_list.items()})
+                        # print(score)
+                        # print(hype_score)
                         return hype_id[: -1]
                     else:
                         # 完成一个解码了，但这个解码得分并不是最高，因此的话需要跳过这个序列
@@ -164,6 +171,7 @@ class Seq2SeqModel(nn.Module):
                     new_hype_ids.append(hype_id)
                     new_hype_scores.append(score)
                     next_chars.append(i_2) # 收集一下，需要连接到当前的输入序列之后
+                index += 1
 
             output_ids = new_hype_ids
 

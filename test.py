@@ -37,8 +37,18 @@ if __name__ == "__main__":
 
     # print(t1 * t3 * t2 )
 
-    str1 = "躺汤糖堂"
-    l1 = [word for word in str1]
-    print(l1)
-    if "糖" in l1:
-        print("hah")
+    # str1 = "躺汤糖堂"
+    # l1 = [word for word in str1]
+    # print(l1)
+    # if "糖" in l1:
+    #     print("hah")
+
+    # l1 = [1, 2, 3, 4, 6]
+    # print(l1[:4] + l1[4 + 1:])
+
+    t1 = torch.tensor([[1, 2, 3], [4, 5, 6]])
+    print(t1.shape)
+    t2 = torch.tensor([1, 2])
+    print(t2.shape)
+    # print(t1.view(-1, 1) + t2)
+    print(t1 + t2.view(-1, 1))
