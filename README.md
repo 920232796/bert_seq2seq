@@ -1,5 +1,7 @@
 # bert_seq2seq
-pytorch实现bert做seq2seq任务，使用unilm方案。注意本项目可以做bert seq2seq 任何任务，比如对联，写诗，自动摘要等等等等，只要你下载数据集，并且写好对应trainer.py，即可。如果喜欢的话欢迎star～ 如果遇到问题也可以提issue，保证会回复。
+一个轻量级的小框架。
+
+pytorch实现bert做seq2seq任务，使用unilm方案。注意本项目可以做bert seq2seq 任何任务，比如对联，写诗，自动摘要等等等等，只要你下载数据集，并且写好对应train.py，即可，只需要改动很少代码，便可以重新训练新任务，如果喜欢的话欢迎star～ 如果遇到问题也可以提issue，保证会回复。
 
 部分代码参考了 https://github.com/huggingface/transformers/ 和 https://github.com/bojone/bert4keras 
 非常感谢！！！
