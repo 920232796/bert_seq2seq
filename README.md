@@ -10,7 +10,7 @@ pytorch实现bert做seq2seq任务，使用unilm方案。注意本项目可以做
 2. 使用roberta模型，模型和字典文件需要去 https://drive.google.com/file/d/1iNeYFhCBJWeUsIlnW_2K6SMwXkM4gLb_/view 这里下载。 具体可以参考这个github仓库～ https://github.com/ymcui/Chinese-BERT-wwm
 3. 如果使用普通的bert模型，下载bert中文预训练权重 "bert-base-chinese": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-pytorch_model.bin", 下载bert中文字典 "bert-base-chinese": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt".
 4. 去example文件夹下面运行对应的trainer.py，针对不同任务，运行不同train.py文件，进行训练。
-5. 每次对于一个新的任务，只需要改动很少一部分代码，配置好模型位置，字典位置，写好数据处理构造输入输出即可。举个例子：
+5. 每次对于一个新的任务，只需要改动很少一部分代码，配置好模型位置，字典位置，写好数据处理构造输入输出(也就是read_corpus函数)即可。举个例子：
 ```python
 class PoemTrainer:
     def __init__(self):
