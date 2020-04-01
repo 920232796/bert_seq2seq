@@ -7,6 +7,10 @@ pytorch实现bert做seq2seq任务，使用unilm方案。注意本项目可以做
 非常感谢！！！
 ### 目前支持
 目前支持model_name 为 roberta 或者 bert
+### 安装 
+1. pip install bert-seq2seq
+2. 安装pytorch 
+3. 安装tqdm 可以用来显示进度条 pip install tqdm
 ### 运行
 1. 下载想训练的数据集，可以专门建个corpus文件夹存放。
 2. 使用roberta模型，模型和字典文件需要去 https://drive.google.com/file/d/1iNeYFhCBJWeUsIlnW_2K6SMwXkM4gLb_/view 这里下载。 具体可以参考这个github仓库～ https://github.com/ymcui/Chinese-BERT-wwm
@@ -47,4 +51,7 @@ class PoemTrainer:
 2020.04.01: 添加了写诗的task
 
 2020.04.01: 重构了代码，开始训练一个新的任务花费时间更少。
+
+python setup.py sdist
+twine upload dist/bert_seq2seq-0.0.1.tar.gz
 
