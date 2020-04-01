@@ -95,8 +95,6 @@ class PoemTrainer:
         data_dir = "./corpus/Poetry"
         self.vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
         self.sents_src, self.sents_tgt = read_corpus(data_dir, self.vocab_path)
-        self.sents_src = self.sents_src[: 40]
-        self.sents_tgt = self.sents_tgt[: 40]
         self.model_name = "roberta" # 选择模型名字
         self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
         self.recent_model_path = "" # 用于把已经训练好的模型继续训练
