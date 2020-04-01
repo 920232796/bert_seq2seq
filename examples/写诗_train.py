@@ -1,6 +1,6 @@
 ## 自动写诗的例子
 import sys
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/large_bert")
+sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 import torch 
 from tqdm import tqdm
 import torch.nn as nn 
@@ -9,24 +9,28 @@ import pandas as pd
 import numpy as np
 import os
 import json
-from config import sentiment_batch_size, sentiment_lr, poem_corpus_dir, roberta_chinese_model_path
-from model.seq2seq_model import Seq2SeqModel
-from model.roberta_model import BertConfig
 import time
 from torch.utils.data import Dataset, DataLoader
-from tokenizer import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+# 引入自定义数据集
+from bert_seq2seq.bert_dataset import BertDataset
 
-def read_corpus(dir_path):
+def read_corpus(dir_path, vocab_path):
     """
     读原始数据
     """
     sents_src = []
     sents_tgt = []
-    word2idx = load_chinese_base_vocab()
+    word2idx = load_chinese_base_vocab(vocab_path)
     tokenizer = Tokenizer(word2idx)
     files= os.listdir(dir_path) #得到文件夹下的所有文件名称
+    flag = 0
     for file1 in files: #遍历文件夹
         if not os.path.isdir(file1): #判断是否是文件夹，不是文件夹才打开
+            flag += 1
+            if flag == 3:
+                break
             file_path = dir_path + "/" + file1
             print(file_path)
             if file_path[-3:] != "csv":
@@ -66,42 +70,11 @@ def read_corpus(dir_path):
     print("诗句共: " + str(len(sents_src)) + "篇")
     return sents_src, sents_tgt
 
-## 自定义dataset
-class PoemDataset(Dataset):
-    """
-    针对特定数据集，定义一个相关的取数据的方式
-    """
-    def __init__(self) :
-        ## 一般init函数是加载所有数据
-        super(PoemDataset, self).__init__()
-        # 读原始数据
-        self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
-        self.word2idx = load_chinese_base_vocab()
-        self.idx2word = {k: v for v, k in self.word2idx.items()}
-        self.tokenizer = Tokenizer(self.word2idx)
-        # print(self.sents_src[:3])
-
-    def __getitem__(self, i):
-        ## 得到单个数据
-        # print(i)
-        src = self.sents_src[i]
-        tgt = self.sents_tgt[i]
-        
-        token_ids, token_type_ids = self.tokenizer.encode(src, tgt)
-        output = {
-            "token_ids": token_ids,
-            "token_type_ids": token_type_ids,
-        }
-        return output
-
-    def __len__(self):
-
-        return len(self.sents_src)
-
 def collate_fn(batch):
     """
     动态padding， batch为一部分sample
     """
+
     def padding(indice, max_length, pad_idx=0):
         """
         pad 函数
@@ -109,7 +82,7 @@ def collate_fn(batch):
         """
         pad_indice = [item + [pad_idx] * max(0, max_length - len(item)) for item in indice]
         return torch.tensor(pad_indice)
-   
+
     token_ids = [data["token_ids"] for data in batch]
     max_length = max([len(t) for t in token_ids])
     token_type_ids = [data["token_type_ids"] for data in batch]
@@ -122,52 +95,35 @@ def collate_fn(batch):
 
 class PoemTrainer:
     def __init__(self):
-        # 加载情感分析数据
-        self.pretrain_model_path = roberta_chinese_model_path
-        # 这个最近模型的路径可以用来继续训练，而不是每次从头训练
-        self.recent_model_path = "./state_dict/bert_poem.model.epoch.5"
-        self.batch_size = sentiment_batch_size
-        self.lr = sentiment_lr
+        # 加载数据
+        data_dir = "./corpus/Poetry"
+        self.vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
+        self.sents_src, self.sents_tgt = read_corpus(data_dir, self.vocab_path)
+        self.sents_src = self.sents_src[: 40]
+        self.sents_tgt = self.sents_tgt[: 40]
+        self.model_name = "roberta" # 选择模型名字
+        self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
+        self.recent_model_path = "" # 用于把已经训练好的模型继续训练
+        self.model_save_path = "./bert_model.bin"
+        self.batch_size = 16
+        self.lr = 1e-5
         # 加载字典
-        self.word2idx = load_chinese_base_vocab()
+        self.word2idx = load_chinese_base_vocab(self.vocab_path)
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
-        # 定义模型超参数
-        bertconfig = BertConfig(vocab_size=len(self.word2idx))
-        # 初始化BERT模型
-        self.bert_model = Seq2SeqModel(config=bertconfig)
-        ## 加载预训练的模型～
-        self.load_model(self.bert_model, self.pretrain_model_path)
+        # 定义模型
+        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name)
+        ## 加载预训练的模型参数～
+        load_model_params(self.bert_model, self.model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
         self.optim_parameters = list(self.bert_model.parameters())
-        self.init_optimizer(lr=self.lr)
+        self.optimizer = torch.optim.Adam(self.optim_parameters, lr=self.lr, weight_decay=1e-3)
         # 声明自定义的数据加载器
-        dataset = PoemDataset()
+        dataset = BertDataset(self.sents_src, self.sents_tgt, self.vocab_path)
         self.dataloader =  DataLoader(dataset, batch_size=self.batch_size, shuffle=True, collate_fn=collate_fn)
-        
-    def init_optimizer(self, lr):
-        # 用指定的学习率初始化优化器
-        self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-3)
-
-    def load_model(self, model, pretrain_model_path):
-        
-        checkpoint = torch.load(pretrain_model_path)
-        # 模型刚开始训练的时候, 需要载入预训练的BERT
-        
-        checkpoint = {k[5:]: v for k, v in checkpoint.items()
-                                            if k[:4] == "bert" and "pooler" not in k}
-        model.load_state_dict(checkpoint, strict=False)
-        torch.cuda.empty_cache()
-        print("{} loaded!".format(pretrain_model_path))
-    
-    def load_recent_model(self, model, recent_model_path):
-        checkpoint = torch.load(recent_model_path)
-        model.load_state_dict(checkpoint)
-        torch.cuda.empty_cache()
-        print(str(recent_model_path) + "loaded!")
 
     def train(self, epoch):
         # 一个epoch的训练
@@ -180,11 +136,11 @@ class PoemTrainer:
         step = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
             step += 1
-            if step % 2000 == 0:
+            if step % 100 == 0:
                 self.bert_model.eval()
                 test_data = ["观棋##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
                 for text in test_data:
-                    print(self.bert_model.generate(text, beam_size=3,device=self.device))
+                    print(self.bert_model.generate(text, beam_size=3,device=self.device, is_poem=True))
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
@@ -196,7 +152,6 @@ class PoemTrainer:
                                                 labels=target_ids,
                                                 device=self.device
                                                 )
-            
             # 反向传播
             if train:
                 # 清空之前的梯度
@@ -214,18 +169,7 @@ class PoemTrainer:
         # 打印训练信息
         print("epoch is " + str(epoch)+". loss is " + str(total_loss) + ". spend time is "+ str(spend_time))
         # 保存模型
-        self.bert_model.eval()
-        test_data = ["观棋##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
-        for text in test_data:
-            print(self.bert_model.generate(text, beam_size=3,device=self.device))
-        self.bert_model.train()
-        self.save_state_dict(self.bert_model, epoch)
-
-    def save_state_dict(self, model, epoch, file_path="bert_poem.model"):
-        """存储当前模型参数"""
-        save_path = "./" + file_path + ".epoch.{}".format(str(epoch))
-        torch.save(model.state_dict(), save_path)
-        print("{} saved!".format(save_path))
+        self.bert_model.save(self.model_save_path)
 
 if __name__ == '__main__':
 
@@ -245,8 +189,11 @@ if __name__ == '__main__':
     # print(tokenier.encode(sents_src[0]))
 
     # # 测试一下自定义数据集
-    # dataset = PoemDataset()
-    # word2idx = load_chinese_base_vocab()
+    # vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
+    # sents_src, sents_tgt = read_corpus("./corpus/Poetry", vocab_path)
+    
+    # dataset = BertDataset(sents_src, sents_tgt, vocab_path)
+    # word2idx = load_chinese_base_vocab(vocab_path)
     # tokenier = Tokenizer(word2idx)
     # dataloader =  DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=collate_fn)
     # for token_ids, token_type_ids, target_ids in dataloader:

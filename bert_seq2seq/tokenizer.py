@@ -1,12 +1,11 @@
 import unicodedata
 from typing import List, Dict
-from config import base_chinese_bert_vocab, roberta_chinese_vocab
 
-def load_chinese_base_vocab() -> Dict[str, int]:
+def load_chinese_base_vocab(vocab_path):
     """
     加载官方中文bert模型字典
     """
-    with open(roberta_chinese_vocab, "r", encoding="utf-8") as f:
+    with open(vocab_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
     word2idx = {}
     for index, line in enumerate(lines):

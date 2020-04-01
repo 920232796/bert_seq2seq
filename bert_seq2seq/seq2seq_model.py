@@ -1,27 +1,35 @@
-## seq2seq模型
-import sys
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/large_bert")
 import torch 
 import torch.nn as nn 
 import torch.nn.functional as F
-from model.roberta_model import BertModel, BertConfig, BertLMPredictionHead
-from tokenizer import Tokenizer, load_chinese_base_vocab
-from config import max_length
+
+from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq.config import max_length
 import time
-from config import yayun_list
+from bert_seq2seq.config import yayun_list
 
 class Seq2SeqModel(nn.Module):
     """
     """
-    def __init__(self, config:BertConfig):
+    def __init__(self, vocab_path, model_name="roberta"):
         super(Seq2SeqModel, self).__init__()
-        self.bert = BertModel(config)
+        self.word2ix = load_chinese_base_vocab(vocab_path)
+        self.tokenizer = Tokenizer(self.word2ix)
+        config = ""
+        if model_name == "roberta":
+            from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertLMPredictionHead
+            config = BertConfig(len(self.word2ix))
+            self.bert = BertModel(config)
+            self.decoder = BertLMPredictionHead(config, self.bert.embeddings.word_embeddings.weight)
+        elif model_name == "bert":
+            from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertLMPredictionHead
+            config = BertConfig(len(self.word2ix))
+            self.bert = BertModel(config)
+            self.decoder = BertLMPredictionHead(config, self.bert.embeddings.word_embeddings.weight)
+        else :
+            raise Exception("model_name_err")
+            
         self.hidden_dim = config.hidden_size
         self.vocab_size = config.vocab_size
-        self.decoder = BertLMPredictionHead(config, self.bert.embeddings.word_embeddings.weight)
-        # 加载字典和分词器
-        self.word2ix = load_chinese_base_vocab()
-        self.tokenizer = Tokenizer(self.word2ix)
 
 
     def compute_loss(self, predictions, labels, target_mask):
@@ -63,6 +71,13 @@ class Seq2SeqModel(nn.Module):
             return predictions, loss 
         else :
             return predictions
+    
+    def save(self, save_path):
+        """
+        保存模型
+        """
+        torch.save(self.bert.state_dict(), save_path)
+        print("{} saved!".format(save_path))
     
     def generate(self, text, out_max_length=80, beam_size=1, device="cpu", is_poem=False):
         # 对 一个 句子生成相应的结果
