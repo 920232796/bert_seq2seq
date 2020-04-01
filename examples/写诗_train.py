@@ -130,7 +130,7 @@ class PoemTrainer:
         step = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
             step += 1
-            if step % 100 == 0:
+            if step % 3000 == 0:
                 self.bert_model.eval()
                 test_data = ["观棋##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
                 for text in test_data:
