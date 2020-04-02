@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='bert_seq2seq',
-    version='0.0.4',
+    version='0.0.5',
     description='use torch to do bert_seq2seq task',
     long_description='bert_seq2seq: https://github.com/920232796/bert_seq2seq',
     license='Apache License 2.0',

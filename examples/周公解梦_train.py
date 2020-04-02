@@ -17,25 +17,22 @@ from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
 # 引入自定义数据集
 from bert_seq2seq.bert_dataset import BertDataset
 
-def read_corpus(dir_path, vocab_path):
+def read_corpus(data_path):
     """
     读原始数据
     """
+    df = pd.read_csv(data_path, delimiter="\t")
     sents_src = []
     sents_tgt = []
-    in_path = dir_path + "/in.txt"
-    out_path = dir_path + "/out.txt"
-    with open(in_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-        for line in lines:
-            sents_src.append(line.strip())
-    with open(out_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-        for line in lines:
-            sents_tgt.append(line.strip())
-
+    for index, row in df.iterrows():
+        data_json = eval(row[0])
+        dream = data_json["dream"]
+        decode = data_json["decode"]
+        sents_src.append(dream)
+        sents_tgt.append(decode)
     return sents_src, sents_tgt
-    
+
+
 def collate_fn(batch):
     """
     动态padding， batch为一部分sample
@@ -62,13 +59,13 @@ def collate_fn(batch):
 class Trainer:
     def __init__(self):
         # 加载数据
-        data_dir = "./corpus/对联"
+        data_dir = "./corpus/dream/周公解梦数据.csv"
         self.vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
-        self.sents_src, self.sents_tgt = read_corpus(data_dir, self.vocab_path)
+        self.sents_src, self.sents_tgt = read_corpus(data_dir)
         self.model_name = "roberta" # 选择模型名字
-        self.model_path = "./state_dict/bert_duilian.model.epoch.0" # roberta模型位置
+        self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
         self.recent_model_path = "" # 用于把已经训练好的模型继续训练
-        self.model_save_path = "./bert_model.bin"
+        self.model_save_path = "./bert_dream_model.bin"
         self.batch_size = 16
         self.lr = 1e-5
         # 加载字典
@@ -79,7 +76,7 @@ class Trainer:
         # 定义模型
         self.bert_model = load_bert(self.vocab_path, model_name=self.model_name)
         ## 加载预训练的模型参数～
-        load_recent_model(self.bert_model, self.model_path)
+        load_model_params(self.bert_model, self.model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
@@ -107,11 +104,11 @@ class Trainer:
         step = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
             step += 1
-            if step % 5000 == 0:
+            if step % 1000 == 0:
                 self.bert_model.eval()
-                test_data = ["花海总涵功德水", "广汉飞霞诗似玉", "执政为民，德行天下"]
+                test_data = ["梦见自己遇到司机", "梦见好朋友一起玩", "梦见以前班主任"]
                 for text in test_data:
-                    print(self.bert_model.generate(text, beam_size=3,device=self.device))
+                    print(self.bert_model.generate(text, beam_size=3,device=self.device, is_poem=True))
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
