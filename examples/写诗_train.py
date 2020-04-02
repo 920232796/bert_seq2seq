@@ -123,6 +123,13 @@ class PoemTrainer:
         # 一个epoch的训练
         self.bert_model.train()
         self.iteration(epoch, dataloader=self.dataloader, train=True)
+    
+    def save(self, save_path):
+        """
+        保存模型
+        """
+        torch.save(self.bert_model.state_dict(), save_path)
+        print("{} saved!".format(save_path))
 
     def iteration(self, epoch, dataloader, train=True):
         total_loss = 0
@@ -163,7 +170,7 @@ class PoemTrainer:
         # 打印训练信息
         print("epoch is " + str(epoch)+". loss is " + str(total_loss) + ". spend time is "+ str(spend_time))
         # 保存模型
-        self.bert_model.save(self.model_save_path)
+        self.save(self.model_save_path)
 
 if __name__ == '__main__':
 

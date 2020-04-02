@@ -72,13 +72,6 @@ class Seq2SeqModel(nn.Module):
         else :
             return predictions
     
-    def save(self, save_path):
-        """
-        保存模型
-        """
-        torch.save(self.bert.state_dict(), save_path)
-        print("{} saved!".format(save_path))
-    
     def generate(self, text, out_max_length=80, beam_size=1, device="cpu", is_poem=False):
         # 对 一个 句子生成相应的结果
         ## 通过输出最大长度得到输入的最大长度，这里问题不大，如果超过最大长度会进行截断
@@ -147,10 +140,10 @@ class Seq2SeqModel(nn.Module):
                         word_list[i_2] = 1
                     else :
                         # 加惩罚
-                        # word_list[i_2] += 1
-                        score -= 8 * word_list[i_2]
+                        word_list[i_2] += 1
+                        score -= 1 * word_list[i_2]
                         # print("惩罚分数：" + str(score))
-                        hype_score[index] -= 8 * word_list[i_2]
+                        hype_score[index] -= 1 * word_list[i_2]
                 if flag == 0 and i_2 == douhao_id:
                     # 第一次遇到逗号 记住押韵
                     flag += 1
@@ -163,11 +156,11 @@ class Seq2SeqModel(nn.Module):
                     word = ix2word[last_chars[index]]
                     # 找押韵 给奖励
                     if word in yayun_list[yayun_save]:
-                        score += 15
-                        hype_score[index] += 15
+                        score += 5
+                        hype_score[index] += 5
                     else:
-                        score -= 15
-                        hype_score[index] -= 15
+                        score -= 2
+                        hype_score[index] -= 2
                 # print(yayun_save)
                 hype_id = output_ids[i_1] + [i_2] # 保存所有输出的序列，而不仅仅是新预测的单个字符
 
