@@ -1,6 +1,6 @@
 ## 自动写诗的例子
 import sys
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq_test")
+sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 import torch 
 from tqdm import tqdm
 import torch.nn as nn 
@@ -66,7 +66,7 @@ class Trainer:
         self.vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
         self.sents_src, self.sents_tgt = read_corpus(data_dir, self.vocab_path)
         self.model_name = "roberta" # 选择模型名字
-        self.model_path = "./state_dict/bert_duilian.model.epoch.0" # roberta模型位置
+        self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
         self.recent_model_path = "" # 用于把已经训练好的模型继续训练
         self.model_save_path = "./bert_model.bin"
         self.batch_size = 16
@@ -79,7 +79,7 @@ class Trainer:
         # 定义模型
         self.bert_model = load_bert(self.vocab_path, model_name=self.model_name)
         ## 加载预训练的模型参数～
-        load_recent_model(self.bert_model, self.model_path)
+        load_model_params(self.bert_model, self.model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数

@@ -1,6 +1,6 @@
 ## 自动写诗的例子
 import sys
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq_test")
+sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 import torch 
 from tqdm import tqdm
 import torch.nn as nn 
