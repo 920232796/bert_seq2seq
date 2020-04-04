@@ -3,7 +3,7 @@
 
 pytorch实现bert做seq2seq任务，使用unilm方案。注意本项目可以做bert seq2seq 任何任务，比如对联，写诗，自动摘要等等等等，只要你下载数据集，并且写好对应train.py，即可，只需要改动很少代码，便可以重新训练新任务，如果喜欢的话欢迎star～ 如果遇到问题也可以提issue，保证会回复。
 
-目前添加了encoder的功能，也可以做NLU相关的任务了！比如情感分析，文本分类。具体example最近会加上。load模型的时候只需要加上一个参数 ``` model_class="encoder"```，具体看源码：
+(暂时没有测试，不一定稳定，今天之内测试完)目前添加了encoder的功能，也可以做NLU相关的任务了！比如情感分析，文本分类。具体example最近会加上。load模型的时候只需要加上一个参数 ``` model_class="encoder"```，具体看源码：
 ```python
 def load_bert(vocab_path, model_name="roberta", model_class="seq2seq"):
     """
