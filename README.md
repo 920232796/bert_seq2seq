@@ -3,9 +3,9 @@
 
 pytorch实现bert做seq2seq任务，使用unilm方案。注意本项目可以做bert seq2seq 任何任务，比如对联，写诗，自动摘要等等等等，只要你下载数据集，并且写好对应train.py，即可，只需要改动很少代码，便可以重新训练新任务，如果喜欢的话欢迎star～ 如果遇到问题也可以提issue，保证会回复。
 
-(暂时没有测试，不一定稳定，今天之内测试完)目前添加了encoder的功能，也可以做NLU相关的任务了！比如情感分析，文本分类。具体example最近会加上。load模型的时候只需要加上一个参数 ``` model_class="encoder"```，具体看源码：
+目前添加了encoder的功能，也可以做NLU相关的任务了！比如情感分析，文本分类。具体example最近会加上。load模型的时候只需要加上一个参数 ``` model_class="encoder"```，具体看源码：
 ```python
-def load_bert(vocab_path, model_name="roberta", model_class="seq2seq"):
+def load_bert(vocab_path, model_name="roberta", model_class="seq2seq", target_size=0):
     """
     model_path: 模型位置
     这是个统一的接口，用来加载模型的
@@ -15,7 +15,9 @@ def load_bert(vocab_path, model_name="roberta", model_class="seq2seq"):
         bert_model = Seq2SeqModel(vocab_path, model_name=model_name)
         return bert_model
     elif model_class == "encoder":
-        bert_model = BertEncoder(vocab_path, model_name=model_name)
+        if target_size == 0:
+            raise Exception("必须传入参数 target_size，才能确定预测多少分类")
+        bert_model = BertEncoder(vocab_path, target_size, model_name=model_name)
         return bert_model
     else :
         raise Exception("model_name_err")
@@ -26,7 +28,7 @@ def load_bert(vocab_path, model_name="roberta", model_class="seq2seq"):
 ### 目前支持
 目前支持model_name 为 roberta 或者 bert
 ### 安装 
-1. ```pip install bert-seq2seq```
+1. 安装本框架 ```pip install bert-seq2seq```
 2. 安装pytorch 
 3. 安装tqdm 可以用来显示进度条 ```pip install tqdm```
 ### 运行
@@ -55,19 +57,24 @@ class PoemTrainer:
 效果感觉还是很不错的～ 
 #### 写诗
 ![image.png](http://www.zhxing.online/image/acb592f918894ca6b62435d2464d3cb0.png)
+#### 新闻摘要文本分类（14分类）
+![image.png](http://www.zhxing.online/image/724f93b03c19404fba4f684eac4695bc.png)
+输出：
+![image.png](http://www.zhxing.online/image/4175b02f928f43fc84e9c866aba3ee2d.png)
 #### 对联
 ![image.png](http://www.zhxing.online/image/42eec322d6cc419da0efdc45c02d9f25.png)
 ![image.png](http://www.zhxing.online/image/25c1967ecfb14c5c9e68da7e3615ccf5.png)
 
 ![image.png](http://www.zhxing.online/image/540a4f1be41d4a3cbd2ccf1b26895868.png)
 
-
 想看文章，可以去我网站～ http://www.blog.zhxing.online/#/readBlog?blogId=315 
 多谢支持。另外，网站上面还有一些介绍unilm论文和特殊的mask如何实现的文章，可以去网站里搜索一下。http://www.blog.zhxing.online/#/
 
 ### 更新记录
 
-2020.04.03: 修复了部分bug，添加了新闻标题文本分类的例子
+2020.04.04: 更新了pypi上面的代码，目前最新版本 0.0.6，请用最新版本，bug会比较少。
+
+2020.04.04: 修复了部分bug，添加了新闻标题文本分类的例子
 
 2020.04.02: 修改了beam-search中对于写诗的重复字和押韵惩罚程度，可能效果会更好。
 
