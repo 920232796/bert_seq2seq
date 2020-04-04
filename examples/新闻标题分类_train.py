@@ -103,6 +103,7 @@ class Trainer:
         self.lr = 1e-5
         # 加载字典
         self.word2idx = load_chinese_base_vocab(self.vocab_path)
+        self.tokenier = Tokenizer(self.word2idx)
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
@@ -141,7 +142,9 @@ class Trainer:
                 self.bert_model.eval()
                 test_data = ["编剧梁馨月讨稿酬六六何念助阵 公司称协商解决", "西班牙BBVA第三季度净利降至15.7亿美元", "基金巨亏30亿 欲打开云天系跌停自救"]
                 for text in test_data:
-                    print(target[torch.argmax(self.bert_model(text)) - 1])
+                    text, text_ids = self.tokenier.encode(text)
+                    text = torch.tensor(text, device=self.device).view(1, -1)
+                    print(target[torch.argmax(self.bert_model(text)).item()])
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
