@@ -1,6 +1,7 @@
 ## bert encoder模型
 import torch 
 import torch.nn as nn 
+from bert_seq2seq.tokenizer import load_chinese_base_vocab, Tokenizer
 
 class BertEncoder(nn.Module):
     """
@@ -31,16 +32,16 @@ class BertEncoder(nn.Module):
         predictions: (batch_size, 1)
         """
         predictions = predictions.view(-1, self.target_size)
-        labels = labels.float().view(-1)
-        loss = nn.CrossEntropyLoss(ignore_index=0, reduction="none")
-        return loss(predictions, labels).mean()
+        labels = labels.view(-1)
+        loss = nn.CrossEntropyLoss(reduction="mean")
+        return loss(predictions, labels)
     
-    def forward(self, text, position_enc, labels=None, use_layer_num=-1):
+    def forward(self, text, position_enc=None, labels=None, use_layer_num=-1):
         if use_layer_num != -1:
             if use_layer_num < 0 or use_layer_num > 7:
                 # 越界
                 raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
-        enc_layers, _ = self.bert(text, position_enc, 
+        enc_layers, _ = self.bert(text, 
                                     output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num] 
 

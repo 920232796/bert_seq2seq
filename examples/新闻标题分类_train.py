@@ -14,27 +14,55 @@ import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
-# 引入自定义数据集
-from bert_seq2seq.bert_dataset import BertDataset
 
-def read_corpus(dir_path):
+target = ["财经", "彩票", "房产", "股票", "家居", "教育", "科技", "社会", "时尚", "时政", "体育", "星座", "游戏", "娱乐"]
+
+def read_corpus(data_path):
     """
     读原始数据
     """
     sents_src = []
     sents_tgt = []
-    in_path = dir_path + "/in.txt"
-    out_path = dir_path + "/out.txt"
-    with open(in_path, "r", encoding="utf-8") as f:
+    
+    with open(data_path) as f:
         lines = f.readlines()
-        for line in lines:
-            sents_src.append(line.strip())
-    with open(out_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-        for line in lines:
-            sents_tgt.append(line.strip())
-
+    for line in lines:
+        line = line.split("\t")
+        sents_tgt.append(int(line[0]))
+        sents_src.append(line[2])
     return sents_src, sents_tgt
+
+## 自定义dataset
+class NLUDataset(Dataset):
+    """
+    针对特定数据集，定义一个相关的取数据的方式
+    """
+    def __init__(self, sents_src, sents_tgt, vocab_path) :
+        ## 一般init函数是加载所有数据
+        super(NLUDataset, self).__init__()
+        # 读原始数据
+        # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
+        self.sents_src = sents_src
+        self.sents_tgt = sents_tgt
+        self.word2idx = load_chinese_base_vocab(vocab_path)
+        self.idx2word = {k: v for v, k in self.word2idx.items()}
+        self.tokenizer = Tokenizer(self.word2idx)
+
+    def __getitem__(self, i):
+        ## 得到单个数据
+        # print(i)
+        src = self.sents_src[i]
+        tgt = self.sents_tgt[i]
+        token_ids, token_type_ids = self.tokenizer.encode(src)
+        output = {
+            "token_ids": token_ids,
+            "token_type_ids": token_type_ids,
+            "target_id": tgt
+        }
+        return output
+
+    def __len__(self):
+        return len(self.sents_src)
     
 def collate_fn(batch):
     """
@@ -52,23 +80,25 @@ def collate_fn(batch):
     token_ids = [data["token_ids"] for data in batch]
     max_length = max([len(t) for t in token_ids])
     token_type_ids = [data["token_type_ids"] for data in batch]
+    target_ids = [data["target_id"] for data in batch]
+    target_ids = torch.tensor(target_ids, dtype=torch.long)
 
     token_ids_padded = padding(token_ids, max_length)
     token_type_ids_padded = padding(token_type_ids, max_length)
-    target_ids_padded = token_ids_padded[:, 1:].contiguous()
+    # target_ids_padded = token_ids_padded[:, 1:].contiguous()
 
-    return token_ids_padded, token_type_ids_padded, target_ids_padded
+    return token_ids_padded, token_type_ids_padded, target_ids
 
 class Trainer:
     def __init__(self):
         # 加载数据
-        data_dir = "./corpus/对联"
+        data_path = "./corpus/新闻标题文本分类/Train.txt"
         self.vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
-        self.sents_src, self.sents_tgt = read_corpus(data_dir)
+        self.sents_src, self.sents_tgt = read_corpus(data_path)
         self.model_name = "roberta" # 选择模型名字
         self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
         self.recent_model_path = "" # 用于把已经训练好的模型继续训练
-        self.model_save_path = "./bert_duilian_model.bin"
+        self.model_save_path = "./bert_multi_classify_model.bin"
         self.batch_size = 16
         self.lr = 1e-5
         # 加载字典
@@ -77,7 +107,7 @@ class Trainer:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
-        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name)
+        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, model_class="encoder", target_size=len(target))
         ## 加载预训练的模型参数～
         load_model_params(self.bert_model, self.model_path)
         # 将模型发送到计算设备(GPU或CPU)
@@ -86,7 +116,7 @@ class Trainer:
         self.optim_parameters = list(self.bert_model.parameters())
         self.optimizer = torch.optim.Adam(self.optim_parameters, lr=self.lr, weight_decay=1e-3)
         # 声明自定义的数据加载器
-        dataset = BertDataset(self.sents_src, self.sents_tgt, self.vocab_path)
+        dataset = NLUDataset(self.sents_src, self.sents_tgt, self.vocab_path)
         self.dataloader =  DataLoader(dataset, batch_size=self.batch_size, shuffle=True, collate_fn=collate_fn)
 
     def train(self, epoch):
@@ -107,11 +137,11 @@ class Trainer:
         step = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
             step += 1
-            if step % 5000 == 0:
+            if step % 2000 == 0:
                 self.bert_model.eval()
-                test_data = ["花海总涵功德水", "广汉飞霞诗似玉", "执政为民，德行天下"]
+                test_data = ["编剧梁馨月讨稿酬六六何念助阵 公司称协商解决", "西班牙BBVA第三季度净利降至15.7亿美元", "基金巨亏30亿 欲打开云天系跌停自救"]
                 for text in test_data:
-                    print(self.bert_model.generate(text, beam_size=3,device=self.device))
+                    print(target[torch.argmax(self.bert_model(text)) - 1])
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
@@ -119,9 +149,8 @@ class Trainer:
             target_ids = target_ids.to(self.device)
             # 因为传入了target标签，因此会计算loss并且返回
             predictions, loss = self.bert_model(token_ids,
-                                                token_type_ids,
                                                 labels=target_ids,
-                                                device=self.device
+                                                
                                                 )
             # 反向传播
             if train:
@@ -149,3 +178,25 @@ if __name__ == '__main__':
     for epoch in range(train_epoches):
         # 训练一个epoch
         trainer.train(epoch)
+
+    # # 测试一下自定义数据集
+    # vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
+    # sents_src, sents_tgt = read_corpus("./corpus/新闻标题文本分类/Train.txt")
+
+    # dataset = NLUDataset(sents_src, sents_tgt, vocab_path)
+    # word2idx = load_chinese_base_vocab(vocab_path)
+    # tokenier = Tokenizer(word2idx)
+    # dataloader =  DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=collate_fn)
+    # for token_ids, token_type_ids, target_ids in dataloader:
+    #     # print(token_ids.shape)
+    #     print(tokenier.decode(token_ids[0].tolist()))
+    #     print(tokenier.decode(token_ids[1].tolist()))
+    #     print(token_type_ids)
+    #     print(target_ids)
+        
+    #     bert_model = load_bert(vocab_path, model_class="encoder", target_size=14)
+    #     bert_model(token_ids)
+    #     # print(tokenier.decode(target_ids[0].tolist()))
+    #     # print(tokenier.decode(target_ids[1].tolist()))
+    #     break
+

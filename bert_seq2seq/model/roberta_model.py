@@ -425,8 +425,8 @@ class BertModel(BertPreTrainedModel):
         output_attentions=False
     ):  
         
-        
         extended_attention_mask = (input_ids > 0).float()
+        # print(extended_attention_mask)
         # 注意力矩阵mask: [batch_size, 1, 1, seq_length]
         extended_attention_mask = extended_attention_mask.unsqueeze(1).unsqueeze(2)
         if attention_mask is not None :
@@ -437,6 +437,7 @@ class BertModel(BertPreTrainedModel):
         if token_type_ids is None:
             token_type_ids = torch.zeros_like(input_ids)
 
+        # print(extended_attention_mask)
         # extended_attention_mask = extended_attention_mask.to(dtype=next(self.parameters()).dtype)  # fp16 compatibility
         extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
 

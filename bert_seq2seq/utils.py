@@ -2,7 +2,7 @@ import torch
 from bert_seq2seq.seq2seq_model import Seq2SeqModel
 from bert_seq2seq.bert_encoder import BertEncoder
 
-def load_bert(vocab_path, model_name="roberta", model_class="seq2seq"):
+def load_bert(vocab_path, model_name="roberta", model_class="seq2seq", target_size=0):
     """
     model_path: 模型位置
     这是个统一的接口，用来加载模型的
@@ -12,7 +12,9 @@ def load_bert(vocab_path, model_name="roberta", model_class="seq2seq"):
         bert_model = Seq2SeqModel(vocab_path, model_name=model_name)
         return bert_model
     elif model_class == "encoder":
-        bert_model = BertEncoder(vocab_path, model_name=model_name)
+        if target_size == 0:
+            raise Exception("必须传入参数 target_size，才能确定预测多少分类")
+        bert_model = BertEncoder(vocab_path, target_size, model_name=model_name)
         return bert_model
     else :
         raise Exception("model_name_err")
@@ -33,7 +35,7 @@ def load_recent_model(model, recent_model_path):
     torch.cuda.empty_cache()
     print(str(recent_model_path) + "loaded!")
 
-    
+
 
 
 
