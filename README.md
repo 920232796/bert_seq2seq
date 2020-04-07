@@ -3,21 +3,31 @@
 
 pytorch实现bert做seq2seq任务，使用unilm方案。注意本项目可以做bert seq2seq 任何任务，比如对联，写诗，自动摘要等等等等，只要你下载数据集，并且写好对应train.py，即可，只需要改动很少代码，便可以重新训练新任务，如果喜欢的话欢迎star～ 如果遇到问题也可以提issue，保证会回复。
 
-目前添加了encoder的功能，也可以做NLU相关的任务了！比如情感分析，文本分类。具体example最近会加上。load模型的时候只需要加上一个参数 ``` model_class="encoder"```，具体看源码：
+本框架目前可以做各种任务，一共分为三种：
+1. seq2seq 比如写诗，对联，自动摘要等。
+2. cls_classifier 通过提取句首的cls向量去做分类，比如情感分析，文本分类。
+3. sequence_labeling 序列标注任务，比如命名实体识别，词性标注。
+三种任务分别加载三种不同的模型，通过``` model_class="encoder"``` 参数去设置，具体看源码：
 ```python
 def load_bert(vocab_path, model_name="roberta", model_class="seq2seq", target_size=0):
     """
     model_path: 模型位置
     这是个统一的接口，用来加载模型的
-    model_class : seq2seq or encoder
+    model_class : seq2seq or cls or sequence_labeling
     """
     if model_class == "seq2seq":
         bert_model = Seq2SeqModel(vocab_path, model_name=model_name)
         return bert_model
-    elif model_class == "encoder":
+    elif model_class == "cls":
         if target_size == 0:
             raise Exception("必须传入参数 target_size，才能确定预测多少分类")
-        bert_model = BertEncoder(vocab_path, target_size, model_name=model_name)
+        bert_model = BertClsClassifier(vocab_path, target_size, model_name=model_name)
+        return bert_model
+    elif model_class == "sequence_labeling":
+        ## 序列标注模型
+        if target_size == 0:
+            raise Exception("必须传入参数 target_size，才能确定预测多少分类")
+        bert_model = BertSeqLabeling(vocab_path, target_size, model_name=model_name)
         return bert_model
     else :
         raise Exception("model_name_err")
@@ -25,8 +35,7 @@ def load_bert(vocab_path, model_name="roberta", model_class="seq2seq", target_si
 
 部分代码参考了 https://github.com/huggingface/transformers/ 和 https://github.com/bojone/bert4keras 
 非常感谢！！！
-### 目前支持
-目前支持model_name 为 roberta 或者 bert
+
 ### 安装 
 1. 安装本框架 ```pip install bert-seq2seq```
 2. 安装pytorch 
@@ -71,6 +80,10 @@ class PoemTrainer:
 多谢支持。另外，网站上面还有一些介绍unilm论文和特殊的mask如何实现的文章，可以去网站里搜索一下。http://www.blog.zhxing.online/#/
 
 ### 更新记录
+
+2020.04.07: 添加了一个ner的example。
+
+2020.04.07: 更新了pypi，并且加入了ner等序列标注任务的模型。
 
 2020.04.04: 更新了pypi上面的代码，目前最新版本 0.0.6，请用最新版本，bug会比较少。
 

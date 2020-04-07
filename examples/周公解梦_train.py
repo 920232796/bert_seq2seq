@@ -32,7 +32,6 @@ def read_corpus(data_path):
         sents_tgt.append(decode)
     return sents_src, sents_tgt
 
-
 def collate_fn(batch):
     """
     动态padding， batch为一部分sample

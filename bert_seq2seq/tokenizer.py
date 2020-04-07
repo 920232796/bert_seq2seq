@@ -171,14 +171,15 @@ class Tokenizer(BasicTokenizer):
         """
         spaced = ''
         for ch in text:
+            # print(ch)
             if self._is_punctuation(ch) or self._is_cjk_character(ch):
                 spaced += ' ' + ch + ' '
             elif self._is_space(ch):
                 spaced += ' '
-            elif ord(ch) == 0 or ord(ch) == 0xfffd or self._is_control(ch):
-                continue
+            # elif ord(ch) == 0 or ord(ch) == 0xfffd or self._is_control(ch):
+            #     continue
             else:
-                spaced += ch
+                spaced += " " + ch + " "
         
         return spaced.strip().split()
 
