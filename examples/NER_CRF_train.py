@@ -32,8 +32,9 @@ def read_corpus(data_path):
     for line in lines:
         if line == "\n":
             t.append(0)
-            sents_src.append(row)
-            sents_tgt.append(t)
+            if len(row) < 500: 
+                sents_src.append(row)
+                sents_tgt.append(t)
             row = ""
             t = [0]
             continue
@@ -131,14 +132,14 @@ def collate_fn(batch):
 class Trainer:
     def __init__(self):
         # 加载数据
-        data_path = "./corpus/粗粒度NER/粗粒度NER.txt"
+        data_path = "./corpus/粗粒度NER/example.train"
         self.vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
         self.sents_src, self.sents_tgt = read_corpus(data_path)
         self.model_name = "roberta" # 选择模型名字
         self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
         self.recent_model_path = "" # 用于把已经训练好的模型继续训练
-        self.model_save_path = "./bert_ner_model.bin"
-        self.batch_size = 16
+        self.model_save_path = "./bert_ner_model_crf.bin"
+        self.batch_size = 4
         self.lr = 1e-5
         # 加载字典
         self.word2idx = load_chinese_base_vocab(self.vocab_path)
@@ -147,7 +148,7 @@ class Trainer:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
-        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, model_class="sequence_labeling", target_size=len(target))
+        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, model_class="sequence_labeling_crf", target_size=len(target))
         ## 加载预训练的模型参数～
         load_model_params(self.bert_model, self.model_path)
         # 将模型发送到计算设备(GPU或CPU)
@@ -176,6 +177,7 @@ class Trainer:
         start_time = time.time() ## 得到当前时间
         step = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
+            # print(target_ids.shape)
             step += 1
             if step % 500 == 0:
                 self.bert_model.eval()
@@ -226,21 +228,24 @@ if __name__ == '__main__':
 
     # 测试一下自定义数据集
     # vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
-    # sents_src, sents_tgt = read_corpus("./corpus/粗粒度NER/粗粒度NER.txt")
+    # sents_src, sents_tgt = read_corpus("./corpus/粗粒度NER/example.train")
     # # print(sents_src)
     # print(len(sents_src))
+    # print(len(sents_src) / 8)
     # dataset = NERDataset(sents_src, sents_tgt, vocab_path)
     # word2idx = load_chinese_base_vocab(vocab_path)
     # tokenier = Tokenizer(word2idx)
-    # print(len(sents_src) / 16)
-    # dataloader =  DataLoader(dataset, batch_size=1, shuffle=True, collate_fn=collate_fn)
+    
+    # dataloader =  DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=collate_fn)
     # for token_ids, token_type_ids, target_ids in dataloader:
-    #     pass
-        # print(token_ids.shape)
-        # print(tokenier.decode(token_ids[0].tolist()))
-        # print(tokenier.decode(token_ids[1].tolist()))
-        # print(token_type_ids)
-        # print(target_ids)
+        
+        
+    #     # print(token_ids.shape)
+    #     print(tokenier.decode(token_ids[0].tolist()))
+    #     print(tokenier.decode(token_ids[1].tolist()))
+    #     # print(token_type_ids)
+    #     print(target_ids)
+    #     break
         
         
     #     bert_model = load_bert(vocab_path, model_class="encoder", target_size=14)

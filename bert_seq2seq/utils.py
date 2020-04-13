@@ -2,6 +2,7 @@ import torch
 from bert_seq2seq.seq2seq_model import Seq2SeqModel
 from bert_seq2seq.bert_cls_classifier import BertClsClassifier
 from bert_seq2seq.bert_seq_labeling import BertSeqLabeling
+from bert_seq2seq.bert_seq_labeling_crf import BertSeqLabelingCRF
 
 def load_bert(vocab_path, model_name="roberta", model_class="seq2seq", target_size=0):
     """
@@ -22,6 +23,12 @@ def load_bert(vocab_path, model_name="roberta", model_class="seq2seq", target_si
         if target_size == 0:
             raise Exception("必须传入参数 target_size，才能确定预测多少分类")
         bert_model = BertSeqLabeling(vocab_path, target_size, model_name=model_name)
+        return bert_model
+    elif model_class == "sequence_labeling_crf":
+        # 带有crf层的序列标注模型
+        if target_size == 0:
+            raise Exception("必须传入参数 target_size，才能确定预测多少分类")
+        bert_model = BertSeqLabelingCRF(vocab_path, target_size, model_name=model_name)
         return bert_model
     else :
         raise Exception("model_name_err")
