@@ -129,6 +129,69 @@ def collate_fn(batch):
 
     return token_ids_padded, token_type_ids_padded, target_ids_padded
 
+def viterbi_decode(nodes, trans):
+    """
+    维特比算法 解码
+    nodes: (seq_len, target_size)
+    trans: (target_size, target_size)
+    """
+    scores = nodes[0]
+    scores[1:] -= 100000 # 刚开始标签肯定是"O"
+    target_size = nodes.shape[1]
+    seq_len = nodes.shape[0]
+    labels = torch.arange(0, target_size).view(1, -1)
+    path = labels
+    for l in range(1, seq_len):
+        scores = scores.view(-1, 1)
+        M = scores + trans + nodes[l].view(1, -1)
+        scores, ids = M.max(0)
+        path = torch.cat((path[:, ids], labels), dim=0)
+        # print(scores)
+    # print(scores)
+    return path[:, scores.argmax()]
+
+def ner_print(model, test_data, vocab_path):
+    model.eval()
+    word2idx = load_chinese_base_vocab(vocab_path)
+    tokenier = Tokenizer(word2idx)
+    trans = model.state_dict()["crf_layer.trans"]
+    for text in test_data:
+        decode = []
+        text_encode, text_ids = tokenier.encode(text)
+        text_tensor = torch.tensor(text_encode).view(1, -1)
+        out = model(text_tensor).squeeze(0) # 其实是nodes
+        labels = viterbi_decode(out, trans)
+        starting = False
+        for l in labels:
+            if l > 0:
+                label = target[l.item()]
+                if label[0] == "B":
+                    decode.append(label[2: ])
+                    starting = True
+                elif starting:
+                    decode.append(label[2: ])
+                else: 
+                    starting = False
+                    decode.append("O")
+            else :
+                decode.append("O")
+        flag = 0
+        res = {}
+        for index, each_entity in enumerate(decode):
+            if each_entity != "O":
+                if flag != each_entity:
+                    cur_text = text[index - 1]
+                    if each_entity in res.keys():
+                        res[each_entity].append(cur_text)
+                    else :
+                        res[each_entity] = [cur_text]
+                    flag = each_entity
+                elif flag == each_entity:
+                    res[each_entity][-1] += text[index - 1]
+            else :
+                flag = 0
+        print(res)
+
 class Trainer:
     def __init__(self):
         # 加载数据
@@ -180,16 +243,8 @@ class Trainer:
             # print(target_ids.shape)
             step += 1
             if step % 500 == 0:
-                self.bert_model.eval()
                 test_data = ["日寇在京掠夺文物详情。", "以书结缘，把欧美，港台流行的食品类食谱汇集一堂"]
-                for text in test_data:
-                    text, text_ids = self.tokenier.encode(text)
-                    text = torch.tensor(text, device=self.device).view(1, -1)
-                    out = self.bert_model(text).squeeze(0)
-                    out_target = torch.argmax(out, dim=-1)
-                    decode_target = [target[i.item()] for i in out_target]
-                    print(decode_target)
-                    # print(target[torch.argmax(self.bert_model(text)).item()])
+                ner_print(self.bert_model, test_data, self.vocab_path)
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
