@@ -14,8 +14,7 @@ import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
-# 共12个标签
-# target = ["pad", "other", "address", "book", "company", "game", "government", "movie", "name", "organization", "position", "scene"]
+
 target = ["O", "B-LOC", "I-LOC", "B-PER", "I-PER", "B-ORG", "I-ORG"]
 
 def read_corpus(data_path):
@@ -43,32 +42,6 @@ def read_corpus(data_path):
         t.append(target.index(line[1].strip("\n")))
 
     return sents_src, sents_tgt
-
-# def read_corpus(data_path):
-#     """
-#     读原始数据
-#     """
-#     sents_src = []
-#     sents_tgt = []
-
-#     with open(data_path) as f:
-#         lines = f.readlines()
-#     for line in lines:
-#         line_dict = eval(line)
-#         sents_src.append(line_dict["text"])
-#         target_list = [1] * (len(line_dict["text"]) + 2) # 算上了cls 和 sep符号
-#         label_dict = line_dict["label"]
-#         for k, v in label_dict.items():
-#             t = target.index(k)
-#             for kk, vv in v.items():
-#                 for l in vv:
-#                     start = l[0]
-#                     end = l[1]
-#                     for i in range(start + 1, end + 2):
-#                         target_list[i] = t
-#         sents_tgt.append(target_list)
-
-#     return sents_src, sents_tgt
 
 ## 自定义dataset
 class NERDataset(Dataset):
@@ -150,7 +123,7 @@ def viterbi_decode(nodes, trans):
     # print(scores)
     return path[:, scores.argmax()]
 
-def ner_print(model, test_data, vocab_path):
+def ner_print(model, test_data, vocab_path, device="cpu"):
     model.eval()
     word2idx = load_chinese_base_vocab(vocab_path)
     tokenier = Tokenizer(word2idx)
@@ -158,7 +131,7 @@ def ner_print(model, test_data, vocab_path):
     for text in test_data:
         decode = []
         text_encode, text_ids = tokenier.encode(text)
-        text_tensor = torch.tensor(text_encode).view(1, -1)
+        text_tensor = torch.tensor(text_encode, device=device).view(1, -1)
         out = model(text_tensor).squeeze(0) # 其实是nodes
         labels = viterbi_decode(out, trans)
         starting = False
@@ -244,7 +217,7 @@ class Trainer:
             step += 1
             if step % 500 == 0:
                 test_data = ["日寇在京掠夺文物详情。", "以书结缘，把欧美，港台流行的食品类食谱汇集一堂"]
-                ner_print(self.bert_model, test_data, self.vocab_path)
+                ner_print(self.bert_model, test_data, self.vocab_path, device=self.device)
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
