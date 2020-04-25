@@ -5,7 +5,7 @@ import torch
 from tqdm import tqdm
 import torch.nn as nn 
 from torch.optim import Adam
-import pandas as pd
+# import pandas as pd
 import numpy as np
 import os
 import json
@@ -169,6 +169,7 @@ class Trainer:
         self.model_save_path = "./细粒度_bert_ner_model_crf.bin"
         self.batch_size = 8
         self.lr = 1e-5
+        self.crf_lr = 1e-2 ##  crf层学习率为0.01
         # 加载字典
         self.word2idx = load_chinese_base_vocab(self.vocab_path)
         self.tokenier = Tokenizer(self.word2idx)
@@ -182,8 +183,11 @@ class Trainer:
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
-        self.optim_parameters = list(self.bert_model.parameters())
-        self.optimizer = torch.optim.Adam(self.optim_parameters, lr=self.lr, weight_decay=1e-3)
+        crf_params = list(map(id, self.bert_model.crf_layer.parameters())) ## 单独把crf层参数拿出来
+        base_params = filter(lambda p: id(p) not in crf_params, self.bert_model.parameters())
+        self.optimizer = torch.optim.Adam([
+                                            {"params": base_params}, 
+                                            {"params": self.bert_model.crf_layer.parameters(), "lr": self.crf_lr}], lr=self.lr, weight_decay=1e-3)
         # 声明自定义的数据加载器
         dataset = NERDataset(self.sents_src, self.sents_tgt, self.vocab_path)
         self.dataloader =  DataLoader(dataset, batch_size=self.batch_size, shuffle=True, collate_fn=collate_fn)
