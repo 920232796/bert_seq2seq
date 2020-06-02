@@ -6,9 +6,9 @@ import torch.nn.functional as F
 class CRFLayer(nn.Module):
     """
     """
-    def __init__(self, output_dim, lr_multiplier=1):
+    def __init__(self, output_dim):
         super(CRFLayer, self).__init__()
-        self.lr_multiplier = lr_multiplier  # 当前层学习率的放大倍数
+        
         self.output_dim = output_dim
         self.trans = nn.Parameter(torch.Tensor(output_dim, output_dim))
         self.trans.data.uniform_(-0.1, 0.1)
@@ -84,11 +84,3 @@ class CRFLayer(nn.Module):
         out = xm + torch.log(torch.sum(torch.exp(x - xm), dim=dim, keepdim=True))
         return out if keepdim else out.squeeze(dim)
  
-# if __name__ == "__main__":
-#     y_pred = torch.tensor([[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[1, 2, 3], [2, 3, 4], [3, 4, 5]]], dtype=torch.float32) #(batch, seq, out_dim)
-#     y_true = torch.tensor([[0, 1, 2], [0, 2, 1]])
-#     crf_layer = CRFLayer(3)
-#     mask = torch.tensor([[1, 1, 0], [1, 1, 1]])
-#     loss = crf_layer(y_pred, y_true, mask)
-#     print(loss)
-    
