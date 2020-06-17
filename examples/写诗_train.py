@@ -13,8 +13,6 @@ import time
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
-# 引入自定义数据集
-from bert_seq2seq.bert_dataset import BertDataset
 
 def read_corpus(dir_path, vocab_path):
     """
@@ -65,6 +63,36 @@ def read_corpus(dir_path, vocab_path):
 
     print("诗句共: " + str(len(sents_src)) + "篇")
     return sents_src, sents_tgt
+
+class BertDataset(Dataset):
+    """
+    针对特定数据集，定义一个相关的取数据的方式
+    """
+    def __init__(self, sents_src, sents_tgt, vocab_path) :
+        ## 一般init函数是加载所有数据
+        super(BertDataset, self).__init__()
+        # 读原始数据
+        # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
+        self.sents_src = sents_src
+        self.sents_tgt = sents_tgt
+        self.word2idx = load_chinese_base_vocab(vocab_path)
+        self.idx2word = {k: v for v, k in self.word2idx.items()}
+        self.tokenizer = Tokenizer(self.word2idx)
+
+    def __getitem__(self, i):
+        ## 得到单个数据
+        src = self.sents_src[i]
+        tgt = self.sents_tgt[i]
+        token_ids, token_type_ids = self.tokenizer.encode(src, tgt)
+        output = {
+            "token_ids": token_ids,
+            "token_type_ids": token_type_ids,
+        }
+        return output
+
+    def __len__(self):
+
+        return len(self.sents_src)
 
 def collate_fn(batch):
     """
@@ -174,22 +202,13 @@ class PoemTrainer:
 
 if __name__ == '__main__':
 
-    # word2idx = load_chinese_base_vocab()
-    # tokenier = Tokenizer(word2idx)
-
     trainer = PoemTrainer()
     train_epoches = 10
     for epoch in range(train_epoches):
         # 训练一个epoch
         trainer.train(epoch)
 
-    ## 测试一下read corpus
-    # sents_src, sents_tgt = read_corpus(duilian_corpus_dir)
-    # print(sents_src[:5])
-    # print(sents_tgt[:5])
-    # print(tokenier.encode(sents_src[0]))
-
-    # # 测试一下自定义数据集
+    ## 测试一下自定义数据集
     # vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
     # sents_src, sents_tgt = read_corpus("./corpus/Poetry", vocab_path)
     
@@ -208,6 +227,4 @@ if __name__ == '__main__':
     #     break
 
 
-    # 
-    # read_corpus(poem_corpus_dir)
     

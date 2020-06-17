@@ -14,8 +14,6 @@ import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
-# 引入自定义数据集
-from bert_seq2seq.bert_dataset import BertDataset
 
 def read_corpus(dir_path):
     """
@@ -36,6 +34,37 @@ def read_corpus(dir_path):
 
     return sents_src, sents_tgt
     
+class BertDataset(Dataset):
+    """
+    针对特定数据集，定义一个相关的取数据的方式
+    """
+    def __init__(self, sents_src, sents_tgt, vocab_path) :
+        ## 一般init函数是加载所有数据
+        super(BertDataset, self).__init__()
+        # 读原始数据
+        # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
+        self.sents_src = sents_src
+        self.sents_tgt = sents_tgt
+        self.word2idx = load_chinese_base_vocab(vocab_path)
+        self.idx2word = {k: v for v, k in self.word2idx.items()}
+        self.tokenizer = Tokenizer(self.word2idx)
+
+    def __getitem__(self, i):
+        ## 得到单个数据
+        # print(i)
+        src = self.sents_src[i]
+        tgt = self.sents_tgt[i]
+        token_ids, token_type_ids = self.tokenizer.encode(src, tgt)
+        output = {
+            "token_ids": token_ids,
+            "token_type_ids": token_type_ids,
+        }
+        return output
+
+    def __len__(self):
+
+        return len(self.sents_src)
+        
 def collate_fn(batch):
     """
     动态padding， batch为一部分sample
