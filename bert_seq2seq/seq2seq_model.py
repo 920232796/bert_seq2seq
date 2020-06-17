@@ -107,17 +107,13 @@ class Seq2SeqModel(nn.Module):
         flag = 0 # 判断第一次遇到逗号
         for step in range(self.out_max_length):
             scores = self.forward(token_ids, token_type_ids, device=device)
-            # print(scores.shape)
             if step == 0:
                 # 重复beam-size次 输入ids
                 token_ids = token_ids.view(1, -1).repeat(beam_size, 1)
                 token_type_ids = token_type_ids.view(1, -1).repeat(beam_size, 1)
             ## 计算log 分值 (beam_size, vocab_size)
             logit_score = torch.log_softmax(scores, dim=-1)[:, -1]
-            # print(logit_score.shape)
             logit_score = output_scores.view(-1, 1) + logit_score # 累计得分
-            # print(logit_score.shape)
-            # print(output_scores.view(-1, 1).shape)
             ## 取topk的时候我们是展平了然后再去调用topk函数
             # 展平
             logit_score = logit_score.view(-1)
@@ -128,7 +124,6 @@ class Seq2SeqModel(nn.Module):
             # 下面需要更新一下输出了
             new_hype_scores = []
             new_hype_ids = []
-            # 为啥有这个[],就是因为要过滤掉结束的序列。
             next_chars = [] # 用来保存新预测出来的一个字符，继续接到输入序列后面，再去预测新字符
             index = 0
             for i_1, i_2, score in zip(indice1, indice2, hype_score):
@@ -142,10 +137,8 @@ class Seq2SeqModel(nn.Module):
                         # 加惩罚
                         word_list[i_2] += 1
                         score -= 1 * word_list[i_2]
-                        # print("惩罚分数：" + str(score))
                         hype_score[index] -= 1 * word_list[i_2]
                 if flag == 0 and i_2 == douhao_id:
-                    # 第一次遇到逗号 记住押韵
                     flag += 1
                     word = ix2word[last_chars[index]]# 找到上一个字符 记住其押韵情况
                     for i, each_yayun in enumerate(yayun_list):
@@ -161,16 +154,11 @@ class Seq2SeqModel(nn.Module):
                     else:
                         score -= 2
                         hype_score[index] -= 2
-                # print(yayun_save)
                 hype_id = output_ids[i_1] + [i_2] # 保存所有输出的序列，而不仅仅是新预测的单个字符
 
                 if i_2 == sep_id:
                     # 说明解码到最后了
                     if score == torch.max(hype_score).item():
-                        # 说明找到得分最大的那个序列了 直接返回即可
-                        # print({ix2word[k]: v for k, v in word_list.items()})
-                        # print(score)
-                        # print(hype_score)
                         return hype_id[: -1]
                     else:
                         # 完成一个解码了，但这个解码得分并不是最高，因此的话需要跳过这个序列
@@ -212,7 +200,6 @@ class Seq2SeqModel(nn.Module):
         for step in range(self.out_max_length):
             
             scores = self.forward(token_ids, token_type_ids, device=device)
-            # print(scores.shape)
             if step == 0:
                 # 重复beam-size次 输入ids
                 token_ids = token_ids.view(1, -1).repeat(beam_size, 1)
