@@ -43,32 +43,6 @@ def read_corpus(data_path):
 
     return sents_src, sents_tgt
 
-# def read_corpus(data_path):
-#     """
-#     读原始数据
-#     """
-#     sents_src = []
-#     sents_tgt = []
-
-#     with open(data_path) as f:
-#         lines = f.readlines()
-#     for line in lines:
-#         line_dict = eval(line)
-#         sents_src.append(line_dict["text"])
-#         target_list = [1] * (len(line_dict["text"]) + 2) # 算上了cls 和 sep符号
-#         label_dict = line_dict["label"]
-#         for k, v in label_dict.items():
-#             t = target.index(k)
-#             for kk, vv in v.items():
-#                 for l in vv:
-#                     start = l[0]
-#                     end = l[1]
-#                     for i in range(start + 1, end + 2):
-#                         target_list[i] = t
-#         sents_tgt.append(target_list)
-
-#     return sents_src, sents_tgt
-
 ## 自定义dataset
 class NERDataset(Dataset):
     """
@@ -241,12 +215,5 @@ if __name__ == '__main__':
         # print(tokenier.decode(token_ids[1].tolist()))
         # print(token_type_ids)
         # print(target_ids)
-        
-        
-    #     bert_model = load_bert(vocab_path, model_class="encoder", target_size=14)
-    #     bert_model(token_ids)
-
-        # print(tokenier.decode(target_ids[0].tolist()))
-        # print(tokenier.decode(target_ids[1].tolist()))
-    #     break
+        # break
 
