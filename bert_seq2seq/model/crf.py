@@ -34,8 +34,7 @@ class CRFLayer(nn.Module):
         mask = mask.reshape((mask.shape[0], mask.shape[1], 1))
         mask = mask.float()
         y_true = y_true.reshape(y_pred.shape[:-1])
-        y_true = y_true.long()
-        # print(y_true.shape)   
+        y_true = y_true.long()  
         y_true_onehot = F.one_hot(y_true, self.output_dim) 
         y_true_onehot = y_true_onehot.float()
 
@@ -69,7 +68,6 @@ class CRFLayer(nn.Module):
             outputs = self.logsumexp(state + g, dim=1) # batch, out_dim
             outputs = outputs + y_pred[:, t]
             outputs = cur_mask * outputs + (1 - cur_mask) * state.squeeze(-1)
-            # print("t is " + str(t) + "  outputs is " + str(outputs))
             state = outputs
         
         return outputs

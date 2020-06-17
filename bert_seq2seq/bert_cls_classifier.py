@@ -24,7 +24,6 @@ class BertClsClassifier(nn.Module):
             raise Exception("model_name_err")
             
         self.final_dense = nn.Linear(config.hidden_size, self.target_size)
-        # self.activation = nn.Sigmoid()
     
     def compute_loss(self, predictions, labels):
         """
