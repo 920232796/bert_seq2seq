@@ -72,7 +72,6 @@ def collate_fn(batch):
     def padding(indice, max_length, pad_idx=0):
         """
         pad 函数
-        注意 token type id 右侧pad是添加1而不是0，1表示属于句子B
         """
         pad_indice = [item + [pad_idx] * max(0, max_length - len(item)) for item in indice]
         return torch.tensor(pad_indice)

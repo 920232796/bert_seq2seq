@@ -53,19 +53,40 @@ class BertConfig(object):
 
 class BertLayerNorm(nn.Module):
     """LayerNorm层, 见Transformer(一), 讲编码器(encoder)的第3部分"""
-    def __init__(self, hidden_size, eps=1e-12):
+    def __init__(self, hidden_size, eps=1e-12, conditional=False):
         """Construct a layernorm module in the TF style (epsilon inside the square root).
         """
         super(BertLayerNorm, self).__init__()
         self.weight = nn.Parameter(torch.ones(hidden_size))
         self.bias = nn.Parameter(torch.zeros(hidden_size))
         self.variance_epsilon = eps
+        self.conditional = conditional
+        if conditional == True:
+            #说明是条件 ln
+            self.weight_dense = nn.Linear(2 * hidden_size, hidden_size, bias=False)
+            self.weight_dense.weight.data.uniform_(0, 0)
+            self.bias_dense = nn.Linear(2 * hidden_size, hidden_size, bias=False)
+            self.bias_dense.weight.data.uniform_(0, 0)
 
     def forward(self, x):
-        u = x.mean(-1, keepdim=True)
-        s = (x - u).pow(2).mean(-1, keepdim=True)
-        x = (x - u) / torch.sqrt(s + self.variance_epsilon)
-        return self.weight * x + self.bias
+        if self.conditional == False:
+            u = x.mean(-1, keepdim=True)
+            s = (x - u).pow(2).mean(-1, keepdim=True)
+            x = (x - u) / torch.sqrt(s + self.variance_epsilon)
+            return self.weight * x + self.bias
+        else :
+            inputs = x[0]
+            cond = x[1]
+            for _ in range(len(inputs.shape) - len(cond.shape)):
+                cond = cond.unsqueeze(dim=1)
+           
+            weight = self.weight + self.weight_dense(cond)
+            bias = self.bias + self.bias_dense(cond)
+            u = inputs.mean(-1, keepdim=True)
+            s = (inputs - u).pow(2).mean(-1, keepdim=True)
+            x = (inputs - u) / torch.sqrt(s + self.variance_epsilon)
+           
+            return weight * x + bias
 
 
 
