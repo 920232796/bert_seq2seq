@@ -89,14 +89,16 @@ class ExtractDataset(Dataset):
                 object_labels[o[0], o[2], 0] = 1
                 object_labels[o[1], o[2], 1] = 1
         
-        output = {
-            "token_ids": token_ids,
-            "token_type_ids": segment_ids,
-            "subject_labels": subject_labels,
-            "subject_ids": subject_ids,
-            "object_labels": object_labels,
-        }
-        return output
+            output = {
+                "token_ids": token_ids,
+                "token_type_ids": segment_ids,
+                "subject_labels": subject_labels,
+                "subject_ids": subject_ids,
+                "object_labels": object_labels,
+            }
+            return output
+        else: 
+            return self.__getitem__(i + 1)
 
     def __len__(self):
 
@@ -185,9 +187,12 @@ class ExtractTrainer:
         total_loss = 0
         start_time = time.time() ## 得到当前时间
         step = 0
+        report_loss = 0.0
         for token_ids, token_type_ids, subject_lables, object_labels, subject_ids in tqdm(dataloader,position=0, leave=True):
             step += 1
-            # if step % 3000 == 0:
+            if step % 300 == 0:
+                print("report loss is " + str(report_loss))
+                report_loss = 0.0
             #     self.bert_model.eval()
             #     test_data = ["观棋##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
             #     for text in test_data:
@@ -212,6 +217,7 @@ class ExtractTrainer:
 
             # 为计算当前epoch的平均loss
             total_loss += loss.item()
+            report_loss += loss.item()
         
         end_time = time.time()
         spend_time = end_time - start_time

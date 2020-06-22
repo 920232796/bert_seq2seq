@@ -31,7 +31,8 @@ class BertRelationExtrac(nn.Module):
         self.object_pred = nn.Linear(config.hidden_size, 2 * self.predicate_num)
     
     def binary_crossentropy(self, labels, pred):
-        loss = (-labels) * torch.log(pred) - (1 - labels) * torch.log(1 - pred)
+        labels = labels.float()
+        loss = (-labels) * torch.log(pred) - (1.0 - labels) * torch.log(1.0 - pred)
         return loss
 
     def compute_total_loss(self, subject_pred, object_pred, subject_labels, object_labels):
