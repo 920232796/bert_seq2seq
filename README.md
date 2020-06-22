@@ -8,7 +8,7 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 2. cls_classifier 通过提取句首的cls向量去做分类，比如情感分析，文本分类。
 3. sequence_labeling 序列标注任务，比如命名实体识别，词性标注。
 4. relation_extract 关系抽取，比如三元组抽取任务。(复现苏剑林老师的例子，不完全一样。)
-三种任务分别加载三种不同的模型，通过``` model_class="seq2seq" or "cls" or "sequence_labeling" or "sequence_labeling_crf or relation_extrac"``` 参数去设置。具体可以去看examples里面的各种例子。当然也随时可以查看修改我的源代码～
+四种任务分别加载四种不同的模型，通过``` model_class="seq2seq" or "cls" or "sequence_labeling" or "sequence_labeling_crf or relation_extrac"``` 参数去设置。具体可以去看examples里面的各种例子。当然也随时可以查看修改我的源代码～
 
 部分代码参考了 https://github.com/huggingface/transformers/ 和 https://github.com/bojone/bert4keras 
 非常感谢！！！
