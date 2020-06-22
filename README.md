@@ -37,6 +37,8 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 
 ### 更新记录
 
+2020.06.22: 补充了Conditional Layer Norm 的一篇文章。解释了部分代码。http://www.blog.zhxing.online/#/readBlog?blogId=347
+
 2020.06.21: 更新了很多代码，复现了一个三元组抽取的例子～
 
 2020.06.02: 最近一直在忙毕业的事情，还有个比赛，暂时不更新了，以后会一直更新哒。
