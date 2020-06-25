@@ -57,8 +57,8 @@ class BertLayerNorm(nn.Module):
         """Construct a layernorm module in the TF style (epsilon inside the square root).
         """
         super(BertLayerNorm, self).__init__()
-        self.weight = nn.Parameter(torch.ones(hidden_size))
-        self.bias = nn.Parameter(torch.zeros(hidden_size))
+        self.gamma = nn.Parameter(torch.ones(hidden_size))
+        self.beta = nn.Parameter(torch.zeros(hidden_size))
         self.variance_epsilon = eps
         self.conditional = conditional
         if conditional == True:
@@ -73,15 +73,15 @@ class BertLayerNorm(nn.Module):
             u = x.mean(-1, keepdim=True)
             s = (x - u).pow(2).mean(-1, keepdim=True)
             x = (x - u) / torch.sqrt(s + self.variance_epsilon)
-            return self.weight * x + self.bias
+            return self.gamma * x + self.beta
         else :
             inputs = x[0]
             cond = x[1]
             for _ in range(len(inputs.shape) - len(cond.shape)):
                 cond = cond.unsqueeze(dim=1)
            
-            weight = self.weight + self.weight_dense(cond)
-            bias = self.bias + self.bias_dense(cond)
+            weight = self.gamma + self.weight_dense(cond)
+            bias = self.beta + self.bias_dense(cond)
             u = inputs.mean(-1, keepdim=True)
             s = (inputs - u).pow(2).mean(-1, keepdim=True)
             x = (inputs - u) / torch.sqrt(s + self.variance_epsilon)
