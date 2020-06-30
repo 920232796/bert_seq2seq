@@ -139,6 +139,9 @@ class Seq2SeqModel(nn.Module):
                         score -= 1 * word_list[i_2]
                         hype_score[index] -= 1 * word_list[i_2]
                 if flag == 0 and i_2 == douhao_id:
+                    if len(last_chars) - 1 < index:
+                        # 说明刚开始预测便预测到逗号了，上一个字符还没有存储
+                        break
                     flag += 1
                     word = ix2word[last_chars[index]]# 找到上一个字符 记住其押韵情况
                     for i, each_yayun in enumerate(yayun_list):
