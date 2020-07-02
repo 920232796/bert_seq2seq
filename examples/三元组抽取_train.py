@@ -193,11 +193,7 @@ class ExtractTrainer:
             if step % 300 == 0:
                 print("report loss is " + str(report_loss))
                 report_loss = 0.0
-            #     self.bert_model.eval()
-            #     test_data = ["观棋##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
-            #     for text in test_data:
-            #         print(self.bert_model.generate(text, beam_size=3,device=self.device, is_poem=True))
-            #     self.bert_model.train()
+            
             # 因为传入了target标签，因此会计算loss并且返回
             predictions, loss = self.bert_model(token_ids,
                                                 subject_ids,
@@ -251,19 +247,3 @@ if __name__ == "__main__":
     #     print(tokenizer.decode(token_ids[0]))
     #     print(tokenizer.decode(token_ids[1]))
     #     break
-
-    # subject_ids = torch.tensor([[1, 2], [0, 1]])
-    # t1 = torch.tensor([[[1, 2, 3], [4, 5, 6], [1, 1, 1]], [[5, 6, 7], [7, 8, 9], [1, 1, 1]]])
-    # res = torch.gather(t1, index=subject_ids[:, :1].unsqueeze(1).expand((2, 1, 3)), dim=1)
-    # res1 = torch.gather(t1, index=subject_ids[:, 1:].unsqueeze(1).expand((2, 1, 3)), dim=1)
-    
-    # print(torch.cat((res, res1), dim=-1)[:, 0].shape)
-
-    # print(subject_ids[:, :1])
-
-    # index=subject_ids[:, :1].unsqueeze(-1).expand_as(t1)
-    # print(index)
-
-    # t2 = torch.tensor([[1], [0]])
-    # t2 = t2.unsqueeze(1).expand((2, 1, 3))
-    # print(t2)
