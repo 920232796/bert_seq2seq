@@ -1,4 +1,4 @@
-## 自动写诗的例子
+## 自动对对联的例子
 import sys
 sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 import torch 

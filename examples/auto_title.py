@@ -1,4 +1,4 @@
-## 自动写诗的例子
+## 自动摘要的例子
 import sys
 sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 import torch 
@@ -42,7 +42,7 @@ class BertDataset(Dataset):
         # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
         self.sents_src = sents_src
         self.sents_tgt = sents_tgt
-        self.word2idx = load_chinese_base_vocab(vocab_path)
+        self.word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
         self.idx2word = {k: v for v, k in self.word2idx.items()}
         self.tokenizer = Tokenizer(self.word2idx)
 
@@ -105,13 +105,12 @@ class Trainer:
         self.model_save_path = "./state_dict/bert_auto_title_model.bin"
         self.batch_size = 16
         self.lr = 1e-5
-        # 加载字典
-        self.word2idx = load_chinese_base_vocab(self.vocab_path, simplfied=True)
+        
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
-        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name)
+        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, simplfied=True)
         ## 加载预训练的模型参数～
         
         load_model_params(self.bert_model, self.model_path)
