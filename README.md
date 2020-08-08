@@ -38,6 +38,8 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 
 ### 更新记录
 
+2020.08.08: 本次更细内容较多，1. 添加了自动摘要的例子 2. 添加了精简词表的代码，原本3W个字缩减为1W多（因为某些字永远不会出现） 3. 修改了部分beam-search代码，效果更好了。4. 细粒度ner暂时不能使用了，数据有点问题，因此暂时放入test文件夹，如果找到合适的数据，可以使用 5. 新增test文件夹，训练好的模型可以在里面进行测试，看看效果。
+
 2020.06.22: 补充了Conditional Layer Norm 的一篇文章。解释了部分代码。http://www.blog.zhxing.online/#/readBlog?blogId=347
 
 2020.06.21: 更新了很多代码，复现了一个三元组抽取的例子～
@@ -70,4 +72,3 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 
 python setup.py sdist
 twine upload dist/bert_seq2seq-0.0.8.tar.gz
-

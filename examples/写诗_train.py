@@ -20,7 +20,7 @@ def read_corpus(dir_path, vocab_path):
     """
     sents_src = []
     sents_tgt = []
-    word2idx = load_chinese_base_vocab(vocab_path)
+    word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
     tokenizer = Tokenizer(word2idx)
     files= os.listdir(dir_path) #得到文件夹下的所有文件名称
     for file1 in files: #遍历文件夹
@@ -34,12 +34,14 @@ def read_corpus(dir_path, vocab_path):
             for index, row in df.iterrows():
                 if type(row[0]) is not str or type(row[3]) is not str:
                     continue
-                if len(row[0]) > 8 or len(row[0]) < 2:
-                    # 过滤掉题目长度过长和过短的诗句
-                    continue
                 if len(row[0].split(" ")) > 1:
                     # 说明题目里面存在空格，只要空格前面的数据
                     row[0] = row[0].split(" ")[0]
+
+                if len(row[0]) > 10 or len(row[0]) < 1:
+                    # 过滤掉题目长度过长和过短的诗句
+                    continue
+                
                 encode_text = tokenizer.encode(row[3])[0]
                 if word2idx["[UNK]"] in encode_text:
                   # 过滤unk字符
@@ -75,7 +77,7 @@ class BertDataset(Dataset):
         # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
         self.sents_src = sents_src
         self.sents_tgt = sents_tgt
-        self.word2idx = load_chinese_base_vocab(vocab_path)
+        self.word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
         self.idx2word = {k: v for v, k in self.word2idx.items()}
         self.tokenizer = Tokenizer(self.word2idx)
 
@@ -124,17 +126,15 @@ class PoemTrainer:
         self.sents_src, self.sents_tgt = read_corpus(data_dir, self.vocab_path)
         self.model_name = "roberta" # 选择模型名字
         self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
-        self.recent_model_path = "" # 用于把已经训练好的模型继续训练
-        self.model_save_path = "./bert_model.bin"
+        self.recent_model_path = "./bert_model_poem.bin" # 用于把已经训练好的模型继续训练
+        self.model_save_path = "./bert_model_poem.bin"
         self.batch_size = 16
         self.lr = 1e-5
-        # 加载字典
-        self.word2idx = load_chinese_base_vocab(self.vocab_path)
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
-        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name)
+        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, simplfied=True)
         ## 加载预训练的模型参数～
         load_model_params(self.bert_model, self.model_path)
         # 将模型发送到计算设备(GPU或CPU)
@@ -166,7 +166,7 @@ class PoemTrainer:
             step += 1
             if step % 3000 == 0:
                 self.bert_model.eval()
-                test_data = ["观棋##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
+                test_data = ["北国风光##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
                 for text in test_data:
                     print(self.bert_model.generate(text, beam_size=3,device=self.device, is_poem=True))
                 self.bert_model.train()
@@ -202,7 +202,7 @@ class PoemTrainer:
 if __name__ == '__main__':
 
     trainer = PoemTrainer()
-    train_epoches = 10
+    train_epoches = 50
     for epoch in range(train_epoches):
         # 训练一个epoch
         trainer.train(epoch)

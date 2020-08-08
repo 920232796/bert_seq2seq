@@ -10,9 +10,9 @@ from bert_seq2seq.config import yayun_list
 class Seq2SeqModel(nn.Module):
     """
     """
-    def __init__(self, vocab_path, model_name="roberta"):
+    def __init__(self, vocab_path, simplfied=False, model_name="roberta"):
         super(Seq2SeqModel, self).__init__()
-        self.word2ix = load_chinese_base_vocab(vocab_path)
+        self.word2ix = load_chinese_base_vocab(vocab_path, simplfied=simplfied)
         self.tokenizer = Tokenizer(self.word2ix)
         config = ""
         if model_name == "roberta":
@@ -82,12 +82,15 @@ class Seq2SeqModel(nn.Module):
         token_ids = torch.tensor(token_ids, device=device).view(1, -1)
         token_type_ids = torch.tensor(token_type_ids, device=device).view(1, -1)
         if is_poem:## 古诗的beam-search稍有不同
-            out_puts_ids = self.poem_beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
+            out_puts_ids, err = self.poem_beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
         else :
-             out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
+             out_puts_ids, err = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
         
         # 解码 得到相应输出
-        return self.tokenizer.decode(out_puts_ids)
+        if err is False:
+            return self.tokenizer.decode(out_puts_ids)
+        
+        return out_puts_ids
     
     def poem_beam_search(self, token_ids, token_type_ids, word2ix, beam_size=1, device="cpu"):
         """
@@ -99,7 +102,8 @@ class Seq2SeqModel(nn.Module):
         juhao_id = word2ix["。"]# 句号
         # 用来保存输出序列
         output_ids = [[]]
-        word_list = {} # 保证不重复生成
+        # word_list = {} # 保证不重复生成
+        repeat_list = [[], [], [], [], []]
         last_chars = []
         yayun_save = -1
         # 用来保存累计得分
@@ -124,6 +128,7 @@ class Seq2SeqModel(nn.Module):
             # 下面需要更新一下输出了
             new_hype_scores = []
             new_hype_ids = []
+            new_repeat_list = []
             next_chars = [] # 用来保存新预测出来的一个字符，继续接到输入序列后面，再去预测新字符
             index = 0
             for i_1, i_2, score in zip(indice1, indice2, hype_score):
@@ -131,38 +136,45 @@ class Seq2SeqModel(nn.Module):
                 i_2 = i_2.item()
                 score = score.item()
                 if i_2 != douhao_id and i_2 != juhao_id:
-                    if i_2 not in word_list.keys():
-                        word_list[i_2] = 1
+                    if i_2 in repeat_list[i_1]:
+                    # 说明出现重复了
+                    # 扣分
+                        score -= 1
+                        hype_score[i_1] -= 1
                     else :
-                        # 加惩罚
-                        word_list[i_2] += 1
-                        score -= 1 * word_list[i_2]
-                        hype_score[index] -= 1 * word_list[i_2]
-                if flag == 0 and i_2 == douhao_id:
-                    if len(last_chars) - 1 < index:
-                        # 说明刚开始预测便预测到逗号了，上一个字符还没有存储
-                        break
+                        repeat_list[i_1].append(i_2)
+
+                    # if i_2 not in word_list.keys():
+                    #     word_list[i_2] = 1
+                    # else :
+                    #     # 加惩罚
+                    #     word_list[i_2] += 1
+                    #     score -= 1 * word_list[i_2]
+                    #     hype_score[index] -= 1 * word_list[i_2]
+                if flag == 0 and i_2 == douhao_id and len(last_chars) != 0:
+                    
                     flag += 1
                     word = ix2word[last_chars[index]]# 找到上一个字符 记住其押韵情况
                     for i, each_yayun in enumerate(yayun_list):
                         if word in each_yayun:
                             yayun_save = i
                             break
-                if i_2 == juhao_id:
-                    word = ix2word[last_chars[index]]
+                if i_2 == juhao_id and len(last_chars) != 0:
+                    
+                    word = ix2word[last_chars[i_1]]
                     # 找押韵 给奖励
                     if word in yayun_list[yayun_save]:
-                        score += 5
-                        hype_score[index] += 5
+                        score += 2
+                        hype_score[i_1] += 2
                     else:
                         score -= 2
-                        hype_score[index] -= 2
+                        hype_score[i_1] -= 2
                 hype_id = output_ids[i_1] + [i_2] # 保存所有输出的序列，而不仅仅是新预测的单个字符
 
                 if i_2 == sep_id:
                     # 说明解码到最后了
                     if score == torch.max(hype_score).item():
-                        return hype_id[: -1]
+                        return hype_id[: -1], False
                     else:
                         # 完成一个解码了，但这个解码得分并不是最高，因此的话需要跳过这个序列
                         beam_size -= 1
@@ -170,10 +182,11 @@ class Seq2SeqModel(nn.Module):
                     new_hype_ids.append(hype_id)
                     new_hype_scores.append(score)
                     next_chars.append(i_2) # 收集一下，需要连接到当前的输入序列之后
+                    new_repeat_list.append(repeat_list[i_1])
                 index += 1
 
             output_ids = new_hype_ids
-
+            repeat_list = new_repeat_list ## 重复会扣分
             last_chars = next_chars.copy() # 记录一下上一个字符
             output_scores = torch.tensor(new_hype_scores, dtype=torch.float32, device=device)
             # 现在需要重新构造输入数据了，用上一次输入连接上这次新输出的字符，再输入bert中预测新字符
@@ -189,7 +202,12 @@ class Seq2SeqModel(nn.Module):
                 break
 
         # 如果达到最大长度的话 直接把得分最高的输出序列返回把
-        return output_ids[output_scores.argmax().item()] 
+        err = False
+        try: 
+            return output_ids[output_scores.argmax().item()], err
+        except:
+            err = True
+            return "本次解码出现错误", err
 
     def beam_search(self, token_ids, token_type_ids, word2ix, beam_size=1, device="cpu"):
         """
@@ -198,10 +216,11 @@ class Seq2SeqModel(nn.Module):
         sep_id = word2ix["[SEP]"]
         # 用来保存输出序列
         output_ids = [[]]
+        repeat_list = [[], [], [], [], []]
+        word_list = {}
         # 用来保存累计得分
         output_scores = torch.zeros(token_ids.shape[0], device=device)
         for step in range(self.out_max_length):
-            
             scores = self.forward(token_ids, token_type_ids, device=device)
             if step == 0:
                 # 重复beam-size次 输入ids
@@ -220,30 +239,49 @@ class Seq2SeqModel(nn.Module):
             # 下面需要更新一下输出了
             new_hype_scores = []
             new_hype_ids = []
+            new_repeat_list = []
             # 为啥有这个[],就是因为要过滤掉结束的序列。
+            index = 0
             next_chars = [] # 用来保存新预测出来的一个字符，继续接到输入序列后面，再去预测新字符
             for i_1, i_2, score in zip(indice1, indice2, hype_score):
                 i_1 = i_1.item()
                 i_2 = i_2.item()
                 score = score.item()
-                
+                if i_2 in repeat_list[i_1]:
+                    # 说明出现重复了
+                    # 扣分
+                    score -= 1
+                    hype_score[i_1] -= 1
+                else :
+                    repeat_list[i_1].append(i_2)
+
+                # if i_2 not in word_list:
+                #     word_list[i_2] = 1
+                # else :
+                #     word_list[i_2] += 1
+                #     score -= 0.5 * word_list[i_2]
+                #     hype_score[index] -= 0.5 * word_list[i_2]
+
                 hype_id = output_ids[i_1] + [i_2] # 保存所有输出的序列，而不仅仅是新预测的单个字符
 
                 if i_2 == sep_id:
                     # 说明解码到最后了
                     if score == torch.max(hype_score).item():
                         # 说明找到得分最大的那个序列了 直接返回即可
-                        return hype_id[: -1]
+                        return hype_id[: -1], False
                     else:
                         # 完成一个解码了，但这个解码得分并不是最高，因此的话需要跳过这个序列
                         beam_size -= 1
+                        
                 else :
                     new_hype_ids.append(hype_id)
                     new_hype_scores.append(score)
                     next_chars.append(i_2) # 收集一下，需要连接到当前的输入序列之后
+                    new_repeat_list.append(repeat_list[i_1])
+                index += 1
 
             output_ids = new_hype_ids
-           
+            repeat_list = new_repeat_list ## 重复会扣分
             output_scores = torch.tensor(new_hype_scores, dtype=torch.float32, device=device)
             # 现在需要重新构造输入数据了，用上一次输入连接上这次新输出的字符，再输入bert中预测新字符
             token_ids = token_ids[:len(output_ids)].contiguous() # 截取，因为要过滤掉已经完成预测的序列
@@ -258,7 +296,12 @@ class Seq2SeqModel(nn.Module):
                 break
 
         # 如果达到最大长度的话 直接把得分最高的输出序列返回把
-        return output_ids[output_scores.argmax().item()] 
+        err = False
+        try: 
+            return output_ids[output_scores.argmax().item()], err
+        except:
+            err = True
+            return "本次解码出现错误", err
  
 
 

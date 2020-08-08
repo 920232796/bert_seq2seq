@@ -5,14 +5,14 @@ from bert_seq2seq.bert_seq_labeling import BertSeqLabeling
 from bert_seq2seq.bert_seq_labeling_crf import BertSeqLabelingCRF
 from bert_seq2seq.bert_relation_extraction import BertRelationExtrac
 
-def load_bert(vocab_path, model_name="roberta", model_class="seq2seq", target_size=0):
+def load_bert(vocab_path, model_name="roberta", model_class="seq2seq", target_size=0, simplfied=False):
     """
     model_path: 模型位置
     这是个统一的接口，用来加载模型的
     model_class : seq2seq or encoder
     """
     if model_class == "seq2seq":
-        bert_model = Seq2SeqModel(vocab_path, model_name=model_name)
+        bert_model = Seq2SeqModel(vocab_path, model_name=model_name, simplfied=simplfied)
         return bert_model
     elif model_class == "cls":
         if target_size == 0:

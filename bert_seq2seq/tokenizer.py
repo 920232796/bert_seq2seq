@@ -1,16 +1,52 @@
 import unicodedata
 from typing import List, Dict
+import re
 
-def load_chinese_base_vocab(vocab_path):
+
+def load_chinese_base_vocab(vocab_path, simplfied=False, startswith=["[PAD]", "[UNK]", "[CLS]", "[SEP]"]):
     """
     加载官方中文bert模型字典
+    simplified: 是否简化词典
     """
     with open(vocab_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
     word2idx = {}
     for index, line in enumerate(lines):
         word2idx[line.strip("\n")] = index 
-    return word2idx
+    
+    if simplfied:
+        new_token_dict, keep_tokens = {}, []
+        for t in startswith:
+            new_token_dict[t] = len(new_token_dict)
+            keep_tokens.append(word2idx[t])
+
+        for t, _ in sorted(word2idx.items(), key=lambda s: s[1]):
+            if t not in new_token_dict:
+                keep = True
+                if len(t) > 1:
+                    for c in Tokenizer.stem(t):
+                        if (
+                            Tokenizer._is_cjk_character(c) or
+                            Tokenizer._is_punctuation(c)
+                        ):
+                            keep = False
+                            break
+                if keep:
+                    new_token_dict[t] = len(new_token_dict)
+                    keep_tokens.append(word2idx[t])
+        
+        print("精简后的词表大小为：" + str(len(keep_tokens)))
+        return new_token_dict
+    else:
+        return word2idx
+
+def save_vocab(dict_path, token_dict, encoding='utf-8'):
+    """将词典（比如精简过的）保存为文件
+    """
+    with open(dict_path, 'w', encoding=encoding) as writer:
+        for k, v in sorted(token_dict.items(), key=lambda s: s[1]):
+            writer.write(k + '\n')
+
 
 class BasicTokenizer(object):
 
@@ -26,7 +62,6 @@ class BasicTokenizer(object):
     def tokenize(self, text: str, add_cls=True, add_sep=True, max_length=None):
         """分词函数
         """
-
         tokens = self._tokenize(text)
         if add_cls:
             tokens.insert(0, self._token_cls)
@@ -117,7 +152,7 @@ class BasicTokenizer(object):
     def ids_to_tokens(self, ids):
         """id序列转换为对应的token序列
         """
-        return [self.id_to_token(i) for i in ids]
+        return [self.id_to_token(i) + " " for i in ids]
 
     def decode(self, ids):
         """转为可读文本
@@ -141,11 +176,12 @@ class Tokenizer(BasicTokenizer):
         self._token_dict_inv = {v: k for k, v in token_dict.items()}
         for token in ['pad', 'cls', 'sep', 'unk', 'mask']:
             try:
-               
                 _token_id = token_dict[getattr(self, "_token_"+str(token))]
+                # print(_token_id)
                 setattr(self, "_token_"+str(token)+"_id", _token_id)
             except Exception as e :
-                
+                # print(e)
+                # print("err")
                 pass
         self._vocab_size = len(token_dict)
 
@@ -159,16 +195,52 @@ class Tokenizer(BasicTokenizer):
         """
         return self._token_dict_inv[i]
     
-    def decode(self, ids):
+    def decode(self, ids, tokens=None):
         """转为可读文本
         """
-        tokens = self.ids_to_tokens(ids)
+        tokens = tokens or self.ids_to_tokens(ids)
+        tokens = [token for token in tokens if not self._is_special(token)]
 
-        return "".join(tokens).strip()
+        text, flag = '', False
+        for i, token in enumerate(tokens):
+            if token[:2] == '##':
+                text += token[2:]
+            elif len(token) == 1 and self._is_cjk_character(token):
+                text += token
+            elif len(token) == 1 and self._is_punctuation(token):
+                text += token
+                text += ' '
+            elif i > 0 and self._is_cjk_character(text[-1]):
+                text += token
+            else:
+                text += ' '
+                text += token
+
+        text = re.sub(' +', ' ', text)
+        text = re.sub('\' (re|m|s|t|ve|d|ll) ', '\'\\1 ', text)
+        punctuation = self._cjk_punctuation() + '+-/={(<['
+        punctuation_regex = '|'.join([re.escape(p) for p in punctuation])
+        punctuation_regex = '(%s) ' % punctuation_regex
+        text = re.sub(punctuation_regex, '\\1', text)
+        text = re.sub('(\d\.) (\d)', '\\1\\2', text)
+
+        return text.strip()
+    
+    # def decode(self, ids):
+    #     """转为可读文本
+    #     """
+    #     tokens = self.ids_to_tokens(ids)
+
+    #     return "".join(tokens).strip()
     
     def _tokenize(self, text):
         """基本分词函数
         """
+        text = text.lower()
+        text = unicodedata.normalize('NFD', text)
+        text = ''.join([
+            ch for ch in text if unicodedata.category(ch) != 'Mn'
+        ])
         spaced = ''
         for ch in text:
             # print(ch)
@@ -176,12 +248,49 @@ class Tokenizer(BasicTokenizer):
                 spaced += ' ' + ch + ' '
             elif self._is_space(ch):
                 spaced += ' '
-            # elif ord(ch) == 0 or ord(ch) == 0xfffd or self._is_control(ch):
-            #     continue
+            elif ord(ch) == 0 or ord(ch) == 0xfffd or self._is_control(ch):
+                continue
             else:
-                spaced += " " + ch + " "
+                spaced += ch
         
-        return spaced.strip().split()
+        tokens = []
+        for word in spaced.strip().split():
+            tokens.extend(self._word_piece_tokenize(word))
+
+        return tokens
+    
+    def _word_piece_tokenize(self, word):
+        """word内分成subword
+        """
+        if word in self._token_dict:
+            return [word]
+
+        tokens = []
+        start, stop = 0, 0
+        while start < len(word):
+            stop = len(word)
+            while stop > start:
+                sub = word[start:stop]
+                if start > 0:
+                    sub = '##' + sub
+                if sub in self._token_dict:
+                    break
+                stop -= 1
+            if start == stop:
+                stop += 1
+            tokens.append(sub)
+            start = stop
+
+        return tokens
+    
+    @staticmethod
+    def stem(token):
+        """获取token的“词干”（如果是##开头，则自动去掉##）
+        """
+        if token[:2] == '##':
+            return token[2:]
+        else:
+            return token
 
     @staticmethod
     def _is_space(ch):
@@ -234,11 +343,24 @@ class Tokenizer(BasicTokenizer):
 
 
 if __name__ == "__main__":
-    word2idx = load_chinese_base_vocab()
+    word2idx, keep_tokens = load_chinese_base_vocab(vocab_path="./state_dict/bert-base-chinese-vocab.txt", simplfied=True)
     # print(word2idx)
+    # print(keep_tokens)
+    # save_vocab("./save_vocab.txt", word2idx)
+    # return 
     tokenizer = Tokenizer(word2idx)
+    # # print(word2idx["今"])
+    # print(len(word2idx))
+    # # print(word2idx["[PAD]"])
+    # # print(word2idx["[SEP]"])
+
     # input_ids, segment_ids = tokenizer.encode("你好啊，今天过的怎么样？", "我很好，谢谢你啦")
     # text = tokenizer.decode(input_ids)
     # print(text)
-    # print(segment_ids)
-    print(tokenizer.encode("今天天气真好啊"))
+    # # print(segment_ids)
+    token_ids, segment_ids = tokenizer.encode("今天天气真好啊Easting 400元,，“哈哈” ")
+    print(token_ids)
+    print(tokenizer.decode(token_ids))
+
+    # save_vocab("./save_vocab.txt", word2idx)
+
