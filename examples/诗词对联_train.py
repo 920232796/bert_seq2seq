@@ -13,6 +13,7 @@ import time
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+import opencc 
 
 def read_corpus(dir_path, vocab_path):
     """
@@ -23,7 +24,9 @@ def read_corpus(dir_path, vocab_path):
     word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
     tokenizer = Tokenizer(word2idx)
     files= os.listdir(dir_path) #得到文件夹下的所有文件名称
+    
     for file1 in files: #遍历文件夹
+        
         if not os.path.isdir(file1): #判断是否是文件夹，不是文件夹才打开
             file_path = dir_path + "/" + file1
             print(file_path)
@@ -31,6 +34,7 @@ def read_corpus(dir_path, vocab_path):
                 continue
             df = pd.read_csv(file_path)
             # 先判断诗句的类型  再确定是否要构造数据
+        
             for index, row in df.iterrows():
                 if type(row[0]) is not str or type(row[3]) is not str:
                     continue
@@ -63,7 +67,135 @@ def read_corpus(dir_path, vocab_path):
                     sents_src.append(row[0] + "##" + "七言律诗")
                     sents_tgt.append(row[3])
 
-    # print("第一次诗句共: " + str(len(sents_src)) + "篇")
+    print("第一个诗句数据集共: " + str(len(sents_src)) + "篇")
+    return sents_src, sents_tgt
+
+def read_corpus_2(dir_path, vocab_path):
+    """读取最近的一个数据集 唐诗和宋诗 """
+    sents_src = []
+    sents_tgt = []
+    word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
+    tokenizer = Tokenizer(word2idx)
+    files= os.listdir(dir_path) #得到文件夹下的所有文件名称
+    
+    for file1 in files: #遍历文件夹
+       
+        if not os.path.isdir(file1): #判断是否是文件夹，不是文件夹才打开
+            file_path = dir_path + "/" + file1
+            print(file_path)
+            # data = json.load(file_path)
+            with open(file_path) as f :
+                poem_list = eval(f.read())
+            
+            for each_poem in poem_list:
+                string_list = each_poem["paragraphs"]
+                poem = ""
+                for each_s in string_list:
+                    poem += each_s
+
+                cc = opencc.OpenCC('t2s')
+                poem = cc.convert(poem)
+
+                encode_text = tokenizer.encode(poem)[0]
+                if word2idx["[UNK]"] in encode_text:
+                    # 过滤unk字符
+                    continue
+                title = cc.convert(each_poem["title"])
+
+                if len(title) > 10 or len(title) < 1:
+                    # 过滤掉题目长度过长和过短的诗句
+                    continue
+
+                if len(poem) == 24 and (poem[5] == "，" or poem[5] == "。"):
+                    # 五言绝句
+                    sents_src.append(title+ "##" + "五言绝句")
+                    sents_tgt.append(poem)
+                elif len(poem) == 32 and (poem[7] == "，" or poem[7] == "。"):
+                    # 七言绝句
+                    sents_src.append(title + "##" + "七言绝句")
+                    sents_tgt.append(poem)
+                elif len(poem) == 48 and (poem[5] == "，" or poem[5] == "。"):
+                    # 五言律诗
+                    sents_src.append(title + "##" + "五言律诗")
+                    sents_tgt.append(poem)
+                elif len(poem) == 64 and (poem[7] == "，" or poem[7] == "。"):
+                    # 七言律诗
+                    sents_src.append(title + "##" + "七言律诗")
+                    sents_tgt.append(poem)
+
+    print("第二个诗句数据集共:" + str(len(sents_src)) + "篇")
+    return sents_src, sents_tgt
+
+
+def read_corpus_ci(dir_path, vocab_path):
+    """ 读取宋词数据集"""
+    import json, sys
+    import sqlite3
+    from collections import OrderedDict
+
+    word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
+    tokenizer = Tokenizer(word2idx)
+
+    try:               # Python 2
+        reload(sys)
+        sys.setdefaultencoding('utf-8')
+    except NameError:  # Python 3
+        pass
+
+    c = sqlite3.connect(dir_path + '/ci.db')
+
+    cursor = c.execute("SELECT name, long_desc, short_desc from ciauthor;")
+
+    d = {"name": None, "description": None, "short_description": None}
+
+    cursor = c.execute("SELECT rhythmic, author, content from ci;")
+
+    d = {"rhythmic": None, "author": None, "paragraphs": None}
+
+    # cis = []
+    sents_src = []
+    sents_tgt = []
+
+    for row in cursor:
+        ci = OrderedDict(sorted(d.items(), key=lambda t: t[0]))
+        ci["rhythmic"] = row[0]
+        ci["author"] = row[1]
+        ci["paragraphs"] = row[2].split('\n')
+        string = ""
+        for s in ci["paragraphs"]:
+            if s == " >> " or s == "词牌介绍":
+                continue
+            string += s
+
+        encode_text = tokenizer.encode(string)[0]
+        if word2idx["[UNK]"] in encode_text:
+            # 过滤unk字符
+            continue
+        sents_src.append(row[0] + "##词")
+        sents_tgt.append(string)
+
+        # cis.append(ci)
+
+    # print(cis[:10])
+    print("词共: " + str(len(sents_src)) + "篇")
+    return sents_src, sents_tgt
+
+def read_corpus_duilian(dir_path):
+    """读取对联数据集 """
+    sents_src = []
+    sents_tgt = []
+    in_path = dir_path + "/in.txt"
+    out_path = dir_path + "/out.txt"
+    with open(in_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+        for line in lines:
+            sents_src.append(line.strip() + "##对联")
+    with open(out_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+        for line in lines:
+            sents_tgt.append(line.strip())
+
+    print("对联共: " + str(len(sents_src)) + "篇")
     return sents_src, sents_tgt
 
 
@@ -122,20 +254,35 @@ def collate_fn(batch):
 class PoemTrainer:
     def __init__(self):
         # 加载数据
-        data_dir = "./corpus/Poetry"
-        self.vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
-        self.sents_src, self.sents_tgt = read_corpus(data_dir, self.vocab_path)
+        data_dir = "./Poetry_ci_duilian"
+        self.vocab_path = "./roberta_wwm_vocab.txt" # roberta模型字典的位置
+        self.sents_src, self.sents_tgt = read_corpus(data_dir + "/Poetry1", self.vocab_path)
+        sents_src2, sents_tgt2 = read_corpus_2(data_dir + "/Poetry2", self.vocab_path)
+        sents_src3, sents_tgt3 = read_corpus_ci(data_dir, self.vocab_path)
+        sents_src4, sents_tgt4 = read_corpus_duilian(data_dir)
+        self.sents_src.extend(sents_src2)
+        self.sents_src.extend(sents_src3)
+        self.sents_src.extend(sents_src4)
+
+        self.sents_tgt.extend(sents_tgt2)
+        self.sents_tgt.extend(sents_tgt3)
+        self.sents_tgt.extend(sents_tgt4)
+
+        ## 保存下加载的数据 下次容易加载
+        # torch.save(self.sents_src, "./poem_ci_duilian.src")
+        # torch.save(self.sents_tgt, "./poem_ci_duilian.tgt")
+
         self.model_name = "roberta" # 选择模型名字
-        self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
-        self.recent_model_path = "./bert_model_poem.bin" # 用于把已经训练好的模型继续训练
-        self.model_save_path = "./bert_model_poem.bin"
-        self.batch_size = 16
+        self.model_path = "./roberta_wwm_pytorch_model.bin" # roberta模型位置
+        self.recent_model_path = "./bert_model_poem_ci_duilian.bin" # 用于把已经训练好的模型继续训练
+        self.model_save_path = "./bert_model_poem_ci_duilian.bin"
+        self.batch_size = 8
         self.lr = 1e-5
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
-        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, simplfied=True)
+        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, simplify=True)
         ## 加载预训练的模型参数～
         load_model_params(self.bert_model, self.model_path)
         # 将模型发送到计算设备(GPU或CPU)
@@ -163,13 +310,20 @@ class PoemTrainer:
         total_loss = 0
         start_time = time.time() ## 得到当前时间
         step = 0
-        for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
+        report_loss = 0
+        # for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
+        for token_ids, token_type_ids, target_ids in dataloader:
             step += 1
             if step % 3000 == 0:
+                print("3000 step loss is :" + str(report_loss))
+                report_loss = 0
                 self.bert_model.eval()
-                test_data = ["北国风光##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
+                test_data = ["北国风光##五言绝句", "题西林壁##七言绝句", "一年四季行好运##对联", "浣溪沙##词"]
                 for text in test_data:
-                    print(self.bert_model.generate(text, beam_size=3,device=self.device, is_poem=True))
+                    if text[-1] == "句" or text[-1] == "诗":
+                        print(self.bert_model.generate(text, beam_size=3,device=self.device, is_poem=True))
+                    else :
+                        print(self.bert_model.generate(text, beam_size=3,device=self.device))
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
@@ -181,6 +335,7 @@ class PoemTrainer:
                                                 labels=target_ids,
                                                 device=self.device
                                                 )
+            
             # 反向传播
             if train:
                 # 清空之前的梯度
@@ -192,34 +347,53 @@ class PoemTrainer:
 
             # 为计算当前epoch的平均loss
             total_loss += loss.item()
+            report_loss += loss.item()
+            if step % 8000 == 0:
+                self.save(self.model_save_path)
         
         end_time = time.time()
         spend_time = end_time - start_time
         # 打印训练信息
         print("epoch is " + str(epoch)+". loss is " + str(total_loss) + ". spend time is "+ str(spend_time))
         # 保存模型
-        self.save(self.model_save_path)
+        
 
 if __name__ == '__main__':
 
     trainer = PoemTrainer()
-    train_epoches = 50
+    train_epoches = 200
     for epoch in range(train_epoches):
         # 训练一个epoch
         trainer.train(epoch)
 
     ## 测试一下自定义数据集
-    # vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
-    # sents_src, sents_tgt = read_corpus("./corpus/Poetry", vocab_path)
+    # data_dir = "./Poetry_ci_duilian"
+    # vocab_path = "./roberta_wwm_vocab.txt" # roberta模型字典的位置
+    # sents_src, sents_tgt = read_corpus(data_dir + "/Poetry1", vocab_path)
+    # sents_src2, sents_tgt2 = read_corpus_2(data_dir + "/Poetry2", vocab_path)
+    # sents_src3, sents_tgt3 = read_corpus_ci(data_dir, vocab_path)
+    # sents_src4, sents_tgt4 = read_corpus_duilian(data_dir)
+    # sents_src.extend(sents_src2)
+    # sents_src.extend(sents_src3)
+    # sents_src.extend(sents_src4)
+
+    # sents_tgt.extend(sents_tgt2)
+    # sents_tgt.extend(sents_tgt3)
+    # sents_tgt.extend(sents_tgt4)
     
+    # print(sents_src[:10])
+    # print(sents_tgt[:10])
     # dataset = BertDataset(sents_src, sents_tgt, vocab_path)
-    # word2idx = load_chinese_base_vocab(vocab_path)
+    # word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
     # tokenier = Tokenizer(word2idx)
-    # dataloader =  DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=collate_fn)
+    # dataloader =  DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
     # for token_ids, token_type_ids, target_ids in dataloader:
     #     print(token_ids.shape)
     #     print(tokenier.decode(token_ids[0].tolist()))
     #     print(tokenier.decode(token_ids[1].tolist()))
+    #     print(tokenier.decode(token_ids[3].tolist()))
+    #     print(tokenier.decode(token_ids[2].tolist()))
+
     #     print(token_type_ids)
     #     print(target_ids.shape)
     #     print(tokenier.decode(target_ids[0].tolist()))
