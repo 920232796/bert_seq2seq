@@ -22,7 +22,7 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 ![image.png](http://www.zhxing.online/image/4175b02f928f43fc84e9c866aba3ee2d.png)
 
 #### 医学ner 
- ![image.png](https://blog-image-xzh.oss-cn-beijing.aliyuncs.com/3b56ae6d-dbfc-4971-b703-0aa69c75043d.png)
+![image.png](https://blog-image-xzh.oss-cn-beijing.aliyuncs.com/3b56ae6d-dbfc-4971-b703-0aa69c75043d.png)
 #### 对联
 ![image.png](http://www.zhxing.online/image/42eec322d6cc419da0efdc45c02d9f25.png)
 
