@@ -20,6 +20,9 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 ![image.png](http://www.zhxing.online/image/724f93b03c19404fba4f684eac4695bc.png)
 输出：
 ![image.png](http://www.zhxing.online/image/4175b02f928f43fc84e9c866aba3ee2d.png)
+
+#### 医学ner 
+ ![image.png](https://blog-image-xzh.oss-cn-beijing.aliyuncs.com/3b56ae6d-dbfc-4971-b703-0aa69c75043d.png)
 #### 对联
 ![image.png](http://www.zhxing.online/image/42eec322d6cc419da0efdc45c02d9f25.png)
 
@@ -37,18 +40,18 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 多谢支持。另外，网站上面还有一些介绍unilm论文和特殊的mask如何实现的文章，可以去网站里搜索一下。http://www.blog.zhxing.online/#/  搜索unilm 即可。
 
 ### 更新记录
+2020.09.29: 新增了天池医学ner比赛的训练例子（医学ner_train.py），详情可见比赛界面：https://tianchi.aliyun.com/competition/entrance/531824/information
+2020.08.16: 新增了诗词对联联合训练的例子(诗词对联_train.py)，可以同时写诗写词作对联了；另外新增了诗词的测试代码，模型训练好了可以进行测试。
 
-2020.08.16: 新增了诗词对联联合训练的例子，可以同时写诗写词作对联了；另外新增了诗词的测试代码，模型训练好了可以进行测试。
-
-2020.08.08: 本次更新的内容较多，1. 添加了自动摘要的例子 2. 添加了精简词表的代码，原本3W个字缩减为1W多（因为某些字永远不会出现） 3. 修改了部分beam-search代码，效果更好了。4. 细粒度ner暂时不能使用了，数据有点问题，因此暂时放入test文件夹，如果找到合适的数据，可以使用 5. 新增test文件夹，训练好的模型可以在里面进行测试，看看效果。
+2020.08.08: 本次更新的内容较多，1. 添加了自动摘要的例子(auto_title.py) 2. 添加了精简词表的代码，原本3W个字缩减为1W多（因为某些字永远不会出现） 3. 修改了部分beam-search代码，效果更好了。4. 细粒度ner暂时不能使用了，数据有点问题，因此暂时放入test文件夹，如果找到合适的数据，可以使用 5. 新增test文件夹，训练好的模型可以在里面进行测试，看看效果。
 
 2020.06.22: 补充了Conditional Layer Norm 的一篇文章。解释了部分代码。http://www.blog.zhxing.online/#/readBlog?blogId=347
 
-2020.06.21: 更新了很多代码，复现了一个三元组抽取的例子～
+2020.06.21: 更新了很多代码，复现了一个三元组抽取的例子(三元组抽取_train.py)～
 
 2020.06.02: 最近一直在忙毕业的事情，还有个比赛，暂时不更新了，以后会一直更新哒。
 
-2020.04.18: 训练了bert+crf模型，crf层学习率好像不够高，还需要改善。
+2020.04.18: 训练了bert+crf模型，crf层学习率好像不够高，还需要改善(现在已经可以单独设置crf层学习率了，一般设为0.01)。
 
 2020.04.13: 添加了NER任务 + CRF层Loss，跑通了训练例子，但是还没有添加维特比算法。
 
