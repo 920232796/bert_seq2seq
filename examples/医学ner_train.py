@@ -1,6 +1,3 @@
-## 本代码数据来自天池医学ner比赛。
-## 运行方式：1. 首先把数据放到对应位置，2. 运行from_ann2dic函数去处理数据 3. 之后再去运行训练代码。
-
 import torch 
 import sys
 sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_ner")
@@ -59,11 +56,11 @@ def from_ann2dic(w_path):
         print("开始读取文件:%s" % r_txt_path)
         with codecs.open(r_txt_path, "r", encoding="utf-8") as f:
             content_str = f.read()
-
+            content_str = content_str.replace("、", "，")
         print("开始写入文本%s" % w_path)
         with codecs.open(w_path, encoding="utf-8", mode="a+") as w:
             for i, char in enumerate(content_str):
-                if char == " " or char == "" or char == "\n" or char == "\r" or char == "<" or char == ">" or char == "b" or char == "r" or char == "/" or char == "、" or char == "(" or char == ")" or unicodedata.category(char) == 'Zs' or char == "-" or char == "（" or char == "）":
+                if char == " " or char == "" or char == "\n" or char == "\r" or char == "<" or char == ">" or char == "b" or char == "r" or char == "/" or unicodedata.category(char) == 'Zs' or char == "-":
                     continue
                 
                 else:
@@ -263,11 +260,11 @@ def ner_print(model, test_data, vocab_path, device="cpu", simplfied=False):
 class Trainer:
     def __init__(self):
         # 加载数据
-        self.vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
+        self.vocab_path = "./roberta_wwm_vocab.txt" # roberta模型字典的位置
         
         self.sents_src, self.sents_tgt = load_data("./res.txt")
         self.model_name = "roberta" # 选择模型名字
-        self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
+        self.model_path = "./roberta_wwm_pytorch_model.bin" # roberta模型位置
         self.recent_model_path = "" # 用于把已经训练好的模型继续训练
         self.model_save_path = "./bert_ner_model_crf.bin"
         self.batch_size = 8
@@ -357,5 +354,19 @@ if __name__ == '__main__':
     for epoch in range(train_epoches):
         # 训练一个epoch
         trainer.train(epoch)
+
+    #  src_data, src_labels = load_data("./res.txt")
+    
+
+# if __name__ == "__main__":
+
+#     ## from_ann2dic("./res.txt")
+
+#     src_data, src_labels = load_data("./res.txt")
+
+#     print(len(src_data))
+#     print(len(src_labels))
+
+
 
     
