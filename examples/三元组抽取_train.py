@@ -10,6 +10,16 @@ from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
 import numpy as np 
 import time 
 
+vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
+model_name = "roberta" # 选择模型名字
+model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
+recent_model_path = "" # 用于把已经训练好的模型继续训练
+model_save_path = "./bert_model_relation_extrac.bin"
+batch_size = 16
+lr = 1e-5
+    
+word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
+
 def load_data(filename):
     D = []
     with open(filename, encoding='utf-8') as f:
@@ -44,15 +54,14 @@ class ExtractDataset(Dataset):
     """
     针对特定数据集，定义一个相关的取数据的方式
     """
-    def __init__(self, data, vocab_path) :
+    def __init__(self, data) :
         ## 一般init函数是加载所有数据
         super(ExtractDataset, self).__init__()
         # 读原始数据
         # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
         self.data = data
-        self.word2idx = load_chinese_base_vocab(vocab_path)
-        self.idx2word = {k: v for v, k in self.word2idx.items()}
-        self.tokenizer = Tokenizer(self.word2idx)
+        self.idx2word = {k: v for v, k in word2idx.items()}
+        self.tokenizer = Tokenizer(word2idx)
 
     def __getitem__(self, i):
         ## 得到单个数据
@@ -145,31 +154,23 @@ class ExtractTrainer:
     def __init__(self):
         # 加载数据
         data_path = "./corpus/三元组抽取/train_data.json"
-        self.vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
         self.data = load_data(data_path)
-        self.model_name = "roberta" # 选择模型名字
-        self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
-        self.recent_model_path = "" # 用于把已经训练好的模型继续训练
-        self.model_save_path = "./bert_model_relation_extrac.bin"
-        self.batch_size = 16
-        self.lr = 1e-5
-        # 加载字典
-        self.word2idx = load_chinese_base_vocab(self.vocab_path)
+        
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
-        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, model_class="relation_extrac", target_size=len(predicate2id))
+        self.bert_model = load_bert(word2idx, model_name=model_name, model_class="relation_extrac", target_size=len(predicate2id))
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, self.model_path)
+        load_model_params(self.bert_model, model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
         self.optim_parameters = list(self.bert_model.parameters())
-        self.optimizer = torch.optim.Adam(self.optim_parameters, lr=self.lr, weight_decay=1e-3)
+        self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-3)
         # 声明自定义的数据加载器
-        dataset = ExtractDataset(self.data, self.vocab_path)
-        self.dataloader =  DataLoader(dataset, batch_size=self.batch_size, shuffle=True, collate_fn=collate_fn)
+        dataset = ExtractDataset(self.data)
+        self.dataloader =  DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 
     def train(self, epoch):
         # 一个epoch的训练
@@ -220,7 +221,7 @@ class ExtractTrainer:
         # 打印训练信息
         print("epoch is " + str(epoch)+". loss is " + str(total_loss) + ". spend time is "+ str(spend_time))
         # 保存模型
-        self.save(self.model_save_path)
+        self.save(model_save_path)
 
 if __name__ == "__main__":
 

@@ -7,19 +7,18 @@ from bert_seq2seq.model.crf import CRFLayer
 class BertSeqLabelingCRF(nn.Module):
     """
     """
-    def __init__(self, vocab_path, target_size, model_name="roberta"):
+    def __init__(self, word2ix, target_size, model_name="roberta"):
         super(BertSeqLabelingCRF, self).__init__()
-        self.word2ix = load_chinese_base_vocab(vocab_path)
         self.target_size = target_size
         config = ""
         if model_name == "roberta":
             from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertPredictionHeadTransform
-            config = BertConfig(len(self.word2ix))
+            config = BertConfig(len(word2ix))
             self.bert = BertModel(config)
             self.transform = BertPredictionHeadTransform(config)
         elif model_name == "bert":
             from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertPredictionHeadTransform
-            config = BertConfig(len(self.word2ix))
+            config = BertConfig(len(word2ix))
             self.bert = BertModel(config)
             self.transform = BertPredictionHeadTransform(config)
         else :

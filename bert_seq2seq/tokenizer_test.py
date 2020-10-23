@@ -248,10 +248,10 @@ class Tokenizer(BasicTokenizer):
                 spaced += ' ' + ch + ' '
             elif self._is_space(ch):
                 spaced += ' '
-            elif ord(ch) == 0 or ord(ch) == 0xfffd or self._is_control(ch):
-                continue
+            # elif ord(ch) == 0 or ord(ch) == 0xfffd or self._is_control(ch):
+            #     continue
             else:
-                spaced += ch
+                spaced += " " + ch + " "
         
         tokens = []
         for word in spaced.strip().split():
@@ -358,7 +358,7 @@ if __name__ == "__main__":
     # text = tokenizer.decode(input_ids)
     # print(text)
     # # print(segment_ids)
-    token_ids, segment_ids = tokenizer.encode("今天天气真好啊Easting 400元,，“哈哈” ")
+    token_ids, segment_ids = tokenizer.encode("今天天气真好啊Easting 400元,，    哈哈 ")
     print(token_ids)
     print(tokenizer.decode(token_ids))
 

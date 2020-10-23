@@ -15,6 +15,16 @@ from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
 
+vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
+model_name = "roberta" # 选择模型名字
+model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
+recent_model_path = "" # 用于把已经训练好的模型继续训练
+model_save_path = "./bert_ner_model_crf.bin"
+batch_size = 4
+lr = 1e-5
+
+word2idx = load_chinese_base_vocab(vocab_path)
+
 target = ["O", "B-LOC", "I-LOC", "B-PER", "I-PER", "B-ORG", "I-ORG"]
 
 def read_corpus(data_path):
@@ -48,16 +58,16 @@ class NERDataset(Dataset):
     """
     针对特定数据集，定义一个相关的取数据的方式
     """
-    def __init__(self, sents_src, sents_tgt, vocab_path) :
+    def __init__(self, sents_src, sents_tgt) :
         ## 一般init函数是加载所有数据
         super(NERDataset, self).__init__()
         # 读原始数据
         # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
         self.sents_src = sents_src
         self.sents_tgt = sents_tgt
-        self.word2idx = load_chinese_base_vocab(vocab_path)
-        self.idx2word = {k: v for v, k in self.word2idx.items()}
-        self.tokenizer = Tokenizer(self.word2idx)
+       
+        self.idx2word = {k: v for v, k in word2idx.items()}
+        self.tokenizer = Tokenizer(word2idx)
 
     def __getitem__(self, i):
         ## 得到单个数据
@@ -122,9 +132,8 @@ def viterbi_decode(nodes, trans):
     # print(scores)
     return path[:, scores.argmax()]
 
-def ner_print(model, test_data, vocab_path, device="cpu"):
+def ner_print(model, test_data, device="cpu"):
     model.eval()
-    word2idx = load_chinese_base_vocab(vocab_path)
     tokenier = Tokenizer(word2idx)
     trans = model.state_dict()["crf_layer.trans"]
     for text in test_data:
@@ -168,32 +177,24 @@ class Trainer:
     def __init__(self):
         # 加载数据
         data_path = "./corpus/粗粒度NER/example.train"
-        self.vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
         self.sents_src, self.sents_tgt = read_corpus(data_path)
-        self.model_name = "roberta" # 选择模型名字
-        self.model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
-        self.recent_model_path = "" # 用于把已经训练好的模型继续训练
-        self.model_save_path = "./bert_ner_model_crf.bin"
-        self.batch_size = 4
-        self.lr = 1e-5
-        # 加载字典
-        self.word2idx = load_chinese_base_vocab(self.vocab_path)
-        self.tokenier = Tokenizer(self.word2idx)
+
+        self.tokenier = Tokenizer(word2idx)
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
-        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, model_class="sequence_labeling_crf", target_size=len(target))
+        self.bert_model = load_bert(word2idx, model_name=model_name, model_class="sequence_labeling_crf", target_size=len(target))
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, self.model_path)
+        load_model_params(self.bert_model, model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
         self.optim_parameters = list(self.bert_model.parameters())
-        self.optimizer = torch.optim.Adam(self.optim_parameters, lr=self.lr, weight_decay=1e-3)
+        self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-3)
         # 声明自定义的数据加载器
-        dataset = NERDataset(self.sents_src, self.sents_tgt, self.vocab_path)
-        self.dataloader =  DataLoader(dataset, batch_size=self.batch_size, shuffle=True, collate_fn=collate_fn)
+        dataset = NERDataset(self.sents_src, self.sents_tgt)
+        self.dataloader =  DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 
     def train(self, epoch):
         # 一个epoch的训练
@@ -216,7 +217,7 @@ class Trainer:
             step += 1
             if step % 500 == 0:
                 test_data = ["日寇在京掠夺文物详情。", "以书结缘，把欧美，港台流行的食品类食谱汇集一堂"]
-                ner_print(self.bert_model, test_data, self.vocab_path, device=self.device)
+                ner_print(self.bert_model, test_data, device=self.device)
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
@@ -243,7 +244,7 @@ class Trainer:
         # 打印训练信息
         print("epoch is " + str(epoch)+". loss is " + str(total_loss) + ". spend time is "+ str(spend_time))
         # 保存模型
-        self.save(self.model_save_path)
+        self.save(model_save_path)
 
 if __name__ == '__main__':
     

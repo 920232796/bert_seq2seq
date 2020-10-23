@@ -6,20 +6,20 @@ from bert_seq2seq.tokenizer import load_chinese_base_vocab, Tokenizer
 class BertRelationExtrac(nn.Module):
     """
     """
-    def __init__(self, vocab_path, predicate_num, model_name="roberta"):
+    def __init__(self, word2ix, predicate_num, model_name="roberta"):
         super(BertRelationExtrac, self).__init__()
-        self.word2ix = load_chinese_base_vocab(vocab_path)
+        
         self.predicate_num = predicate_num 
         config = ""
         if model_name == "roberta":
             from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertPredictionHeadTransform, BertLayerNorm
-            config = BertConfig(len(self.word2ix))
+            config = BertConfig(len(word2ix))
             self.bert = BertModel(config)
             self.layer_norm = BertLayerNorm(config.hidden_size)
             self.layer_norm_cond = BertLayerNorm(config.hidden_size, conditional=True)
         elif model_name == "bert":
             from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertPredictionHeadTransform, BertLayerNorm
-            config = BertConfig(len(self.word2ix))
+            config = BertConfig(len(word2ix))
             self.bert = BertModel(config)
             self.layer_norm = BertLayerNorm(config.hidden_size)
             self.layer_norm_cond = BertLayerNorm(config.hidden_size, conditional=True)

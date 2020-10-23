@@ -27,6 +27,18 @@ target = ["O", "B-DRUG", "B-DRUG_INGREDIENT", "B-DISEASE", "B-SYMPTOM", "B-SYNDR
 
 labels2id = {k: v for v, k in enumerate(target)}
 
+vocab_path = "./roberta_wwm_vocab.txt" # roberta模型字典的位置   
+model_name = "roberta" # 选择模型名字
+model_path = "./roberta_wwm_pytorch_model.bin" # roberta模型位置
+recent_model_path = "" # 用于把已经训练好的模型继续训练
+model_save_path = "./bert_ner_model_crf.bin"
+batch_size = 8
+lr = 1e-5
+crf_lr = 1e-2 ##  crf层学习率为0.01
+# 加载字典
+word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
+
+
 def from_ann2dic(w_path):
 
     for i in range(1000):
@@ -76,7 +88,6 @@ def load_data(path: str):
     """
     加载数据
     """
-    
     src_data = []
     labels_data = []
     with open(path) as f :
@@ -136,16 +147,16 @@ class NERDataset(Dataset):
     """
     针对特定数据集，定义一个相关的取数据的方式
     """
-    def __init__(self, sents_src, sents_tgt, vocab_path) :
+    def __init__(self, sents_src, sents_tgt) :
         ## 一般init函数是加载所有数据
         super(NERDataset, self).__init__()
         # 读原始数据
         # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
         self.sents_src = sents_src
         self.sents_tgt = sents_tgt
-        self.word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
-        self.idx2word = {k: v for v, k in self.word2idx.items()}
-        self.tokenizer = Tokenizer(self.word2idx)
+        
+        self.idx2word = {k: v for v, k in word2idx.items()}
+        self.tokenizer = Tokenizer(word2idx)
 
     def __getitem__(self, i):
         ## 得到单个数据
@@ -219,9 +230,9 @@ def viterbi_decode(nodes, trans):
     # print(scores)
     return path[:, scores.argmax()]
 
-def ner_print(model, test_data, vocab_path, device="cpu", simplfied=False):
+def ner_print(model, test_data, device="cpu"):
     model.eval()
-    word2idx = load_chinese_base_vocab(vocab_path, simplfied=simplfied)
+    
     tokenier = Tokenizer(word2idx)
     trans = model.state_dict()["crf_layer.trans"]
     for text in test_data:
@@ -260,26 +271,16 @@ def ner_print(model, test_data, vocab_path, device="cpu", simplfied=False):
 class Trainer:
     def __init__(self):
         # 加载数据
-        self.vocab_path = "./roberta_wwm_vocab.txt" # roberta模型字典的位置
-        
         self.sents_src, self.sents_tgt = load_data("./res.txt")
-        self.model_name = "roberta" # 选择模型名字
-        self.model_path = "./roberta_wwm_pytorch_model.bin" # roberta模型位置
-        self.recent_model_path = "" # 用于把已经训练好的模型继续训练
-        self.model_save_path = "./bert_ner_model_crf.bin"
-        self.batch_size = 8
-        self.lr = 1e-5
-        self.crf_lr = 1e-2 ##  crf层学习率为0.01
-        # 加载字典
-        self.word2idx = load_chinese_base_vocab(self.vocab_path, simplfied=True)
-        self.tokenier = Tokenizer(self.word2idx)
+        
+        self.tokenier = Tokenizer(word2idx)
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
-        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, model_class="sequence_labeling_crf", target_size=len(target), simplfied=True)
+        self.bert_model = load_bert(word2idx, model_name=model_name, model_class="sequence_labeling_crf", target_size=len(target))
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, self.model_path)
+        load_model_params(self.bert_model, model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
@@ -287,10 +288,10 @@ class Trainer:
         base_params = filter(lambda p: id(p) not in crf_params, self.bert_model.parameters())
         self.optimizer = torch.optim.Adam([
                                             {"params": base_params}, 
-                                            {"params": self.bert_model.crf_layer.parameters(), "lr": self.crf_lr}], lr=self.lr, weight_decay=1e-5)
+                                            {"params": self.bert_model.crf_layer.parameters(), "lr": crf_lr}], lr=lr, weight_decay=1e-5)
         # 声明自定义的数据加载器
-        dataset = NERDataset(self.sents_src, self.sents_tgt, self.vocab_path)
-        self.dataloader =  DataLoader(dataset, batch_size=self.batch_size, shuffle=True, collate_fn=collate_fn)
+        dataset = NERDataset(self.sents_src, self.sents_tgt)
+        self.dataloader =  DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 
     def train(self, epoch):
         # 一个epoch的训练
@@ -315,7 +316,7 @@ class Trainer:
                 test_data = ["补气养血，调经止带，用于月经不调经期腹痛，非处方药物甲类，国家基本药物目录2012如果服用任何其他药品请告知医师或药师包括任何从药房超市或保健品商店购买的非处方药品。", 
                 "月经过多孕妇忌服。黑褐色至黑色的小蜜丸味甜微苦。", 
                 "红虎灌肠液50毫升装，安徽天洋药业清热解毒，化湿除带，祛瘀止痛，散结消癥，用于慢性盆腔炎所致小腹疼痛腰，骶酸痛带下量多或有发热。"]
-                ner_print(self.bert_model, test_data, self.vocab_path, device=self.device, simplfied=True)
+                ner_print(self.bert_model, test_data, device=self.device)
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
@@ -343,7 +344,7 @@ class Trainer:
         # 打印训练信息
         print("epoch is " + str(epoch)+". loss is " + str(total_loss) + ". spend time is "+ str(spend_time))
         # 保存模型
-        self.save(self.model_save_path)
+        self.save(model_save_path)
 
 if __name__ == '__main__':
     

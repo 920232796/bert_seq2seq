@@ -21,14 +21,14 @@ if __name__ == "__main__":
     # 加载字典
     word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
     # 定义模型
-    bert_model = load_bert(vocab_path, model_name=model_name, simplfied=True)
+    bert_model = load_bert(word2idx, model_name=model_name)
     bert_model.eval()
 #     ## 加载预训练的模型参数～
     # load_model_params(bert_model, model_path)
     checkpoint = torch.load(auto_title_model, map_location="cpu")
     # print(checkpoint)
     bert_model.load_state_dict(torch.load(auto_title_model, map_location="cpu"), strict=False)
-    test_data = ["知己##七言绝句"]
+    test_data = ["天涯海角##七言绝句"]
 #     #  test_data = [
 # #               "本文总结了十个可穿戴产品的设计原则而这些原则同样也是笔者认为是这个行业最吸引人的地方1为人们解决重复性问题2从人开始而不是从机器开始3要引起注意但不要刻意4提升用户能力而不是取代人",
 # #              "2007年乔布斯向人们展示iPhone并宣称它将会改变世界还有人认为他在夸大其词然而在8年后以iPhone为代表的触屏智能手机已经席卷全球各个角落未来智能手机将会成为真正的个人电脑为人类发展做出更大的贡献", 

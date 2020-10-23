@@ -15,13 +15,21 @@ from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
 import opencc 
 
-def read_corpus(dir_path, vocab_path):
+vocab_path = "./roberta_wwm_vocab.txt" # roberta模型字典的位置
+model_name = "roberta" # 选择模型名字
+model_path = "./roberta_wwm_pytorch_model.bin" # roberta模型位置
+recent_model_path = "./bert_model_poem_ci_duilian.bin" # 用于把已经训练好的模型继续训练
+model_save_path = "./bert_model_poem_ci_duilian.bin"
+batch_size = 8
+lr = 1e-5
+word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
+
+def read_corpus(dir_path):
     """
     读原始数据
     """
     sents_src = []
     sents_tgt = []
-    word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
     tokenizer = Tokenizer(word2idx)
     files= os.listdir(dir_path) #得到文件夹下的所有文件名称
     
@@ -70,11 +78,10 @@ def read_corpus(dir_path, vocab_path):
     print("第一个诗句数据集共: " + str(len(sents_src)) + "篇")
     return sents_src, sents_tgt
 
-def read_corpus_2(dir_path, vocab_path):
+def read_corpus_2(dir_path):
     """读取最近的一个数据集 唐诗和宋诗 """
     sents_src = []
     sents_tgt = []
-    word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
     tokenizer = Tokenizer(word2idx)
     files= os.listdir(dir_path) #得到文件夹下的所有文件名称
     
@@ -127,13 +134,11 @@ def read_corpus_2(dir_path, vocab_path):
     return sents_src, sents_tgt
 
 
-def read_corpus_ci(dir_path, vocab_path):
+def read_corpus_ci(dir_path):
     """ 读取宋词数据集"""
     import json, sys
     import sqlite3
     from collections import OrderedDict
-
-    word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
     tokenizer = Tokenizer(word2idx)
 
     try:               # Python 2
@@ -203,16 +208,15 @@ class BertDataset(Dataset):
     """
     针对特定数据集，定义一个相关的取数据的方式
     """
-    def __init__(self, sents_src, sents_tgt, vocab_path) :
+    def __init__(self, sents_src, sents_tgt) :
         ## 一般init函数是加载所有数据
         super(BertDataset, self).__init__()
         # 读原始数据
         # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
         self.sents_src = sents_src
         self.sents_tgt = sents_tgt
-        self.word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
-        self.idx2word = {k: v for v, k in self.word2idx.items()}
-        self.tokenizer = Tokenizer(self.word2idx)
+        self.idx2word = {k: v for v, k in word2idx.items()}
+        self.tokenizer = Tokenizer(word2idx)
 
     def __getitem__(self, i):
         ## 得到单个数据
@@ -255,10 +259,10 @@ class PoemTrainer:
     def __init__(self):
         # 加载数据
         data_dir = "./Poetry_ci_duilian"
-        self.vocab_path = "./roberta_wwm_vocab.txt" # roberta模型字典的位置
-        self.sents_src, self.sents_tgt = read_corpus(data_dir + "/Poetry1", self.vocab_path)
-        sents_src2, sents_tgt2 = read_corpus_2(data_dir + "/Poetry2", self.vocab_path)
-        sents_src3, sents_tgt3 = read_corpus_ci(data_dir, self.vocab_path)
+        
+        self.sents_src, self.sents_tgt = read_corpus(data_dir + "/Poetry1")
+        sents_src2, sents_tgt2 = read_corpus_2(data_dir + "/Poetry2")
+        sents_src3, sents_tgt3 = read_corpus_ci(data_dir)
         sents_src4, sents_tgt4 = read_corpus_duilian(data_dir)
         self.sents_src.extend(sents_src2)
         self.sents_src.extend(sents_src3)
@@ -272,27 +276,21 @@ class PoemTrainer:
         # torch.save(self.sents_src, "./poem_ci_duilian.src")
         # torch.save(self.sents_tgt, "./poem_ci_duilian.tgt")
 
-        self.model_name = "roberta" # 选择模型名字
-        self.model_path = "./roberta_wwm_pytorch_model.bin" # roberta模型位置
-        self.recent_model_path = "./bert_model_poem_ci_duilian.bin" # 用于把已经训练好的模型继续训练
-        self.model_save_path = "./bert_model_poem_ci_duilian.bin"
-        self.batch_size = 8
-        self.lr = 1e-5
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
-        self.bert_model = load_bert(self.vocab_path, model_name=self.model_name, simplify=True)
+        self.bert_model = load_bert(word2idx, model_name=model_name)
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, self.model_path)
+        load_model_params(self.bert_model, model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
         self.optim_parameters = list(self.bert_model.parameters())
-        self.optimizer = torch.optim.Adam(self.optim_parameters, lr=self.lr, weight_decay=1e-3)
+        self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-3)
         # 声明自定义的数据加载器
-        dataset = BertDataset(self.sents_src, self.sents_tgt, self.vocab_path)
-        self.dataloader =  DataLoader(dataset, batch_size=self.batch_size, shuffle=True, collate_fn=collate_fn)
+        dataset = BertDataset(self.sents_src, self.sents_tgt)
+        self.dataloader =  DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 
     def train(self, epoch):
         # 一个epoch的训练
@@ -320,10 +318,10 @@ class PoemTrainer:
                 self.bert_model.eval()
                 test_data = ["北国风光##五言绝句", "题西林壁##七言绝句", "一年四季行好运##对联", "浣溪沙##词"]
                 for text in test_data:
-                    if text[-1] == "句" or text[-1] == "诗":
-                        print(self.bert_model.generate(text, beam_size=3,device=self.device, is_poem=True))
-                    else :
-                        print(self.bert_model.generate(text, beam_size=3,device=self.device))
+                    # if text[-1] == "句" or text[-1] == "诗":
+                    #     print(self.bert_model.generate(text, beam_size=3,device=self.device, is_poem=True))
+                    # else :
+                    print(self.bert_model.generate(text, beam_size=3,device=self.device))
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
@@ -349,7 +347,7 @@ class PoemTrainer:
             total_loss += loss.item()
             report_loss += loss.item()
             if step % 8000 == 0:
-                self.save(self.model_save_path)
+                self.save(model_save_path)
         
         end_time = time.time()
         spend_time = end_time - start_time

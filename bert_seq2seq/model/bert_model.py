@@ -181,7 +181,7 @@ class BertSelfAttention(nn.Module):
         # seem a bit unusual, but is taken from the original Transformer paper.
         attention_probs = self.dropout(attention_probs)
 
-        # 注意力加权
+        # 注意力加权 torch.dot()
         context_layer = torch.matmul(attention_probs, value_layer)
         # 把加权后的V reshape, 得到[batch_size, length, embedding_dimension]
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
@@ -230,7 +230,7 @@ class BertIntermediate(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
-        self.intermediate_act_fn = ACT2FN[config.hidden_act]
+        self.intermediate_act_fn = ACT2FN[config.hidden_act] ## relu 
 
     def forward(self, hidden_states):
         hidden_states = self.dense(hidden_states)
