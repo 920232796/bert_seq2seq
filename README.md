@@ -51,6 +51,8 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 多谢支持。另外，网站上面还有一些介绍unilm论文和特殊的mask如何实现的文章，可以去网站里搜索一下。http://www.blog.zhxing.online/#/  搜索unilm 即可。
 
 ### 更新记录
+2020.10.24: 调整了大量代码，添加了THUCNews数据集的自动摘要例子～现在的话，训练应该效果很好了，以前可能出现预训练参数加载不上的情况，效果有时会很差。
+
 2020.10.23: 调整了一些代码结构，把每个例子里面的一些变量写为全局变量了，改了下beam-search的代码，更精简了。不过暂时不支持写诗里面的押韵了。以后补上。
 
 2020.09.29: 新增了天池医学ner比赛的训练例子（医学ner_train.py），详情可见比赛界面：https://tianchi.aliyun.com/competition/entrance/531824/information

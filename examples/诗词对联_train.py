@@ -22,7 +22,7 @@ recent_model_path = "./bert_model_poem_ci_duilian.bin" # 用于把已经训练�
 model_save_path = "./bert_model_poem_ci_duilian.bin"
 batch_size = 8
 lr = 1e-5
-word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
+word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
 
 def read_corpus(dir_path):
     """
@@ -282,7 +282,7 @@ class PoemTrainer:
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name)
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, model_path)
+        load_model_params(self.bert_model, model_path, keep_tokens=keep_tokens)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数

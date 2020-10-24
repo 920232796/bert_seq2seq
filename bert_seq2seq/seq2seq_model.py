@@ -30,7 +30,7 @@ class Seq2SeqModel(nn.Module):
             raise Exception("model_name_err")
             
         self.hidden_dim = config.hidden_size
-        self.vocab_size = config.vocab_size
+        self.vocab_size = len(word2ix)
 
 
     def compute_loss(self, predictions, labels, target_mask):
@@ -73,7 +73,7 @@ class Seq2SeqModel(nn.Module):
         else :
             return predictions
     
-    def generate(self, text, out_max_length=80, beam_size=1, device="cpu", is_poem=False, max_length=256):
+    def generate(self, text, out_max_length=40, beam_size=1, device="cpu", is_poem=False, max_length=256):
         # 对 一个 句子生成相应的结果
         ## 通过输出最大长度得到输入的最大长度，这里问题不大，如果超过最大长度会进行截断
         self.out_max_length = out_max_length

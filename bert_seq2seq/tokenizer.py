@@ -36,7 +36,7 @@ def load_chinese_base_vocab(vocab_path, simplfied=False, startswith=["[PAD]", "[
                     keep_tokens.append(word2idx[t])
         
         print("精简后的词表大小为：" + str(len(keep_tokens)))
-        return new_token_dict
+        return new_token_dict, keep_tokens
     else:
         return word2idx
 

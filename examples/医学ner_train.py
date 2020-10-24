@@ -36,7 +36,7 @@ batch_size = 8
 lr = 1e-5
 crf_lr = 1e-2 ##  crf层学习率为0.01
 # 加载字典
-word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
+word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
 
 
 def from_ann2dic(w_path):
@@ -280,7 +280,7 @@ class Trainer:
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name, model_class="sequence_labeling_crf", target_size=len(target))
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, model_path)
+        load_model_params(self.bert_model, model_path, keep_tokens=keep_tokens)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
