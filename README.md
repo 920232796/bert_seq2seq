@@ -39,6 +39,13 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 2. 使用roberta模型，模型和字典文件需要去 https://drive.google.com/file/d/1iNeYFhCBJWeUsIlnW_2K6SMwXkM4gLb_/view 这里下载。 具体可以参考这个github仓库～ https://github.com/ymcui/Chinese-BERT-wwm
 3. 如果使用普通的bert模型，下载bert中文预训练权重 "bert-base-chinese": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-pytorch_model.bin", 下载bert中文字典 "bert-base-chinese": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt".
 4. 去example文件夹下面运行对应的trainer.py，针对不同任务，运行不同train.py文件，需要修改输入输出数据的结构，然后进行训练。具体可以看examples里面的各种例子～
+### 一些函数解释
+#### def load_bert(word2ix, model_name="roberta", model_class="seq2seq")
+加载bert模型，model_name参数指定了用哪种bert，目前支持bert和roberta；model_class指定了使用bert做哪种任务，seq2seq表示生成任务，cls表示文本分类任务......
+#### def load_model_params(model, pretrain_model_path)
+加载bert模型参数，注意，只是加载编码器的参数，也就是从网上下载好的预训练模型的参数；例如seq2seq模型包括了bert模型的参数+全连接层，此函数只是加载第一部分参数。
+#### def load_recent_model(model, recent_model_path)
+加载全部模型参数，当你训练了部分时间，保存了模型以后，通过此函数便可以加载上次模型训练结果，继续训练。
 
 想看文章，可以去我网站～ http://www.blog.zhxing.online/#/  搜索写诗或者对联或者NER或者新闻摘要文本分类即可找到对应文章。
 多谢支持。另外，网站上面还有一些介绍unilm论文和特殊的mask如何实现的文章，可以去网站里搜索一下。http://www.blog.zhxing.online/#/  搜索unilm 即可。
