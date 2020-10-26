@@ -83,6 +83,7 @@ class Seq2SeqModel(nn.Module):
         token_ids = torch.tensor(token_ids, device=device).view(1, -1)
         token_type_ids = torch.tensor(token_type_ids, device=device).view(1, -1)
         if is_poem:## 古诗的beam-search稍有不同
+            
             out_puts_ids = self.beam_search_poem(text, token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
         else :   
             out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
