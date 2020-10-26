@@ -19,7 +19,7 @@ if __name__ == "__main__":
     model_name = "roberta"  # 选择模型名字
     # model_path = "./state_dict/bert-base-chinese-pytorch_model.bin"  # roberta模型位
     # 加载字典
-    word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
+    word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
     # 定义模型
     bert_model = load_bert(word2idx, model_name=model_name)
     bert_model.eval()
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 # #              "雅虎发布2014年第四季度财报并推出了免税方式剥离其持有的阿里巴巴集团15％股权的计划打算将这一价值约400亿美元的宝贵投资分配给股东截止发稿前雅虎股价上涨了大约7％至5145美元", 
 #                 # "新华社受权于18日全文播发修改后的《中华人民共和国立法法》修改后的立法法分为“总则”“法律”“行政法规”“地方性法规自治条例和单行条例规章”“适用与备案审查”“附则”等6章共计105条"]
     for text in test_data:
-        print(bert_model.generate(text, beam_size=3))
+        print(bert_model.generate(text, beam_size=3, is_poem=True))
 
         # print(name[0])
 

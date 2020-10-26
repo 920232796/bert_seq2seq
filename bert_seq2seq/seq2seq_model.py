@@ -82,11 +82,10 @@ class Seq2SeqModel(nn.Module):
         token_ids, token_type_ids = self.tokenizer.encode(text, max_length=input_max_length)
         token_ids = torch.tensor(token_ids, device=device).view(1, -1)
         token_type_ids = torch.tensor(token_type_ids, device=device).view(1, -1)
-        # if is_poem:## 古诗的beam-search稍有不同
-        #     out_puts_ids, err = self.poem_beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
-        # else :
-            
-        out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
+        if is_poem:## 古诗的beam-search稍有不同
+            out_puts_ids = self.beam_search_poem(text, token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
+        else :   
+            out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
         
         # 解码 得到相应输出
         # if err is False:
@@ -216,9 +215,11 @@ class Seq2SeqModel(nn.Module):
         beam-search操作
         """
         sep_id = word2ix["[SEP]"]
+        
         # 用来保存输出序列
         output_ids = torch.empty(1, 0, device=device, dtype=torch.long)
         # 用来保存累计得分
+      
         with torch.no_grad(): 
             output_scores = torch.zeros(token_ids.shape[0], device=device)
             for step in range(self.out_max_length):
@@ -265,7 +266,266 @@ class Seq2SeqModel(nn.Module):
                         beam_size = flag.sum()  # topk相应变化
     
             return output_ids[output_scores.argmax()]
- 
+
+    def beam_search_poem(self, text, token_ids, token_type_ids, word2ix, beam_size=1, device="cpu"):
+        """
+        beam-search操作
+        """
+        yayun_pos = []
+        title = text.split("##")[0]
+        if "五言律诗" in text:
+            yayun_pos = [10, 22, 34, 46]
+        elif "五言绝句" in text:
+            yayun_pos = [10, 22]
+        elif "七言律诗" in text:
+            yayun_pos = [14, 30, 46, 62]
+        elif "七言绝句" in text:
+            yayun_pos = [14, 30]
+        sep_id = word2ix["[SEP]"]
+        douhao_id = word2ix["，"]# 逗号
+        ix2word = {v: k for k, v in word2ix.items()}
+        juhao_id = word2ix["。"]# 句号
+        repeat_word = [[] for i in range(beam_size)]
+        # 用来保存输出序列
+        output_ids = torch.empty(1, 0, device=device, dtype=torch.long)
+        last_chars = torch.empty(1, 0, device=device, dtype=torch.long)
+        yayun_chars = (-1) * torch.ones(beam_size, dtype=torch.long)
+        start = 0
+        with torch.no_grad(): 
+            output_scores = torch.zeros(token_ids.shape[0], device=device)
+            for step in range(self.out_max_length):
+                if step == 0:
+                    scores = self.forward(token_ids, token_type_ids, device=device)
+                    # 重复beam-size次 输入ids
+                    token_ids = token_ids.view(1, -1).repeat(beam_size, 1)
+                    token_type_ids = token_type_ids.view(1, -1).repeat(beam_size, 1)
+                else:
+                    scores = self.forward(new_input_ids, new_token_type_ids, device=device)
+                
+                logit_score = torch.log_softmax(scores[:, -1], dim=-1)
+                
+                for i, char in enumerate(last_chars):
+                    
+                    for word in repeat_word[i]:
+                        logit_score[i, word] -= 5
+                    for word in title:
+                        ix = word2ix.get(word, -1)
+                        if ix != -1:
+                            logit_score[i, ix] += 2
+
+                if step in yayun_pos:
+                    # print("step is " + str(step))
+                    # print("yayun_chars is " + str(yayun_chars))
+                    for i, char in enumerate(last_chars):
+                        if yayun_chars[i].item() != -1:
+                            yayuns = yayun_list[yayun_chars[i].item()]
+                            for char in yayuns:
+                                ix = word2ix.get(char, -1)
+                                if ix != -1:
+                                    # print("char is " + str(char))
+                                    logit_score[i, ix] += 10
+
+
+                logit_score = output_scores.view(-1, 1) + logit_score # 累计得分
+                ## 取topk的时候我们是展平了然后再去调用topk函数
+                # 展平
+                logit_score = logit_score.view(-1)
+                hype_score, hype_pos = torch.topk(logit_score, beam_size)
+                indice1 = (hype_pos // scores.shape[-1]) # 行索引
+                indice2 = (hype_pos % scores.shape[-1]).long().reshape(-1, 1) # 列索引
+                
+                for index, each_out in zip(indice1, indice2):
+                    index = index.item()
+                    each_out = each_out.item()
+                    
+                    if each_out in repeat_word[index]:
+                        pass 
+                        # repeat_word[index].append(each_out)
+                        # hype_score[index] -= 2 * repeat_word[index].count(each_out)
+                    else :
+                        repeat_word[index].append(each_out)
+                    
+                    if start < beam_size and each_out == douhao_id and len(last_chars) != 0:
+                        start += 1
+                        word = ix2word[last_chars[index].item()]# 找到上一个字符 记住其押韵情况
+                        for i, each_yayun in enumerate(yayun_list):
+                            if word in each_yayun:
+                                yayun_chars[index] = i
+                                break
+                        
+                    # if each_out == juhao_id and len(last_chars) != 0:  
+                    #     word = ix2word[last_chars[index].item()]
+                    #     if yayun_chars[index].item() != -1 and word in yayun_list[yayun_chars[index].item()]:
+                    #         hype_score[index] += 10
+                    #     else:
+                    #         hype_score[index] -= 5
+
+                # 更新得分
+                output_scores = hype_score
+
+                last_chars = indice2
+
+                output_ids = torch.cat([output_ids[indice1], indice2], dim=1).long()
+                new_input_ids = torch.cat([token_ids, output_ids], dim=1)
+                new_token_type_ids = torch.cat([token_type_ids, torch.ones_like(output_ids)], dim=1)
+
+                end_counts = (output_ids == sep_id).sum(1)  # 统计出现的end标记
+                best_one = output_scores.argmax()
+                if end_counts[best_one] == 1:
+                    # 说明出现终止了～
+                    # print(repeat_word)
+                    # print(yayun_chars)
+                    return output_ids[best_one]
+                else :
+                    # 保留未完成部分
+                    flag = (end_counts < 1)  # 标记未完成序列
+                    if not flag.all():  # 如果有已完成的
+                        token_ids = token_ids[flag]
+                        token_type_ids = token_type_ids[flag]
+                        last_chars = last_chars[flag]
+                        yayun_chars = yayun_chars[flag]
+                        new_input_ids = new_input_ids[flag]
+                        new_token_type_ids = new_token_type_ids[flag]
+                        output_ids = output_ids[flag]  # 扔掉已完成序列
+                        output_scores = output_scores[flag]  # 扔掉已完成序列
+                        end_counts = end_counts[flag]  # 扔掉已完成end计数
+                        beam_size = flag.sum()  # topk相应变化
+                        flag = flag.long()
+
+                        new_repeat_word = []
+                        for index, i in enumerate(flag):
+                            if i.item() == 1:
+                                new_repeat_word.append(repeat_word[index])
+                     
+                        repeat_word = new_repeat_word
+
+
+            # print(repeat_word)
+            # print(yayun_chars)
+            return output_ids[output_scores.argmax()]
+    
+    def beam_search_poem_v2(self, text, token_ids, token_type_ids, word2ix, beam_size=1, device="cpu"):
+        """
+        beam-search操作
+        """
+        yayun_pos = []
+        if "五言律诗" in text:
+            yayun_pos = [10, 22, 34, 46]
+        elif "五言绝句" in text:
+            yayun_pos = [10, 22]
+        elif "七言律诗" in text:
+            yayun_pos = [14, 30, 46, 62]
+        elif "七言绝句" in text:
+            yayun_pos = [14, 30]
+        sep_id = word2ix["[SEP]"]
+        douhao_id = word2ix["，"]# 逗号
+        ix2word = {v: k for k, v in word2ix.items()}
+        juhao_id = word2ix["。"]# 句号
+        repeat_word = []
+        # 用来保存输出序列
+        output_ids = torch.empty(1, 0, device=device, dtype=torch.long)
+        last_chars = torch.empty(1, 0, device=device, dtype=torch.long)
+        yayun_chars = (-1) * torch.ones(beam_size, dtype=torch.long)
+        start = 0
+        with torch.no_grad(): 
+            output_scores = torch.zeros(token_ids.shape[0], device=device)
+            for step in range(self.out_max_length):
+                if step == 0:
+                    scores = self.forward(token_ids, token_type_ids, device=device)
+                    # 重复beam-size次 输入ids
+                    token_ids = token_ids.view(1, -1).repeat(beam_size, 1)
+                    token_type_ids = token_type_ids.view(1, -1).repeat(beam_size, 1)
+                else:
+                    scores = self.forward(new_input_ids, new_token_type_ids, device=device)
+                
+                logit_score = torch.log_softmax(scores[:, -1], dim=-1)
+                # if len(last_chars) != 0:
+                #     logit_score[last_chars] -= 5
+                for i, char in enumerate(last_chars):
+                    logit_score[i, char] -= 2
+                    for word in repeat_word:
+                        logit_score[i, word] -= 1
+                if step in yayun_pos:
+                    # print("step is " + str(step))
+                    # print("yayun_chars is " + str(yayun_chars))
+                    for i, char in enumerate(last_chars):
+                        if yayun_chars[i].item() != -1:
+                            yayuns = yayun_list[yayun_chars[i].item()]
+                            for char in yayuns:
+                                ix = word2ix.get(char, -1)
+                                if ix != -1:
+                                    # print("char is " + str(char))
+                                    logit_score[i, ix] += 3
+                logit_score = output_scores.view(-1, 1) + logit_score # 累计得分
+                ## 取topk的时候我们是展平了然后再去调用topk函数
+                # 展平
+                logit_score = logit_score.view(-1)
+                hype_score, hype_pos = torch.topk(logit_score, beam_size)
+                indice1 = (hype_pos // scores.shape[-1]) # 行索引
+                indice2 = (hype_pos % scores.shape[-1]).long().reshape(-1, 1) # 列索引
+                
+                for index, each_out in zip(indice1, indice2):
+                    index = index.item()
+                    each_out = each_out.item()
+                    
+                    if each_out in repeat_word:
+                        pass 
+                        # repeat_word[index].append(each_out)
+                        # hype_score[index] -= 2 * repeat_word[index].count(each_out)
+                    else :
+                        repeat_word.append(each_out)
+                    
+                    if start < beam_size and each_out == douhao_id and len(last_chars) != 0:
+                        start += 1
+                        word = ix2word[last_chars[index].item()]# 找到上一个字符 记住其押韵情况
+                        for i, each_yayun in enumerate(yayun_list):
+                            if word in each_yayun:
+                                yayun_chars[index] = i
+                                break
+                        
+                    # if each_out == juhao_id and len(last_chars) != 0:  
+                    #     word = ix2word[last_chars[index].item()]
+                    #     if yayun_chars[index].item() != -1 and word in yayun_list[yayun_chars[index].item()]:
+                    #         hype_score[index] += 10
+                    #     else:
+                    #         hype_score[index] -= 5
+
+                # 更新得分
+                output_scores = hype_score
+
+                last_chars = indice2
+
+                output_ids = torch.cat([output_ids[indice1], indice2], dim=1).long()
+                new_input_ids = torch.cat([token_ids, output_ids], dim=1)
+                new_token_type_ids = torch.cat([token_type_ids, torch.ones_like(output_ids)], dim=1)
+
+                end_counts = (output_ids == sep_id).sum(1)  # 统计出现的end标记
+                best_one = output_scores.argmax()
+                if end_counts[best_one] == 1:
+                    # 说明出现终止了～
+                    # print(repeat_word)
+                    # print(yayun_chars)
+                    return output_ids[best_one]
+                else :
+                    # 保留未完成部分
+                    flag = (end_counts < 1)  # 标记未完成序列
+                    if not flag.all():  # 如果有已完成的
+                        token_ids = token_ids[flag]
+                        token_type_ids = token_type_ids[flag]
+                        last_chars = last_chars[flag]
+                        yayun_chars = yayun_chars[flag]
+                        new_input_ids = new_input_ids[flag]
+                        new_token_type_ids = new_token_type_ids[flag]
+                        output_ids = output_ids[flag]  # 扔掉已完成序列
+                        output_scores = output_scores[flag]  # 扔掉已完成序列
+                        end_counts = end_counts[flag]  # 扔掉已完成end计数
+                        beam_size = flag.sum()  # topk相应变化
+                        flag = flag.long()
+
+
+            # print(repeat_word)
+            # print(yayun_chars)
+            return output_ids[output_scores.argmax()]
 
 
 

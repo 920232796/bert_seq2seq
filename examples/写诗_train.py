@@ -172,7 +172,7 @@ class PoemTrainer:
                 self.bert_model.eval()
                 test_data = ["北国风光##五言绝句", "题西林壁##七言绝句", "长安早春##五言律诗"]
                 for text in test_data:
-                    print(self.bert_model.generate(text, beam_size=3,device=self.device))
+                    print(self.bert_model.generate(text, beam_size=3,device=self.device, is_poem=True))
                 self.bert_model.train()
 
             token_ids = token_ids.to(self.device)
