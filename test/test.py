@@ -16,15 +16,19 @@ auto_title_model = "./state_dict/bert_model_poem.bin"
 
 if __name__ == "__main__":
     vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
-    model_name = "roberta"  # 选择模型名字
-    # model_path = "./state_dict/bert-base-chinese-pytorch_model.bin"  # roberta模型位
-    # 加载字典
-    word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
-    # 定义模型
-    bert_model = load_bert(word2idx, model_name=model_name)
-    load_model_params(bert_model, "./state_dict/roberta_wwm_pytorch_model.bin", keep_tokens=keep_tokens)
+    # model_name = "roberta"  # 选择模型名字
+    # # model_path = "./state_dict/bert-base-chinese-pytorch_model.bin"  # roberta模型位
+    # # 加载字典
+    # word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
+    # # 定义模型
+    # bert_model = load_bert(word2idx, model_name=model_name)
+    # load_model_params(bert_model, "./state_dict/roberta_wwm_pytorch_model.bin", keep_tokens=keep_tokens)
 
-    for name, params in bert_model.named_parameters():
-        print(name)
+    # for name, params in bert_model.named_parameters():
+    #     print(name)
+
+    checkpoint = torch.load("./state_dict/roberta_wwm_pytorch_model.bin")
+    for k, v in checkpoint.items():
+        print(k)
 
 

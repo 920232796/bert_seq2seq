@@ -19,9 +19,9 @@ if __name__ == "__main__":
     model_name = "roberta"  # 选择模型名字
     # model_path = "./state_dict/bert-base-chinese-pytorch_model.bin"  # roberta模型位
     # 加载字典
-    word2idx = load_chinese_base_vocab(vocab_path, simplfied=True)
+    word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
     # 定义模型
-    bert_model = load_bert(vocab_path, model_name=model_name)
+    bert_model = load_bert(word2idx, model_name=model_name)
     bert_model.eval()
 #     ## 加载预训练的模型参数～
     # load_model_params(bert_model, model_path)
