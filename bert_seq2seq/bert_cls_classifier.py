@@ -12,11 +12,11 @@ class BertClsClassifier(nn.Module):
         self.tokenizer = Tokenizer(word2ix)
         self.target_size = target_size
         config = ""
-        if model_name == "roberta":
+        if model_name == "roberta" :
             from bert_seq2seq.model.roberta_model import BertModel, BertConfig
             config = BertConfig(len(self.word2ix))
             self.bert = BertModel(config)
-        elif model_name == "bert":
+        elif model_name == "bert" :
             from bert_seq2seq.model.bert_model import BertConfig, BertModel
             config = BertConfig(len(self.word2ix))
             self.bert = BertModel(config)
