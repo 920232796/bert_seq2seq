@@ -93,3 +93,46 @@ class BertRelationExtrac(nn.Module):
             return predictions, loss 
         else :
             return predictions
+
+    def predict_subject(self, text, position_enc=None, use_layer_num=-1, device="cpu"):
+        if use_layer_num != -1:
+            if use_layer_num < 0 or use_layer_num > 7:
+                # 越界
+                raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
+        # 计算target mask
+        text = text.to(device)
+
+        self.target_mask = (text > 0).float()
+        enc_layers, _ = self.bert(text, output_all_encoded_layers=True)
+        squence_out = enc_layers[use_layer_num]
+
+        transform_out = self.layer_norm(squence_out)
+        subject_pred_out = self.subject_pred(transform_out)
+
+        subject_pred_act = self.activation(subject_pred_out)
+
+        return subject_pred_act
+
+    def predict_object_predicate(self, text, subject_ids, position_enc=None, subject_labels=None, object_labels=None, use_layer_num=-1, device="cpu"):
+        if use_layer_num != -1:
+            if use_layer_num < 0 or use_layer_num > 7:
+                # 越界
+                raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
+        # 计算target mask
+        text = text.to(device)
+        subject_ids = subject_ids.to(device)
+
+        self.target_mask = (text > 0).float()
+        enc_layers, _ = self.bert(text, output_all_encoded_layers=True)
+        squence_out = enc_layers[use_layer_num]
+
+        subject_vec = self.extrac_subject(squence_out, subject_ids)
+        object_layer_norm = self.layer_norm_cond([squence_out, subject_vec])
+        object_pred_out = self.object_pred(object_layer_norm)
+        object_pred_act = self.activation(object_pred_out)
+        batch_size, seq_len, target_size = object_pred_act.shape
+
+        object_pred_act = object_pred_act.reshape((batch_size, seq_len, int(target_size/2), 2))
+        # print(object_pred_act.shape)
+        predictions = object_pred_act
+        return predictions
