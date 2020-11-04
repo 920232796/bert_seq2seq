@@ -18,6 +18,8 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 ### 目前几个小例子的效果截图
 #### 写诗
 ![image.png](http://www.zhxing.online/image/acb592f918894ca6b62435d2464d3cb0.png)
+#### bert+crf ner
+
 #### 新闻摘要文本分类（14分类）
 ![image.png](http://www.zhxing.online/image/724f93b03c19404fba4f684eac4695bc.png)
 输出：
