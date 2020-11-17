@@ -104,11 +104,9 @@ class BertEmbeddings(nn.Module):
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, input_ids=None, token_type_ids=None, position_ids=None):
-        if input_ids is not None:
-            input_shape = input_ids.size()
-        else:
-            input_shape = inputs_embeds.size()[:-1]
-
+        
+        input_shape = input_ids.size()
+        
         seq_length = input_shape[1]
         device = input_ids.device
         if position_ids is None:
@@ -445,7 +443,6 @@ class BertModel(BertPreTrainedModel):
         output_all_encoded_layers=True,
         output_attentions=False
     ):  
-        
         
         extended_attention_mask = (input_ids > 0).float()
         # 注意力矩阵mask: [batch_size, 1, 1, seq_length]
