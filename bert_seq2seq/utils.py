@@ -57,8 +57,8 @@ def load_model_params(model, pretrain_model_path, keep_tokens=None):
         torch.cuda.empty_cache()
         print("{} loaded!".format(pretrain_model_path))
 
-def load_recent_model(model, recent_model_path):
-    checkpoint = torch.load(recent_model_path)
+def load_recent_model(model, recent_model_path, device="cuda"):
+    checkpoint = torch.load(recent_model_path, map_location=device)
     model.load_state_dict(checkpoint)
     torch.cuda.empty_cache()
     print(str(recent_model_path) + " loaded!")

@@ -13,6 +13,7 @@ from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
 
 auto_title_model = "./state_dict/bert_model_poem.bin"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
     vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
@@ -23,11 +24,11 @@ if __name__ == "__main__":
     # 定义模型
     bert_model = load_bert(word2idx, model_name=model_name)
     bert_model.eval()
-#     ## 加载预训练的模型参数～
-    # load_model_params(bert_model, model_path)
+#   ## 加载预训练的模型参数～
     checkpoint = torch.load(auto_title_model, map_location="cpu")
     # print(checkpoint)
-    bert_model.load_state_dict(torch.load(auto_title_model, map_location="cpu"), strict=False)
+    load_recent_model(bert_model, recent_model_path=auto_title_model, device=device)
+    # bert_model.load_state_dict(torch.load(auto_title_model, map_location="cpu"), strict=False)
     test_data = ["天涯海角##七言绝句"]
 #     #  test_data = [
 # #               "本文总结了十个可穿戴产品的设计原则而这些原则同样也是笔者认为是这个行业最吸引人的地方1为人们解决重复性问题2从人开始而不是从机器开始3要引起注意但不要刻意4提升用户能力而不是取代人",
