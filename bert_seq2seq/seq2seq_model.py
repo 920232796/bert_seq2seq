@@ -252,7 +252,7 @@ class Seq2SeqModel(nn.Module):
                 best_one = output_scores.argmax()
                 if end_counts[best_one] == 1:
                     # 说明出现终止了～
-                    return output_ids[best_one]
+                    return output_ids[best_one][:-1]
                 else :
                     # 保留未完成部分
                     flag = (end_counts < 1)  # 标记未完成序列
@@ -376,7 +376,7 @@ class Seq2SeqModel(nn.Module):
                     # 说明出现终止了～
                     # print(repeat_word)
                     # print(yayun_chars)
-                    return output_ids[best_one]
+                    return output_ids[best_one][:-1]
                 else :
                     # 保留未完成部分
                     flag = (end_counts < 1)  # 标记未完成序列

@@ -5,6 +5,7 @@ import torch
 from tqdm import tqdm
 import torch.nn as nn 
 from torch.optim import Adam
+import unicodedata
 import pandas as pd
 import numpy as np
 import os
@@ -19,13 +20,70 @@ vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
 model_name = "roberta" # 选择模型名字
 model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
 recent_model_path = "" # 用于把已经训练好的模型继续训练
-model_save_path = "./bert_ner_model_crf.bin"
+model_save_path = "./bert_粗粒度ner_crf.bin"
 batch_size = 4
 lr = 1e-5
 
 word2idx = load_chinese_base_vocab(vocab_path)
 
 target = ["O", "B-LOC", "I-LOC", "B-PER", "I-PER", "B-ORG", "I-ORG"]
+
+def _is_punctuation(ch):
+    """标点符号类字符判断（全/半角均在此内）
+    """
+    code = ord(ch)
+    return 33 <= code <= 47 or \
+        58 <= code <= 64 or \
+        91 <= code <= 96 or \
+        123 <= code <= 126 or \
+        unicodedata.category(ch).startswith('P')
+
+def _cjk_punctuation():
+    return u'\uff02\uff03\uff04\uff05\uff06\uff07\uff08\uff09\uff0a\uff0b\uff0c\uff0d\uff0f\uff1a\uff1b\uff1c\uff1d\uff1e\uff20\uff3b\uff3c\uff3d\uff3e\uff3f\uff40\uff5b\uff5c\uff5d\uff5e\uff5f\uff60\uff62\uff63\uff64\u3000\u3001\u3003\u3008\u3009\u300a\u300b\u300c\u300d\u300e\u300f\u3010\u3011\u3014\u3015\u3016\u3017\u3018\u3019\u301a\u301b\u301c\u301d\u301e\u301f\u3030\u303e\u303f\u2013\u2014\u2018\u2019\u201b\u201c\u201d\u201e\u201f\u2026\u2027\ufe4f\ufe51\ufe54\xb7\uff01\uff1f\uff61\u3002'
+
+def _is_cjk_character(ch):
+    """CJK类字符判断（包括中文字符也在此列）
+    参考：https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)
+    """
+    code = ord(ch)
+    return 0x4E00 <= code <= 0x9FFF or \
+        0x3400 <= code <= 0x4DBF or \
+        0x20000 <= code <= 0x2A6DF or \
+        0x2A700 <= code <= 0x2B73F or \
+        0x2B740 <= code <= 0x2B81F or \
+        0x2B820 <= code <= 0x2CEAF or \
+        0xF900 <= code <= 0xFAFF or \
+        0x2F800 <= code <= 0x2FA1F
+
+@staticmethod
+def _is_control(ch):
+    """控制类字符判断
+    """
+    return unicodedata.category(ch) in ('Cc', 'Cf')
+
+def word_piece_tokenize(word):
+    """word内分成subword
+    """
+    if word in word2idx:
+        return [word]
+
+    tokens = []
+    start, stop = 0, 0
+    while start < len(word):
+        stop = len(word)
+        while stop > start:
+            sub = word[start:stop]
+            if start > 0:
+                sub = '##' + sub
+            if sub in word2idx:
+                break
+            stop -= 1
+        if start == stop:
+            stop += 1
+        tokens.append(sub)
+        start = stop
+
+    return tokens
 
 def read_corpus(data_path):
     """
@@ -37,21 +95,22 @@ def read_corpus(data_path):
     with open(data_path) as f:
         lines = f.readlines()
     row = ""
-    t = [0]
+    t = []
     for line in lines:
         if line == "\n":
-            t.append(0)
-            if len(row) < 500: 
+            
+            if len(row) < 300: 
                 sents_src.append(row)
                 sents_tgt.append(t)
             row = ""
-            t = [0]
+            t = []
             continue
         line = line.split(" ")
         row = row + line[0]
-        t.append(target.index(line[1].strip("\n")))
+        t.append(line[1].strip("\n"))
 
     return sents_src, sents_tgt
+
 
 ## 自定义dataset
 class NERDataset(Dataset):
@@ -74,7 +133,12 @@ class NERDataset(Dataset):
         # print(i)
         src = self.sents_src[i]
         tgt = self.sents_tgt[i]
+        tgt = ["O"] + tgt + ["O"]
+        tgt = [target.index(i) for i in tgt ]
         token_ids, token_type_ids = self.tokenizer.encode(src)
+        if len(token_ids) != len(tgt):
+            print("not equal")
+            os._exit(0)
         output = {
             "token_ids": token_ids,
             "token_type_ids": token_type_ids,
@@ -176,7 +240,7 @@ def ner_print(model, test_data, device="cpu"):
 class Trainer:
     def __init__(self):
         # 加载数据
-        data_path = "./corpus/粗粒度NER/example.train"
+        data_path = "./state_dict/corase_train_update.txt"
         self.sents_src, self.sents_tgt = read_corpus(data_path)
 
         self.tokenier = Tokenizer(word2idx)
@@ -216,7 +280,7 @@ class Trainer:
             # print(target_ids.shape)
             step += 1
             if step % 500 == 0:
-                test_data = ["日寇在京掠夺文物详情。", "以书结缘，把欧美，港台流行的食品类食谱汇集一堂"]
+                test_data = ["日寇在京掠夺文物详情。", "以书结缘，把欧美，港台流行的食品类食谱汇集一堂。", "明天天津下雨，不知道主任还能不能来学校吃个饭。"]
                 ner_print(self.bert_model, test_data, device=self.device)
                 self.bert_model.train()
 
@@ -254,32 +318,31 @@ if __name__ == '__main__':
         # 训练一个epoch
         trainer.train(epoch)
 
-    # 测试一下自定义数据集
-    # vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
-    # sents_src, sents_tgt = read_corpus("./corpus/粗粒度NER/example.train")
-    # # print(sents_src)
-    # print(len(sents_src))
-    # print(len(sents_src) / 8)
-    # dataset = NERDataset(sents_src, sents_tgt, vocab_path)
-    # word2idx = load_chinese_base_vocab(vocab_path)
-    # tokenier = Tokenizer(word2idx)
-    
-    # dataloader =  DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=collate_fn)
-    # for token_ids, token_type_ids, target_ids in dataloader:
-        
-        
-    #     # print(token_ids.shape)
-    #     print(tokenier.decode(token_ids[0].tolist()))
-    #     print(tokenier.decode(token_ids[1].tolist()))
-    #     # print(token_type_ids)
-    #     print(target_ids)
-    #     break
-        
-        
-    #     bert_model = load_bert(vocab_path, model_class="encoder", target_size=14)
-    #     bert_model(token_ids)
-
-        # print(tokenier.decode(target_ids[0].tolist()))
-        # print(tokenier.decode(target_ids[1].tolist()))
-    #     break
-
+    # with open("./state_dict/corase_train_update.txt", "a+") as f:
+    #     with open("./state_dict/人民日报ner数据.txt", "r", encoding="utf-8") as f1 :
+    #         lines = f1.readlines()
+    #         start = 1
+    #         string = ""
+    #         label = ""
+    #         for line in lines:
+    #             if line == "\n":
+    #                 f.write("\n")
+    #                 continue
+    #             line = line.strip("\n")
+    #             line = line.split(" ")
+    #             if _is_punctuation(line[0]) or _is_cjk_character(line[0]):
+    #                 if string != "":
+    #                     string = string.lower()
+    #                     tokens = word_piece_tokenize(string) # 子词
+    #                     for t in tokens:
+    #                         if "##" in t:
+    #                             f.write(t[2:] + " " + label + "\n")
+    #                         else :
+    #                             f.write(t + " " + label + "\n")
+    #                     # f.write(string + " " + label + "\n")
+    #                     string = ""
+    #                     label = ""
+    #                 f.write(line[0] + " " + line[1] + "\n")
+    #             else :
+    #                 string += line[0]
+    #                 label = line[1]
