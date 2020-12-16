@@ -22,6 +22,7 @@ recent_model_path = "" # 用于把已经训练好的模型继续训练
 model_save_path = "./bert_duilian_model.bin"
 batch_size = 16
 lr = 1e-5
+data_dir = "./corpus/对联"
 word2idx = load_chinese_base_vocab(vocab_path)
 
 def read_corpus(dir_path):
@@ -99,7 +100,6 @@ def collate_fn(batch):
 class Trainer:
     def __init__(self):
         # 加载数据
-        data_dir = "./corpus/对联"
         self.sents_src, self.sents_tgt = read_corpus(data_dir)
         
         # 判断是否有可用GPU
@@ -108,7 +108,7 @@ class Trainer:
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name)
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, self.model_path)
+        load_model_params(self.bert_model, model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数

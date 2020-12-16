@@ -223,7 +223,6 @@ class BertAttention(nn.Module):
         
         return attention_output, attention_metrix
 
-
 class BertIntermediate(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -248,7 +247,6 @@ class BertOutput(nn.Module):
         hidden_states = self.LayerNorm(hidden_states + input_tensor)
         return hidden_states
 
-
 class BertLayer(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -266,7 +264,6 @@ class BertLayer(nn.Module):
         intermediate_output = self.intermediate(attention_output)
         layer_output = self.output(intermediate_output, attention_output)
         return layer_output, attention_matrix
-
 
 class BertEncoder(nn.Module):
     def __init__(self, config):
