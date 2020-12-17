@@ -102,6 +102,7 @@ if __name__ == "__main__":
     # 定义模型
     bert_model = load_bert(word2idx, model_class="relation_extrac", model_name=model_name, target_size=len(predicate2id))
     bert_model.eval()
+    bert_model.to(device)
 #   ## 加载预训练的模型参数～
     checkpoint = torch.load(relation_extrac_model, map_location="cpu")
     # print(checkpoint)

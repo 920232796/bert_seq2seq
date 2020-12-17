@@ -23,6 +23,7 @@ if __name__ == "__main__":
     word2idx = load_chinese_base_vocab(vocab_path, simplfied=False)
     # 定义模型
     bert_model = load_bert(word2idx, model_name=model_name)
+    bert_model.to(device)
     bert_model.eval()
 #   ## 加载预训练的模型参数～
     checkpoint = torch.load(auto_title_model, map_location="cpu")

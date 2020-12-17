@@ -23,6 +23,7 @@ if __name__ == "__main__":
     word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
     # 定义模型
     bert_model = load_bert(word2idx, model_name=model_name)
+    bert_model.to(device)
     bert_model.eval()
     ## 加载训练的模型参数～
     load_recent_model(bert_model, recent_model_path=auto_title_model, device=device)
