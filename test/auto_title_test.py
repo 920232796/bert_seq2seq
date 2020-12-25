@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     for text in test_data:
         with torch.no_grad():
-            print(bert_model.generate(text, beam_size=3))
+            print(bert_model.generate(text, beam_size=3, device=device))
 
 
 

@@ -34,9 +34,9 @@ if __name__ == "__main__":
     with torch.no_grad():
         for text in test_data:
             if text[-1] == "句" or text[-1] == "诗":
-                print(bert_model.generate(text, beam_size=3, is_poem=True))
+                print(bert_model.generate(text, beam_size=3, is_poem=True, device=device))
             else:
-                print(bert_model.generate(text, beam_size=3, is_poem=False))
+                print(bert_model.generate(text, beam_size=3, is_poem=False, device=device))
 
 
 
