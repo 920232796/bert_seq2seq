@@ -103,12 +103,10 @@ class BertEmbeddings(nn.Module):
         self.LayerNorm = BertLayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
-    def forward(self, input_ids=None, token_type_ids=None, position_ids=None):
-        if input_ids is not None:
-            input_shape = input_ids.size()
-        else:
-            input_shape = inputs_embeds.size()[:-1]
-
+    def forward(self, input_ids, token_type_ids=None, position_ids=None):
+     
+        input_shape = input_ids.size()
+        
         seq_length = input_shape[1]
         device = input_ids.device
         if position_ids is None:
