@@ -20,7 +20,7 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 ![image.png](http://www.zhxing.online/image/acb592f918894ca6b62435d2464d3cb0.png)
 #### bert+crf ner
 输入：
-![image.png](https://github.com/920232796/bert_seq2seq/raw/master/img/ner-input.png)
+![image.png](img/ner-input.png?raw=true)
 输出：
 ![iamge.png](https://github.com/920232796/bert_seq2seq/raw/master/img/ner-out.png)
 #### 新闻摘要文本分类（14分类）
