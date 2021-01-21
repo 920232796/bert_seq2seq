@@ -75,7 +75,7 @@ class BertRelationExtrac(nn.Module):
         enc_layers, _ = self.bert(text, 
                                     output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num] 
-        sub_out = enc_layers[-2]
+        sub_out = enc_layers[-1]
         # print(squence_out.shape)
 
         # transform_out = self.layer_norm(squence_out)
@@ -83,14 +83,14 @@ class BertRelationExtrac(nn.Module):
 
         subject_pred_act = self.activation(subject_pred_out)
 
-        subject_pred_act = subject_pred_act**2 
+        # subject_pred_act = subject_pred_act**2 
 
         subject_vec = self.extrac_subject(sub_out, subject_ids)
         object_layer_norm = self.layer_norm_cond([sub_out, subject_vec])
         object_pred_out = self.object_pred(object_layer_norm)
         object_pred_act = self.activation(object_pred_out)
 
-        object_pred_act = object_pred_act**4
+        # object_pred_act = object_pred_act**4
 
         batch_size, seq_len, target_size = object_pred_act.shape
 
@@ -117,12 +117,12 @@ class BertRelationExtrac(nn.Module):
         self.target_mask = (text > 0).float()
         enc_layers, _ = self.bert(text, output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num]
-        sub_out = enc_layers[-2]
+        sub_out = enc_layers[-1]
         # transform_out = self.layer_norm(squence_out)
         subject_pred_out = self.subject_pred(squence_out)
         subject_pred_act = self.activation(subject_pred_out)
 
-        subject_pred_act = subject_pred_act**2
+        # subject_pred_act = subject_pred_act**2
 
         # subject_pred_act = (subject_pred_act > 0.5).long() 
         return subject_pred_act
@@ -138,13 +138,13 @@ class BertRelationExtrac(nn.Module):
 
         enc_layers, _ = self.bert(text, output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num]
-        sub_out = enc_layers[-2]
+        sub_out = enc_layers[-1]
         subject_vec = self.extrac_subject(sub_out, subject_ids)
         object_layer_norm = self.layer_norm_cond([sub_out, subject_vec])
         object_pred_out = self.object_pred(object_layer_norm)
         object_pred_act = self.activation(object_pred_out)
 
-        object_pred_act = object_pred_act**4 
+        # object_pred_act = object_pred_act**4 
 
         batch_size, seq_len, target_size = object_pred_act.shape
         object_pred_act = object_pred_act.view((batch_size, seq_len, int(target_size/2), 2))
