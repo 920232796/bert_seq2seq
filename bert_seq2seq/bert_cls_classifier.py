@@ -1,9 +1,10 @@
 ## bert encoder模型
 import torch 
 import torch.nn as nn 
-from bert_seq2seq.tokenizer import load_chinese_base_vocab, Tokenizer
+from bert_seq2seq.tokenizer import Tokenizer
+from bert_seq2seq.basic_bert import BasicBert
 
-class BertClsClassifier(nn.Module):
+class BertClsClassifier(BasicBert):
     """
     """
     def __init__(self, word2ix, target_size, model_name="roberta"):

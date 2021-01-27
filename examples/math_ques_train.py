@@ -11,7 +11,7 @@ import glob
 import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 import re 
 
 vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
@@ -154,18 +154,12 @@ class Trainer:
     def __init__(self):
         # 判断是否有可用GPU
         data = load_data(train_data_path)
-        # print(load_val_data(val_data_path)[:10])
-        # os._exit(0)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name)
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, model_path)
-        # load_model_params(self.bert_model, model_path, keep_tokens=keep_tokens)
-        # 加载已经训练好的模型，继续训练
-        # load_recent_model(self.bert_model, recent_model_path)
-
+        self.bert_model.load_pretrain_params(model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
@@ -185,7 +179,7 @@ class Trainer:
         """
         保存模型
         """
-        torch.save(self.bert_model.state_dict(), save_path)
+        self.bert_model.save_all_params(save_path)
         print("{} saved!".format(save_path))
 
     def iteration(self, epoch, dataloader, train=True):
@@ -285,44 +279,9 @@ class Trainer:
 
 if __name__ == '__main__':
 
-    # src, tgt = read_file("./data/train.src", "./data/train.tgt")
-
     trainer = Trainer()
     train_epoches = 25
 
     for epoch in range(train_epoches):
         # 训练一个epoch
         trainer.train(epoch)
-
-     # 测试一下自定义数据集
-    # vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
-    # # sents_src, sents_tgt = read_file("./corpus/auto_title/train.src", "./corpus/auto_title/train.tgt")
-    # sents_src= torch.load("./corpus/auto_title/train_clean.src")
-    # sents_tgt = torch.load("./corpus/auto_title/train_clean.tgt")
-    # import time
-    # dataset = BertDataset(sents_src, sents_tgt, vocab_path)
-    # word2idx = load_chinese_base_vocab(vocab_path)
-    # tokenier = Tokenizer(word2idx)
-    # dataloader =  DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=collate_fn)
-    # for token_ids, token_type_ids, target_ids in dataloader:
-    #     # print(token_ids.shape)
-    #     print(tokenier.decode(token_ids[0].tolist()))
-    #     print(tokenier.decode(token_ids[1].tolist()))
-    #     # print(token_type_ids)
-    #     # print(target_ids.shape)
-    #     # print(tokenier.decode(target_ids[0].tolist()))
-    #     # print(tokenier.decode(target_ids[1].tolist()))
-    #     break
-
-    
-    # src, tgt = read_file("./corpus/auto_title/train.src", "./corpus/auto_title/train.tgt")
-    # save_src, save_tgt = [], []
-    # for src_i, tgt_i in zip(src, tgt):
-    #     src_i = src_i.replace("“", "").replace("”", "").replace("——", "-").replace("—", "-")
-    #     tgt_i = tgt_i.replace("“", "").replace("”", "").replace("——", "-").replace("—", "-")
-        
-    #     save_src.append(src_i)
-    #     save_tgt.append(tgt_i)
-    
-    # torch.save(save_src, "./corpus/auto_title/train_clean.src")
-    # torch.save(save_tgt, "./corpus/auto_title/train_clean.tgt")

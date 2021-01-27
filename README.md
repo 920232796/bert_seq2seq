@@ -1,7 +1,7 @@
 # bert_seq2seq
 一个轻量级的小框架。
 
-pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎star～ 如果遇到问题也可以提issue，保证会回复。
+pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎star～ 谢谢谢谢。如果遇到问题也可以提issue，保证会回复。
 
 也欢迎加入交流群～ 可以提问题，提建议，互相交流 QQ群: 975907202 
 
@@ -45,19 +45,21 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 1. 下载想训练的数据集，可以专门建个corpus文件夹存放。
 2. 使用roberta模型，模型和字典文件需要去 https://drive.google.com/file/d/1iNeYFhCBJWeUsIlnW_2K6SMwXkM4gLb_/view 这里下载。 具体可以参考这个github仓库～ https://github.com/ymcui/Chinese-BERT-wwm
 3. 如果使用普通的bert模型，下载bert中文预训练权重 "bert-base-chinese": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-pytorch_model.bin", 下载bert中文字典 "bert-base-chinese": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt".
-4. 去example文件夹下面运行对应的trainer.py，针对不同任务，运行不同train.py文件，需要修改输入输出数据的结构，然后进行训练。具体可以看examples里面的各种例子～
+4. 去example文件夹下面运行对应的*_train.py文件，针对不同任务，运行不同train.py文件，需要修改输入输出数据的结构，然后进行训练。具体可以看examples里面的各种例子～
 ### 一些函数解释
 #### def load_bert(word2ix, model_name="roberta", model_class="seq2seq")
 加载bert模型，model_name参数指定了用哪种bert，目前支持bert和roberta；model_class指定了使用bert做哪种任务，seq2seq表示生成任务，cls表示文本分类任务......
-#### def load_model_params(model, pretrain_model_path)
+#### model.load_pretrain_params(pretrain_model_path)
 加载bert模型参数，注意，只是加载编码器的参数，也就是从网上下载好的预训练模型的参数；例如seq2seq模型包括了bert模型的参数+全连接层，此函数只是加载第一部分参数。
-#### def load_recent_model(model, recent_model_path)
+#### def model.load_all_params(recent_model_path)
 加载全部模型参数，当你训练了部分时间，保存了模型以后，通过此函数便可以加载上次模型训练结果，继续训练。
 
-想看文章，可以去我网站～ http://www.blog.zhxing.online/#/  搜索写诗或者对联或者NER或者新闻摘要文本分类即可找到对应文章。
+想看各种文章，可以去我网站～ http://www.blog.zhxing.online/#/  搜索写诗或者对联或者NER或者新闻摘要文本分类即可找到对应文章。
 多谢支持。另外，网站上面还有一些介绍unilm论文和特殊的mask如何实现的文章，可以去网站里搜索一下。http://www.blog.zhxing.online/#/  搜索unilm 即可。
 
 ### 更新记录
+
+2021.1.27: 调整了框架的代码结构，改动较多，如果有bug，欢迎提issue。
 
 2021.1.21: 添加了一个新的例子，人物关系提取分类。
 

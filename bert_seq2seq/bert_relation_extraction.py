@@ -2,8 +2,9 @@
 import torch 
 import torch.nn as nn 
 from bert_seq2seq.tokenizer import load_chinese_base_vocab, Tokenizer
+from bert_seq2seq.basic_bert import BasicBert
 
-class BertRelationExtrac(nn.Module):
+class BertRelationExtrac(BasicBert):
     """
     """
     def __init__(self, word2ix, predicate_num, model_name="roberta"):
@@ -53,13 +54,8 @@ class BertRelationExtrac(nn.Module):
         ## 抽取subject的向量表征
         batch_size = output.shape[0]
         hidden_size = output.shape[-1]
-        # print("out shape is " + str(output.shape))
         start_end = torch.gather(output, index=subject_ids.unsqueeze(-1).expand((batch_size, 2, hidden_size)), dim=1)
-        # print("start_end shape is " + str(start_end.shape))
-        # start = torch.gather(output, index=subject_ids[:, :1].unsqueeze(1).expand((batch_size, 1, hidden_size)), dim=1)
-        # end = torch.gather(output, index=subject_ids[:, 1: ].unsqueeze(1).expand((batch_size, 1, hidden_size)), dim=1)
         subject = torch.cat((start_end[:, 0], start_end[:, 1]), dim=-1)
-        # print("subject shape is " + str(subject.shape))
         return subject
 
     def forward(self, text, subject_ids, position_enc=None, subject_labels=None, object_labels=None, use_layer_num=-1, device="cpu"):
@@ -76,9 +72,7 @@ class BertRelationExtrac(nn.Module):
                                     output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num] 
         sub_out = enc_layers[-1]
-        # print(squence_out.shape)
 
-        # transform_out = self.layer_norm(squence_out)
         subject_pred_out = self.subject_pred(squence_out)
 
         subject_pred_act = self.activation(subject_pred_out)
@@ -95,7 +89,6 @@ class BertRelationExtrac(nn.Module):
         batch_size, seq_len, target_size = object_pred_act.shape
 
         object_pred_act = object_pred_act.reshape((batch_size, seq_len, int(target_size/2), 2))
-        # print(object_pred_act.shape)
         predictions = object_pred_act
         if subject_labels is not None and object_labels is not None:
             ## 计算loss
@@ -111,7 +104,6 @@ class BertRelationExtrac(nn.Module):
             if use_layer_num < 0 or use_layer_num > 7:
                 # 越界
                 raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
-        # 计算target mask
         text = text.to(device)
 
         self.target_mask = (text > 0).float()
@@ -148,6 +140,5 @@ class BertRelationExtrac(nn.Module):
 
         batch_size, seq_len, target_size = object_pred_act.shape
         object_pred_act = object_pred_act.view((batch_size, seq_len, int(target_size/2), 2))
-        # print(object_pred_act.shape)
         predictions = object_pred_act
         return predictions

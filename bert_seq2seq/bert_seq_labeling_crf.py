@@ -1,10 +1,11 @@
 ## bert encoder模型
 import torch 
 import torch.nn as nn 
-from bert_seq2seq.tokenizer import load_chinese_base_vocab, Tokenizer
+from bert_seq2seq.tokenizer import Tokenizer
 from bert_seq2seq.model.crf import CRFLayer
+from bert_seq2seq.basic_bert import BasicBert
 
-class BertSeqLabelingCRF(nn.Module):
+class BertSeqLabelingCRF(BasicBert):
     """
     """
     def __init__(self, word2ix, target_size, model_name="roberta"):
@@ -26,8 +27,6 @@ class BertSeqLabelingCRF(nn.Module):
         
         self.final_dense = nn.Linear(config.hidden_size, self.target_size)
         self.crf_layer = CRFLayer(self.target_size)
-
-        # self.activation = nn.Sigmoid()
     
     def compute_loss(self, predictions, labels):
         """

@@ -12,8 +12,10 @@ import json
 import time
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 import opencc 
+
+data_dir = "./Poetry_ci_duilian"
 
 vocab_path = "./roberta_wwm_vocab.txt" # roberta模型字典的位置
 model_name = "roberta" # 选择模型名字
@@ -258,7 +260,6 @@ def collate_fn(batch):
 class PoemTrainer:
     def __init__(self):
         # 加载数据
-        data_dir = "./Poetry_ci_duilian"
         
         self.sents_src, self.sents_tgt = read_corpus(data_dir + "/Poetry1")
         sents_src2, sents_tgt2 = read_corpus_2(data_dir + "/Poetry2")
@@ -282,7 +283,7 @@ class PoemTrainer:
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name)
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, model_path, keep_tokens=keep_tokens)
+        self.bert_model.load_pretrain_params(model_path, keep_tokens=keep_tokens)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
@@ -301,7 +302,7 @@ class PoemTrainer:
         """
         保存模型
         """
-        torch.save(self.bert_model.state_dict(), save_path)
+        self.bert_model.save_all_params(save_path)
         print("{} saved!".format(save_path))
 
     def iteration(self, epoch, dataloader, train=True):

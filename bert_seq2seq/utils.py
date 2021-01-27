@@ -39,28 +39,27 @@ def load_bert(word2ix, model_name="roberta", model_class="seq2seq", target_size=
     else :
         raise Exception("model_name_err")
 
-def load_model_params(model, pretrain_model_path, keep_tokens=None):
+# def load_model_params(model, pretrain_model_path, keep_tokens=None):
         
-        checkpoint = torch.load(pretrain_model_path)
-        # 模型刚开始训练的时候, 需要载入预训练的BERT
+#         checkpoint = torch.load(pretrain_model_path)
+#         # 模型刚开始训练的时候, 需要载入预训练的BERT
 
-        # checkpoint = {k[5:]: v for k, v in checkpoint.items()
-        checkpoint = {k: v for k, v in checkpoint.items()
-                                            if k[:4] == "bert" and "pooler" not in k}
-        if keep_tokens is not None:
-            ## 说明精简词表了，embeedding层也要过滤下
-            embedding_weight_name = "bert.embeddings.word_embeddings.weight"
+#         checkpoint = {k: v for k, v in checkpoint.items()
+#                                             if k[:4] == "bert" and "pooler" not in k}
+#         if keep_tokens is not None:
+#             ## 说明精简词表了，embeedding层也要过滤下
+#             embedding_weight_name = "bert.embeddings.word_embeddings.weight"
             
-            checkpoint[embedding_weight_name] = checkpoint[embedding_weight_name][keep_tokens]
+#             checkpoint[embedding_weight_name] = checkpoint[embedding_weight_name][keep_tokens]
             
-        model.load_state_dict(checkpoint, strict=False)
-        torch.cuda.empty_cache()
-        print("{} loaded!".format(pretrain_model_path))
+#         model.load_state_dict(checkpoint, strict=False)
+#         torch.cuda.empty_cache()
+#         print("{} loaded!".format(pretrain_model_path))
 
-def load_recent_model(model, recent_model_path, device="cuda"):
-    checkpoint = torch.load(recent_model_path, map_location=device)
-    model.load_state_dict(checkpoint)
-    torch.cuda.empty_cache()
-    print(str(recent_model_path) + " loaded!")
+# def load_recent_model(model, recent_model_path, device="cuda"):
+#     checkpoint = torch.load(recent_model_path, map_location=device)
+#     model.load_state_dict(checkpoint)
+#     torch.cuda.empty_cache()
+#     print(str(recent_model_path) + " loaded!")
 
 

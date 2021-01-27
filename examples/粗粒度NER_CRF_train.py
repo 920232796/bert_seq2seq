@@ -14,7 +14,9 @@ import time
 import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
+
+data_path = "./state_dict/corase_train_update.txt"
 
 vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
 model_name = "roberta" # 选择模型名字
@@ -111,7 +113,6 @@ def read_corpus(data_path):
 
     return sents_src, sents_tgt
 
-
 ## 自定义dataset
 class NERDataset(Dataset):
     """
@@ -170,7 +171,6 @@ def collate_fn(batch):
   
     token_ids_padded = padding(token_ids, max_length)
     token_type_ids_padded = padding(token_type_ids, max_length)
-    # target_ids_padded = token_ids_padded[:, 1:].contiguous()
     target_ids_padded = padding(target_ids, max_length)
 
     return token_ids_padded, token_type_ids_padded, target_ids_padded
@@ -240,7 +240,7 @@ def ner_print(model, test_data, device="cpu"):
 class Trainer:
     def __init__(self):
         # 加载数据
-        data_path = "./state_dict/corase_train_update.txt"
+        
         self.sents_src, self.sents_tgt = read_corpus(data_path)
 
         self.tokenier = Tokenizer(word2idx)
@@ -250,7 +250,7 @@ class Trainer:
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name, model_class="sequence_labeling_crf", target_size=len(target))
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, model_path)
+        self.bert_model.load_pretrain_params(model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
@@ -269,7 +269,7 @@ class Trainer:
         """
         保存模型
         """
-        torch.save(self.bert_model.state_dict(), save_path)
+        self.bert_model.save_all_params(save_path)
         print("{} saved!".format(save_path))
 
     def iteration(self, epoch, dataloader, train=True):

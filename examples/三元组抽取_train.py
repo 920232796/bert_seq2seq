@@ -7,15 +7,13 @@ from tqdm import tqdm
 import json
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 import numpy as np
 import time
 
 vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
-
 model_name = "roberta" # 选择模型名字
 model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
-
 recent_model_path = ""  # 用于把已经训练好的模型继续训练
 model_save_path = "./state_dict/bert_model_relation_extrac.bin"
 batch_size = 16
@@ -97,8 +95,7 @@ def search_object(token_ids, object_labels):
     # print(object_labels.sum())
     start = np.where(object_labels[:, :, 0] > 0.5)
     end = np.where(object_labels[:, :, 1] > 0.5)
-    # print(start)
-    # print(end)
+   
     for _start, predicate1 in zip(*start):
         for _end, predicate2 in zip(*end):
             if _start <= _end and predicate1 == predicate2:
@@ -123,10 +120,8 @@ class ExtractDataset(Dataset):
         ## 一般init函数是加载所有数据
         super(ExtractDataset, self).__init__()
         # 读原始数据
-        # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
         self.data = data
         self.idx2word = {k: v for v, k in word2idx.items()}
-        # self.tokenizer = Tokenizer(word2idx)
 
     def __getitem__(self, i):
         ## 得到单个数据
@@ -233,7 +228,7 @@ class ExtractTrainer:
         self.bert_model = load_bert(word2idx, model_name=model_name, model_class="relation_extrac",
                                     target_size=len(predicate2id))
         # 加载预训练的模型参数～
-        load_model_params(self.bert_model, model_path)
+        self.bert_model.load_pretrain_params(model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
@@ -253,7 +248,7 @@ class ExtractTrainer:
         """
         保存模型
         """
-        torch.save(self.bert_model.state_dict(), save_path)
+        self.bert_model.save_all_params(save_path)
         print("{} saved!".format(save_path))
 
     def test(self, data_dev):
@@ -362,10 +357,7 @@ class ExtractTrainer:
                     # 保存模型
                     self.save(model_save_path)
                 print("dev f1: " + str(f1) + " .acc: " + str(acc) + " .recall: " + str(recall) + " best_f1:" + str(self.best_f1))
-
-
-
-                       
+                  
             # 因为传入了target标签，因此会计算loss并且返回
             predictions, loss = self.bert_model(token_ids,
                                                 subject_ids,
@@ -406,22 +398,3 @@ if __name__ == "__main__":
     for epoch in range(train_epoches):
         # 训练一个epoch
         trainer.train(epoch)
-
-    # data = load_data("./state_dict/extract/train_data.json")
-  
-    # datasets = ExtractDataset(data)
-    # idx2word = {v: k for k, v in word2idx.items()}
-    # dataloader = DataLoader(datasets, shuffle=True, collate_fn=collate_fn, batch_size=1)
-    # for token_ids, segment_ids, subject_labels, object_labels, subject_ids in dataloader:
-    #     print(token_ids)
-    #     # print(segment_ids)
-    #     print(subject_ids)
-    #     search_subject(token_ids[0].numpy(), subject_labels[0].numpy())
-    #     # print(subject_labels)
-    #     # print(object_labels)
-    #     objects = search_object(token_ids[0].numpy(), object_labels[0].numpy())
-    #     print(objects)
-
-    #     print(tokenizer.decode(token_ids[0].numpy()))
-    #     # print(tokenizer.decode(token_ids[1]))
-    #     break

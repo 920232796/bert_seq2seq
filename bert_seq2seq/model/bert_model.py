@@ -473,3 +473,12 @@ class BertModel(BertPreTrainedModel):
             # 如果不用输出所有encoder层
             encoder_layers = encoder_layers[-1]
         return encoder_layers, pooled_output
+
+
+if __name__ == "__main__":
+    t1 = (torch.rand(2, 10) * 10).long()
+    config = BertConfig(vocab_size=256, hidden_size=768)
+    embed = BertEmbeddings(config)
+    out = embed(t1)
+    print(out.shape)
+    

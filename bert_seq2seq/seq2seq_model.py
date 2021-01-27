@@ -6,9 +6,9 @@ from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 import time
 from bert_seq2seq.config import yayun_list
 import os 
+from bert_seq2seq.basic_bert import BasicBert
 
-
-class Seq2SeqModel(nn.Module):
+class Seq2SeqModel(BasicBert):
     """
     """
     def __init__(self, word2ix, model_name="roberta"):
@@ -353,13 +353,6 @@ class Seq2SeqModel(nn.Module):
                             if word in each_yayun:
                                 yayun_chars[index] = i
                                 break
-                        
-                    # if each_out == juhao_id and len(last_chars) != 0:  
-                    #     word = ix2word[last_chars[index].item()]
-                    #     if yayun_chars[index].item() != -1 and word in yayun_list[yayun_chars[index].item()]:
-                    #         hype_score[index] += 10
-                    #     else:
-                    #         hype_score[index] -= 5
 
                 # 更新得分
                 output_scores = hype_score
@@ -400,9 +393,6 @@ class Seq2SeqModel(nn.Module):
                      
                         repeat_word = new_repeat_word
 
-
-            # print(repeat_word)
-            # print(yayun_chars)
             return output_ids[output_scores.argmax()]
     
     def beam_search_poem_v2(self, text, token_ids, token_type_ids, word2ix, beam_size=1, device="cpu"):
@@ -483,13 +473,6 @@ class Seq2SeqModel(nn.Module):
                             if word in each_yayun:
                                 yayun_chars[index] = i
                                 break
-                        
-                    # if each_out == juhao_id and len(last_chars) != 0:  
-                    #     word = ix2word[last_chars[index].item()]
-                    #     if yayun_chars[index].item() != -1 and word in yayun_list[yayun_chars[index].item()]:
-                    #         hype_score[index] += 10
-                    #     else:
-                    #         hype_score[index] -= 5
 
                 # 更新得分
                 output_scores = hype_score
@@ -524,8 +507,6 @@ class Seq2SeqModel(nn.Module):
                         flag = flag.long()
 
 
-            # print(repeat_word)
-            # print(yayun_chars)
             return output_ids[output_scores.argmax()]
 
 

@@ -13,7 +13,7 @@ import time
 import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 
 vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
 model_name = "roberta" # 选择模型名字
@@ -108,7 +108,7 @@ class Trainer:
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name)
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, model_path)
+        self.bert_model.load_pretrain_params(model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
@@ -127,7 +127,7 @@ class Trainer:
         """
         保存模型
         """
-        torch.save(self.bert_model.state_dict(), save_path)
+        self.bert_model.save_all_params(save_path)
         print("{} saved!".format(save_path))
 
     def iteration(self, epoch, dataloader, train=True):

@@ -14,7 +14,7 @@ import time
 import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 # 共11个标签
 target = ["other", "address", "book", "company", "game", "government", "movie", "name", "organization", "position", "scene"]
 
@@ -30,7 +30,6 @@ lr = 1e-5
 crf_lr = 1e-2 ##  crf层学习率为0.01
 # 加载字典
 word2idx = load_chinese_base_vocab(vocab_path)
-
 
 def _is_punctuation(ch):
     """标点符号类字符判断（全/半角均在此内）
@@ -245,7 +244,7 @@ class Trainer:
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name, model_class="sequence_labeling_crf", target_size=len(target))
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, model_path)
+        self.bert_model.load_pretrain_params(model_path)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
@@ -267,7 +266,7 @@ class Trainer:
         """
         保存模型
         """
-        torch.save(self.bert_model.state_dict(), save_path)
+        self.bert_model.save_all_params(save_path)
         print("{} saved!".format(save_path))
 
     def iteration(self, epoch, dataloader, train=True):

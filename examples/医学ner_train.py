@@ -13,7 +13,7 @@ import unicodedata
 import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 
 target = ["O", "B-DRUG", "B-DRUG_INGREDIENT", "B-DISEASE", "B-SYMPTOM", "B-SYNDROME", "B-DISEASE_GROUP", 
         "B-FOOD", "B-FOOD_GROUP", "B-PERSON_GROUP", "B-DRUG_GROUP", "B-DRUG_DOSAGE", "B-DRUG_TASTE",
@@ -127,19 +127,9 @@ def load_data(path: str):
             continue
         save_src_data.append(src)
         save_label_data.append(label)
-        # retain = 0
-        # # print(label)
-        # for l in label:
-        #     if l != 0:
-        #         retain = 1
-        #         break
-        # if retain == 1:
-        #     save_src_data.append(src)
-        #     save_label_data.append(label)
 
         # retain = 0
     print("清洗后数据大小为：" + str(len(save_src_data)))
-    # print("删除全O的句子后数据大小为：" + str(len(save_src_data)))
     return save_src_data, save_label_data
   
 ## 自定义dataset
@@ -280,7 +270,7 @@ class Trainer:
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name, model_class="sequence_labeling_crf", target_size=len(target))
         ## 加载预训练的模型参数～
-        load_model_params(self.bert_model, model_path, keep_tokens=keep_tokens)
+        self.bert_model.load_pretrain_params(model_path, keep_tokens=keep_tokens)
         # 将模型发送到计算设备(GPU或CPU)
         self.bert_model.to(self.device)
         # 声明需要优化的参数
@@ -302,7 +292,7 @@ class Trainer:
         """
         保存模型
         """
-        torch.save(self.bert_model.state_dict(), save_path)
+        self.bert_model.save_all_params(save_path)
         print("{} saved!".format(save_path))
 
     def iteration(self, epoch, dataloader, train=True):
@@ -348,25 +338,11 @@ class Trainer:
 
 if __name__ == '__main__':
     
-    # from_ann2dic("./res.txt")
-
     trainer = Trainer()
     train_epoches = 50
     for epoch in range(train_epoches):
         # 训练一个epoch
         trainer.train(epoch)
-
-    #  src_data, src_labels = load_data("./res.txt")
-    
-
-# if __name__ == "__main__":
-
-#     ## from_ann2dic("./res.txt")
-
-#     src_data, src_labels = load_data("./res.txt")
-
-#     print(len(src_data))
-#     print(len(src_labels))
 
 
 
