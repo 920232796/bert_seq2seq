@@ -10,7 +10,7 @@ import json
 import time
 import bert_seq2seq
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 
 relation_extrac_model = "./state_dict/bert_model_relation_extrac.bin"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 #   ## 加载预训练的模型参数～
     checkpoint = torch.load(relation_extrac_model, map_location="cpu")
     # print(checkpoint)
-    load_recent_model(bert_model, recent_model_path=relation_extrac_model, device=device)
+    bert_model.load_all_params(model_path=relation_extrac_model, device=device)
     text = ["查尔斯·阿兰基斯（Charles Aránguiz），1989年4月17日出生于智利圣地亚哥，智利职业足球运动员，司职中场，效力于德国足球甲级联赛勒沃库森足球俱乐部", 
             "李治即位后，萧淑妃受宠，王皇后为了排挤萧淑妃，答应李治让身在感业寺的武则天续起头发，重新纳入后宫",
             "《星空黑夜传奇》是连载于起点中文网的网络小说，作者是啤酒的罪孽"]

@@ -6,7 +6,7 @@ import os
 import json
 import time
 import bert_seq2seq
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 
 target = ["O", "B-LOC", "I-LOC", "B-PER", "I-PER", "B-ORG", "I-ORG"]
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     bert_model.to(device)
     bert_model.eval()
     ## 加载训练的模型参数～
-    load_recent_model(bert_model, recent_model_path=model_path, device=device)
+    bert_model.load_all_params(model_path=model_path, device=device)
     test_data = ["日寇在京掠夺文物详情。", 
                 "以书结缘，把欧美，港台流行的食品类食谱汇集一堂。", 
                 "明天天津下雨，不知道杨永康主任还能不能来学校吃个饭。",

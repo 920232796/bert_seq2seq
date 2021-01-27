@@ -10,7 +10,7 @@ import json
 import time
 import bert_seq2seq
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 
 auto_title_model = "./state_dict/bert_model_poem_ci_duilian.bin"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 #   ## 加载预训练的模型参数～
     checkpoint = torch.load(auto_title_model, map_location="cpu")
     # print(checkpoint)
-    load_recent_model(bert_model, recent_model_path=auto_title_model, device=device)
+    bert_model.load_all_params(model_path=auto_title_model, device=device)
     test_data = ["江山竞秀，万里风光入画图##对联", 
                 "北国风光##五言绝句"]
     with torch.no_grad():

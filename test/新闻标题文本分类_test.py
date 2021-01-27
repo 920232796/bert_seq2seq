@@ -6,7 +6,7 @@ import os
 import json
 import time
 import bert_seq2seq
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 
 target = ["财经", "彩票", "房产", "股票", "家居", "教育", "科技", "社会", "时尚", "时政", "体育", "星座", "游戏", "娱乐"]
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     bert_model.to(device)
     bert_model.eval()
     ## 加载训练的模型参数～
-    load_recent_model(bert_model, recent_model_path=cls_model, device=device)
+    bert_model.load_all_params(model_path=cls_model, device=device)
     test_data = ["编剧梁馨月讨稿酬六六何念助阵 公司称协商解决", 
                 "西班牙BBVA第三季度净利降至15.7亿美元", 
                 "基金巨亏30亿 欲打开云天系跌停自救"]

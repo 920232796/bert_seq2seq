@@ -6,7 +6,7 @@ import os
 import json
 import time
 import bert_seq2seq
-from bert_seq2seq.utils import load_bert, load_model_params, load_recent_model
+from bert_seq2seq.utils import load_bert
 
 target = ["other", "address", "book", "company", "game", "government", "movie", "name", "organization", "position", "scene"]
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     bert_model.to(device)
     bert_model.eval()
     ## 加载训练的模型参数～
-    load_recent_model(bert_model, recent_model_path=model_path, device=device)
+    bert_model.load_all_params(model_path=model_path, device=device)
     # test_data = ["在广州经营小古董珠宝店的潘凝已经收藏了200多款泰迪熊，其中不少更是老牌泰迪熊厂商史蒂夫、赫曼。", 
     #             "2009年1月，北京市长郭金龙在其政府工作报告中曾明确提出，限价房不停建",
     #             "昨天，记者连线农业银行亳州市支行办公室主任沈伦，他表示，亳州市支行已经对此事进行了讨论和研究",
