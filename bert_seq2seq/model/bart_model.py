@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ PyTorch BART model. """
-
+import os 
 import math
 import random
 import warnings
@@ -224,6 +224,11 @@ def shift_tokens_right(input_ids: torch.Tensor, pad_token_id: int, decoder_start
 
     return shifted_input_ids
 
+# t1 = torch.tensor([[1, 2, 3, 4]])
+# out = shift_tokens_right(t1, 0, 101)
+# print(out)
+# os._exit(0)
+
 def _make_causal_mask(input_ids_shape: torch.Size, dtype: torch.dtype, past_key_values_length: int = 0):
     """
     可以用于cross attention return (tgt_len, tgt_len + past_key_values_len) , row is output, column is input.
@@ -242,7 +247,7 @@ def _make_causal_mask(input_ids_shape: torch.Size, dtype: torch.dtype, past_key_
 
 # import os 
 # input_ids = torch.tensor([[1, 2, 3], [4, 5, 6]], dtype=torch.long)
-# out = _make_causal_mask(input_ids.shape, torch.long, 2)
+# out = _make_causal_mask(input_ids.shape, torch.long, 0)
 # print(out)
 # print(out.shape)
 # os._exit(0)
@@ -260,16 +265,16 @@ def _expand_mask(mask: torch.Tensor, dtype: torch.dtype, tgt_len: Optional[int] 
 
     return inverted_mask.masked_fill(inverted_mask.bool(), torch.finfo(dtype).min)
 
-import os 
-# input_ids = torch.tensor([[1, 2, 3, 4, 5, 6, 0]], dtype=torch.long)
-# out = _make_causal_mask(input_ids.shape, torch.long, 0)
+# import os 
+# # input_ids = torch.tensor([[1, 2, 3, 4, 5, 6, 0]], dtype=torch.long)
+# # out = _make_causal_mask(input_ids.shape, torch.long, 0)
+# # print(out)
+# # print(out.shape)
+# mask = torch.tensor([[1, 1, 1, 0]])
+# out = _expand_mask(mask, torch.float, tgt_len=6)
 # print(out)
-# print(out.shape)
-mask = torch.tensor([[1, 1, 1, 0]])
-out = _expand_mask(mask, torch.float, tgt_len=6)
-print(out)
 
-os._exit(0)
+# os._exit(0)
 
 class BartLearnedPositionalEmbedding(nn.Embedding):
     """
@@ -1059,6 +1064,8 @@ class BartModel(nn.Module):
                 return_dict=return_dict,
             )
 
+        if decoder_attention_mask is None :
+            decoder_attention_mask = (decoder_input_ids > 0).float()
         # decoder outputs consists of (dec_features, past_key_value, dec_hidden, dec_attn)
         decoder_outputs = self.decoder(
             input_ids=decoder_input_ids,
@@ -1077,8 +1084,6 @@ class BartModel(nn.Module):
 
         
         return decoder_outputs, encoder_outputs
-
-       
 
 class BartForConditionalGeneration(nn.Module):
 
