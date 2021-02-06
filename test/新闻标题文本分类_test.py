@@ -21,7 +21,7 @@ if __name__ == "__main__":
     tokenizer = Tokenizer(word2idx)
     # 定义模型
     bert_model = load_bert(word2idx, model_name=model_name, model_class="cls", target_size=len(target))
-    bert_model.to(device)
+    bert_model.set_device(device)
     bert_model.eval()
     ## 加载训练的模型参数～
     bert_model.load_all_params(model_path=cls_model, device=device)

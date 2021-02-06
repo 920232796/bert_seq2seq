@@ -58,14 +58,14 @@ class BertRelationExtrac(BasicBert):
         subject = torch.cat((start_end[:, 0], start_end[:, 1]), dim=-1)
         return subject
 
-    def forward(self, text, subject_ids, position_enc=None, subject_labels=None, object_labels=None, use_layer_num=-1, device="cpu"):
+    def forward(self, text, subject_ids, position_enc=None, subject_labels=None, object_labels=None, use_layer_num=-1):
         if use_layer_num != -1:
             if use_layer_num < 0 or use_layer_num > 7:
                 # 越界
                 raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
         # 计算target mask
-        text = text.to(device)
-        subject_ids = subject_ids.to(device)
+        text = text.to(self.device)
+        subject_ids = subject_ids.to(self.device)
 
         self.target_mask = (text > 0).float()
         enc_layers, _ = self.bert(text, 
@@ -92,8 +92,8 @@ class BertRelationExtrac(BasicBert):
         predictions = object_pred_act
         if subject_labels is not None and object_labels is not None:
             ## 计算loss
-            subject_labels = subject_labels.to(device)
-            object_labels = object_labels.to(device)
+            subject_labels = subject_labels.to(self.device)
+            object_labels = object_labels.to(self.device)
             loss = self.compute_total_loss(subject_pred_act, object_pred_act, subject_labels, object_labels)
             return predictions, loss 
         else :
@@ -104,7 +104,7 @@ class BertRelationExtrac(BasicBert):
             if use_layer_num < 0 or use_layer_num > 7:
                 # 越界
                 raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
-        text = text.to(device)
+        text = text.to(self.device)
 
         self.target_mask = (text > 0).float()
         enc_layers, _ = self.bert(text, output_all_encoded_layers=True)
@@ -125,8 +125,8 @@ class BertRelationExtrac(BasicBert):
                 # 越界
                 raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
         # 计算target mask
-        text = text.to(device)
-        subject_ids = subject_ids.to(device)
+        text = text.to(self.device)
+        subject_ids = subject_ids.to(self.device)
 
         enc_layers, _ = self.bert(text, output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num]

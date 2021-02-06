@@ -161,7 +161,7 @@ class Trainer:
         ## 加载预训练的模型参数～
         self.bert_model.load_pretrain_params(model_path)
         # 将模型发送到计算设备(GPU或CPU)
-        self.bert_model.to(self.device)
+        self.bert_model.set_device(self.device)
         # 声明需要优化的参数
         self.optim_parameters = list(self.bert_model.parameters())
         self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-5)

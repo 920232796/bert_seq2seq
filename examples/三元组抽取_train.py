@@ -363,7 +363,7 @@ class ExtractTrainer:
                                                 subject_ids,
                                                 subject_labels=subject_lables,
                                                 object_labels=object_labels,
-                                                device=self.device
+    
                                                 )
             # 反向传播
             if train:

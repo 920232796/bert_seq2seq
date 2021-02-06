@@ -96,7 +96,7 @@ class Trainer:
         # 加载已经训练好的模型，继续训练
 
         # 将模型发送到计算设备(GPU或CPU)
-        self.bert_model.to(self.device)
+        self.bert_model.set_device(self.device)
         # 声明需要优化的参数
         self.optim_parameters = list(self.bert_model.parameters())
         self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-3)
@@ -129,7 +129,7 @@ class Trainer:
                  "2007年乔布斯向人们展示iPhone并宣称它将会改变世界还有人认为他在夸大其词然而在8年后以iPhone为代表的触屏智能手机已经席卷全球各个角落未来智能手机将会成为真正的个人电脑为人类发展做出更大的贡献", 
                  "8月28日，网络爆料称，华住集团旗下连锁酒店用户数据疑似发生泄露。从卖家发布的内容看，数据包含华住旗下汉庭、禧玥、桔子、宜必思等10余个品牌酒店的住客信息。泄露的信息包括华住官网注册资料、酒店入住登记的身份信息及酒店开房记录，住客姓名、手机号、邮箱、身份证号、登录账号密码等。卖家对这个约5亿条数据打包出售。第三方安全平台威胁猎人对信息出售者提供的三万条数据进行验证，认为数据真实性非常高。当天下午 ，华 住集 团发声明称，已在内部迅速开展核查，并第一时间报警。当晚，上海警方消息称，接到华住集团报案，警方已经介入调查。"]
                 for text in test_data:
-                    print(self.bert_model.generate(text, beam_size=3,device=self.device))
+                    print(self.bert_model.generate(text, beam_size=3))
                 print("loss is " + str(report_loss))
                 report_loss = 0
                 # self.eval(epoch)
@@ -137,14 +137,11 @@ class Trainer:
             if step % 8000 == 0:
                 self.save(model_save_path)
 
-            token_ids = token_ids.to(self.device)
-            token_type_ids = token_type_ids.to(self.device)
-            target_ids = target_ids.to(self.device)
             # 因为传入了target标签，因此会计算loss并且返回
             predictions, loss = self.bert_model(token_ids,
                                                 token_type_ids,
                                                 labels=target_ids,
-                                                device=self.device
+                                               
                                                 )
             report_loss += loss.item()
             # 反向传播

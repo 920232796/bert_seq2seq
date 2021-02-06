@@ -42,7 +42,12 @@ class BertSeqLabelingCRF(BasicBert):
                 # 越界
                 raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
         # 计算target mask
-        self.target_mask = (text > 0).float()
+        self.target_mask = (text > 0).float().to(self.device)
+        text = text.to(self.device)
+        if position_enc is not None :
+            position_enc = position_enc.to(self.device)
+        if labels is not None :
+            labels = labels.to(self.device)
         enc_layers, _ = self.bert(text, 
                                     output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num] 

@@ -285,7 +285,7 @@ class PoemTrainer:
         ## 加载预训练的模型参数～
         self.bert_model.load_pretrain_params(model_path, keep_tokens=keep_tokens)
         # 将模型发送到计算设备(GPU或CPU)
-        self.bert_model.to(self.device)
+        self.bert_model.set_device(self.device)
         # 声明需要优化的参数
         self.optim_parameters = list(self.bert_model.parameters())
         self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-3)
@@ -322,17 +322,14 @@ class PoemTrainer:
                     # if text[-1] == "句" or text[-1] == "诗":
                     #     print(self.bert_model.generate(text, beam_size=3,device=self.device, is_poem=True))
                     # else :
-                    print(self.bert_model.generate(text, beam_size=3,device=self.device))
+                    print(self.bert_model.generate(text, beam_size=3))
                 self.bert_model.train()
 
-            token_ids = token_ids.to(self.device)
-            token_type_ids = token_type_ids.to(self.device)
-            target_ids = target_ids.to(self.device)
             # 因为传入了target标签，因此会计算loss并且返回
             predictions, loss = self.bert_model(token_ids,
                                                 token_type_ids,
                                                 labels=target_ids,
-                                                device=self.device
+                                                
                                                 )
             
             # 反向传播

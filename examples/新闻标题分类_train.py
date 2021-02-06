@@ -112,7 +112,7 @@ class Trainer:
         ## 加载预训练的模型参数～
         self.bert_model.load_pretrain_params(model_path)
         # 将模型发送到计算设备(GPU或CPU)
-        self.bert_model.to(self.device)
+        self.bert_model.set_device(self.device)
         # 声明需要优化的参数
         self.optim_parameters = list(self.bert_model.parameters())
         self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-3)
@@ -146,10 +146,7 @@ class Trainer:
                     text = torch.tensor(text, device=self.device).view(1, -1)
                     print(target[torch.argmax(self.bert_model(text)).item()])
                 self.bert_model.train()
-
-            token_ids = token_ids.to(self.device)
-            token_type_ids = token_type_ids.to(self.device)
-            target_ids = target_ids.to(self.device)
+                
             # 因为传入了target标签，因此会计算loss并且返回
             predictions, loss = self.bert_model(token_ids,
                                                 labels=target_ids,                                

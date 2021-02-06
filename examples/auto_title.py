@@ -108,14 +108,10 @@ class Trainer:
         print("device: " + str(self.device))
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name)
-        ## 加载预训练的模型参数～
-        
+        self.bert_model.set_device(self.device)
+        ## 加载预训练的模型参数～  
         self.bert_model.load_pretrain_params(model_path, keep_tokens=keep_tokens)
-        # 加载已经训练好的模型，继续训练
-        # load_recent_model(self.bert_model, self.recent_model_path)
 
-        # 将模型发送到计算设备(GPU或CPU)
-        self.bert_model.to(self.device)
         # 声明需要优化的参数
         self.optim_parameters = list(self.bert_model.parameters())
         self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-3)

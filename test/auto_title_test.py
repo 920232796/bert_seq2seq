@@ -23,7 +23,7 @@ if __name__ == "__main__":
     word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
     # 定义模型
     bert_model = load_bert(word2idx, model_name=model_name)
-    bert_model.to(device)
+    bert_model.set_device(device)
     bert_model.eval()
     ## 加载训练的模型参数～
     bert_model.load_all_params(model_path=auto_title_model, device=device)
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     test_data = ["重庆潼南县的8位村民一年前在河道里挖出一根30米长乌木，卖得19.6万元，大家分了这笔数额不小的意外之财。如今，当地财政局将他们起诉到法院，称乌木在河道中发现，其所有权应归国家。法院一审二审都判决村民们还钱"]
     for text in test_data:
         with torch.no_grad():
-            print(bert_model.generate(text, beam_size=3, device=device))
+            print(bert_model.generate(text, beam_size=3))
 
 
 

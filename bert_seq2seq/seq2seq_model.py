@@ -43,14 +43,20 @@ class Seq2SeqModel(BasicBert):
         loss = nn.CrossEntropyLoss(ignore_index=0, reduction="none")
         return (loss(predictions, labels) * target_mask).sum() / target_mask.sum() ## 通过mask 取消 pad 和句子a部分预测的影响
     
-    def forward(self, input_tensor, token_type_id, position_enc=None, labels=None, device="cpu"):
+    def forward(self, input_tensor, token_type_id, position_enc=None, labels=None):
         ## 传入输入，位置编码，token type id ，还有句子a 和句子b的长度，注意都是传入一个batch数据
         ##  传入的几个值，在seq2seq 的batch iter 函数里面都可以返回
+        input_tensor = input_tensor.to(self.device)
+        token_type_id = token_type_id.to(self.device)
+        if position_enc is not None:
+            position_enc = position_enc.to(self.device)
+        if labels is not None :
+            labels = labels.to(self.device)
         input_shape = input_tensor.shape
         batch_size = input_shape[0]
         seq_len = input_shape[1]
         ## 构建特殊的mask
-        ones = torch.ones((1, 1, seq_len, seq_len), dtype=torch.float32, device=device)
+        ones = torch.ones((1, 1, seq_len, seq_len), dtype=torch.float32, device=self.device)
         a_mask = ones.tril() # 下三角矩阵
         s_ex12 = token_type_id.unsqueeze(1).unsqueeze(2).float()
         s_ex13 = token_type_id.unsqueeze(1).unsqueeze(3).float()
@@ -73,20 +79,20 @@ class Seq2SeqModel(BasicBert):
         else :
             return predictions
     
-    def generate(self, text, out_max_length=40, beam_size=1, device="cpu", is_poem=False, max_length=256):
+    def generate(self, text, out_max_length=40, beam_size=1, is_poem=False, max_length=256):
         # 对 一个 句子生成相应的结果
         ## 通过输出最大长度得到输入的最大长度，这里问题不大，如果超过最大长度会进行截断
         self.out_max_length = out_max_length
         input_max_length = max_length - out_max_length
         # print(text)
         token_ids, token_type_ids = self.tokenizer.encode(text, max_length=input_max_length)
-        token_ids = torch.tensor(token_ids, device=device).view(1, -1)
-        token_type_ids = torch.tensor(token_type_ids, device=device).view(1, -1)
+        token_ids = torch.tensor(token_ids, device=self.device).view(1, -1)
+        token_type_ids = torch.tensor(token_type_ids, device=self.device).view(1, -1)
         if is_poem:## 古诗的beam-search稍有不同
             
-            out_puts_ids = self.beam_search_poem(text, token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
+            out_puts_ids = self.beam_search_poem(text, token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=self.device)
         else :   
-            out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=device)
+            out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=self.device)
         
         # 解码 得到相应输出
         # if err is False:
@@ -225,12 +231,12 @@ class Seq2SeqModel(BasicBert):
             output_scores = torch.zeros(token_ids.shape[0], device=device)
             for step in range(self.out_max_length):
                 if step == 0:
-                    scores = self.forward(token_ids, token_type_ids, device=device)
+                    scores = self.forward(token_ids, token_type_ids)
                     # 重复beam-size次 输入ids
                     token_ids = token_ids.view(1, -1).repeat(beam_size, 1)
                     token_type_ids = token_type_ids.view(1, -1).repeat(beam_size, 1)
                 else:
-                    scores = self.forward(new_input_ids, new_token_type_ids, device=device)
+                    scores = self.forward(new_input_ids, new_token_type_ids)
                 
                 logit_score = torch.log_softmax(scores[:, -1], dim=-1)
                 
@@ -296,12 +302,12 @@ class Seq2SeqModel(BasicBert):
             output_scores = torch.zeros(token_ids.shape[0], device=device)
             for step in range(self.out_max_length):
                 if step == 0:
-                    scores = self.forward(token_ids, token_type_ids, device=device)
+                    scores = self.forward(token_ids, token_type_ids)
                     # 重复beam-size次 输入ids
                     token_ids = token_ids.view(1, -1).repeat(beam_size, 1)
                     token_type_ids = token_type_ids.view(1, -1).repeat(beam_size, 1)
                 else:
-                    scores = self.forward(new_input_ids, new_token_type_ids, device=device)
+                    scores = self.forward(new_input_ids, new_token_type_ids)
                 
                 logit_score = torch.log_softmax(scores[:, -1], dim=-1)
                 
@@ -422,12 +428,12 @@ class Seq2SeqModel(BasicBert):
             output_scores = torch.zeros(token_ids.shape[0], device=device)
             for step in range(self.out_max_length):
                 if step == 0:
-                    scores = self.forward(token_ids, token_type_ids, device=device)
+                    scores = self.forward(token_ids, token_type_ids)
                     # 重复beam-size次 输入ids
                     token_ids = token_ids.view(1, -1).repeat(beam_size, 1)
                     token_type_ids = token_type_ids.view(1, -1).repeat(beam_size, 1)
                 else:
-                    scores = self.forward(new_input_ids, new_token_type_ids, device=device)
+                    scores = self.forward(new_input_ids, new_token_type_ids)
                 
                 logit_score = torch.log_softmax(scores[:, -1], dim=-1)
                 # if len(last_chars) != 0:

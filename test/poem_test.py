@@ -23,7 +23,7 @@ if __name__ == "__main__":
     word2idx = load_chinese_base_vocab(vocab_path, simplfied=False)
     # 定义模型
     bert_model = load_bert(word2idx, model_name=model_name)
-    bert_model.to(device)
+    bert_model.set_device(device)
     bert_model.eval()
 #   ## 加载预训练的模型参数～
     checkpoint = torch.load(auto_title_model, map_location="cpu")
@@ -34,9 +34,9 @@ if __name__ == "__main__":
     with torch.no_grad():
         for text in test_data:
             if text[-1] == "句" or text[-1] == "诗":
-                print(bert_model.generate(text, beam_size=3, is_poem=True, device=device))
+                print(bert_model.generate(text, beam_size=3, is_poem=True))
             else:
-                print(bert_model.generate(text, beam_size=3, is_poem=False, device=device))
+                print(bert_model.generate(text, beam_size=3, is_poem=False))
 
 
 
