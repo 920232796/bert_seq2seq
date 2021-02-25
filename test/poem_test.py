@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # print(checkpoint)
     bert_model.load_all_params(model_path=auto_title_model, device=device)
     test_data = ["江山竞秀，万里风光入画图##对联", 
-                "北国风光##五言绝句"]
+                ]
     with torch.no_grad():
         for text in test_data:
             if text[-1] == "句" or text[-1] == "诗":
