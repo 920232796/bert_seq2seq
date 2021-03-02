@@ -1,6 +1,8 @@
 """
 """
 import sys
+# from numpy import random
+import random
 import torch
 import torch.nn as nn
 from tqdm import tqdm
@@ -133,7 +135,7 @@ class ExtractDataset(Dataset):
             s = tokenizer.encode(s)[0][1:-1]
             p = predicate2id[p]
             o = tokenizer.encode(o)[0][1:-1]
-            s_idx = search(s, token_ids)
+            s_idx = search(s, token_ids) 
             o_idx = search(o, token_ids)
             if s_idx != -1 and o_idx != -1:
                 s = (s_idx, s_idx + len(s) - 1)
@@ -148,9 +150,7 @@ class ExtractDataset(Dataset):
                 subject_labels[s[0], 0] = 1
                 subject_labels[s[1], 1] = 1
             # 随机选一个subject
-            start, end = np.array(list(spoes.keys())).T
-            start = np.random.choice(start)
-            end = np.random.choice(end[end >= start])
+            start, end = random.choice(list(spoes.keys()))
             subject_ids = (start, end)
             # 对应的object标签
             object_labels = np.zeros((len(token_ids), len(predicate2id), 2))
@@ -230,7 +230,7 @@ class ExtractTrainer:
         # 加载预训练的模型参数～
         self.bert_model.load_pretrain_params(model_path)
         # 将模型发送到计算设备(GPU或CPU)
-        self.bert_model.to(self.device)
+        self.bert_model.set_device(self.device)
         # 声明需要优化的参数
         self.optim_parameters = list(self.bert_model.parameters())
         self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-3)

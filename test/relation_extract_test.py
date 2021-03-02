@@ -108,8 +108,10 @@ if __name__ == "__main__":
     # print(checkpoint)
     bert_model.load_all_params(model_path=relation_extrac_model, device=device)
     text = ["查尔斯·阿兰基斯（Charles Aránguiz），1989年4月17日出生于智利圣地亚哥，智利职业足球运动员，司职中场，效力于德国足球甲级联赛勒沃库森足球俱乐部", 
-            "李治即位后，萧淑妃受宠，王皇后为了排挤萧淑妃，答应李治让身在感业寺的武则天续起头发，重新纳入后宫",
-            "《星空黑夜传奇》是连载于起点中文网的网络小说，作者是啤酒的罪孽"]
+            "《星空黑夜传奇》是连载于起点中文网的网络小说，作者是啤酒的罪孽",
+            "《李烈钧自述》是2011年11月1日人民日报出版社出版的图书，作者是李烈钧",
+            "杨铁心和郭啸天兄弟二人在牛家村的农屋里喝酒，他们的岳飞大将军在风波亭被害之事，二人希望能够像岳飞大将军一样精忠报国。"]
+
     for d in text:
         with torch.no_grad():
             token_ids_test, segment_ids = tokenizer.encode(d, max_length=256)

@@ -143,12 +143,6 @@ def read_corpus_ci(dir_path):
     from collections import OrderedDict
     tokenizer = Tokenizer(word2idx)
 
-    try:               # Python 2
-        reload(sys)
-        sys.setdefaultencoding('utf-8')
-    except NameError:  # Python 3
-        pass
-
     c = sqlite3.connect(dir_path + '/ci.db')
 
     cursor = c.execute("SELECT name, long_desc, short_desc from ciauthor;")

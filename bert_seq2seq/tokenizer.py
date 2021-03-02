@@ -343,7 +343,7 @@ class Tokenizer(BasicTokenizer):
 
 
 if __name__ == "__main__":
-    word2idx = load_chinese_base_vocab(vocab_path="./state_dict/bert-base-chinese-vocab.txt", simplfied=True)
+    word2idx = load_chinese_base_vocab(vocab_path="./state_dict/bert-base-chinese-vocab.txt")
     # print(word2idx)
     # print(keep_tokens)
     # save_vocab("./save_vocab.txt", word2idx)
@@ -358,7 +358,7 @@ if __name__ == "__main__":
     # text = tokenizer.decode(input_ids)
     # print(text)
     # # print(segment_ids)
-    token_ids, segment_ids = tokenizer.encode("今天天气真好啊Easting 400元,，“哈哈” ")
+    token_ids, segment_ids = tokenizer.encode("I never thought i could do this.")
     print(token_ids)
     print(tokenizer.decode(token_ids))
 
