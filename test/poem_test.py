@@ -29,14 +29,13 @@ if __name__ == "__main__":
     checkpoint = torch.load(auto_title_model, map_location="cpu")
     # print(checkpoint)
     bert_model.load_all_params(model_path=auto_title_model, device=device)
-    test_data = ["江山竞秀，万里风光入画图##对联", 
-                ]
+    test_data = ["江山竞秀，万里风光入画图##对联"]
     with torch.no_grad():
         for text in test_data:
             if text[-1] == "句" or text[-1] == "诗":
                 print(bert_model.generate(text, beam_size=3, is_poem=True))
             else:
-                print(bert_model.generate(text, beam_size=3, is_poem=False))
+                print(bert_model.generate_random(text, beam_size=5))
 
 
 

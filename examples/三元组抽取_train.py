@@ -350,7 +350,7 @@ class ExtractTrainer:
                             object_p_pred = self.bert_model.predict_object_predicate(token_ids_test, sub_ids, device=self.device)
                             res = search_object(token_ids_test[0], object_p_pred.squeeze(0).cpu())
                             print("p and obj is " + str(res))
-            if step % 5000 == 0:
+            if step % 2000 == 0:
                 f1, recall, acc = self.test(self.data_dev)
                 if f1 > self.best_f1:
                     self.best_f1 = f1

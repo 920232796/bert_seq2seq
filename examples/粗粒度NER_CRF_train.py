@@ -68,7 +68,6 @@ def word_piece_tokenize(word):
     """
     if word in word2idx:
         return [word]
-
     tokens = []
     start, stop = 0, 0
     while start < len(word):
@@ -316,7 +315,7 @@ if __name__ == '__main__':
         trainer.train(epoch)
 
     # with open("./state_dict/corase_train_update.txt", "a+") as f:
-    #     with open("./state_dict/人民日报ner数据.txt", "r", encoding="utf-8") as f1 :
+    #     with open("./corpus/粗粒度NER/人民日报ner数据.txt", "r", encoding="utf-8") as f1 :
     #         lines = f1.readlines()
     #         start = 1
     #         string = ""
