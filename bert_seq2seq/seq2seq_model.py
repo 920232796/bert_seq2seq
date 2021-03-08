@@ -151,7 +151,7 @@ class Seq2SeqModel(BasicBert):
                 flag = (end_counts < 1)  # 标记未完成序列
                 if not flag.all():  # 如果有已完成的
                     for i, f in enumerate(flag):
-                        output_list.append(output_ids[i])
+                        output_list.append(output_ids[i][:-1])
                     token_ids = token_ids[flag]
                     token_type_ids = token_type_ids[flag]
                     new_input_ids = new_input_ids[flag]
