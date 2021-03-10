@@ -1,4 +1,5 @@
-## 自动对对联的例子
+## 自动聊天的例子
+# data from : https://github.com/liucongg/UnilmChatchitRobot
 import sys
 sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 import torch 
@@ -19,28 +20,43 @@ vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
 model_name = "roberta" # 选择模型名字
 model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
 recent_model_path = "" # 用于把已经训练好的模型继续训练
-model_save_path = "./bert_duilian_model.bin"
+model_save_path = "./bert_chat_model.bin"
 batch_size = 16
 lr = 1e-5
-data_dir = "./corpus/对联"
+data_path = "./corpus/chat_data/douban_kuakua_qa.txt"
 word2idx = load_chinese_base_vocab(vocab_path)
+maxlen = 256 
 
-def read_corpus(dir_path):
+def read_corpus():
     """
     读原始数据
     """
     sents_src = []
     sents_tgt = []
-    in_path = dir_path + "/in.txt"
-    out_path = dir_path + "/out.txt"
-    with open(in_path, "r", encoding="utf-8") as f:
+    last_qa = 0
+    with open(data_path, "r", encoding="utf-8") as f :
         lines = f.readlines()
-        for line in lines:
-            sents_src.append(line.strip())
-    with open(out_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-        for line in lines:
-            sents_tgt.append(line.strip())
+    for line in lines:
+        line = line.strip("\n").replace("<br/>", "")
+        line = line.split("\t")
+        # print(line)
+        if line[0] == "Q:":
+            last_qa = 0
+            sents_src.append(line[1])
+        elif line[0] == "A:":
+            last_qa = 1
+            sents_tgt.append(line[1])
+        else:
+            if last_qa == 0:
+                sents_src[-1] = sents_src[-1] + line[0]
+                # print("sents_src[-1]" + str(sents_src[-1]))
+            else:
+                sents_tgt[-1] = sents_tgt[-1] + line[0]
+                # print("sents_tgt[-1]" + str(sents_tgt[-1]))
+            
+        
+    assert len(sents_src) == len(sents_tgt), "input and target is not equal."
+
 
     return sents_src, sents_tgt
     
@@ -64,7 +80,7 @@ class BertDataset(Dataset):
         # print(i)
         src = self.sents_src[i]
         tgt = self.sents_tgt[i]
-        token_ids, token_type_ids = self.tokenizer.encode(src, tgt)
+        token_ids, token_type_ids = self.tokenizer.encode(src, tgt, max_length=maxlen)
         output = {
             "token_ids": token_ids,
             "token_type_ids": token_type_ids,
@@ -100,7 +116,7 @@ def collate_fn(batch):
 class Trainer:
     def __init__(self):
         # 加载数据
-        self.sents_src, self.sents_tgt = read_corpus(data_dir)
+        self.sents_src, self.sents_tgt = read_corpus()
         
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -136,11 +152,11 @@ class Trainer:
         step = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
             step += 1
-            if step % 5000 == 0:
+            if step % 1000 == 0:
                 self.bert_model.eval()
-                test_data = ["花海总涵功德水", "广汉飞霞诗似玉", "执政为民，德行天下"]
+                test_data = ["工作不开心", "我起晚了", "好像去吃火锅，但是我现在在减肥！"]
                 for text in test_data:
-                    print(self.bert_model.generate(text, beam_size=3))
+                    print(self.bert_model.generate_random(text, beam_size=3))
                 self.bert_model.train()
 
             # 因为传入了target标签，因此会计算loss并且返回
@@ -174,3 +190,9 @@ if __name__ == '__main__':
     for epoch in range(train_epoches):
         # 训练一个epoch
         trainer.train(epoch)
+
+
+    # sents_src, sents_tgt = read_corpus()
+
+    # print(sents_src[:10])
+    # print(sents_tgt[:10])

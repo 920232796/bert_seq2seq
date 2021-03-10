@@ -159,7 +159,6 @@ class Trainer:
             predictions, loss = self.bert_model(token_ids,
                                                 token_type_ids,
                                                 labels=target_ids,
-                                                device=self.device
                                                 )
             report_loss += loss.item()
             # 反向传播
