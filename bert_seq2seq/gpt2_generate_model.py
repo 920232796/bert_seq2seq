@@ -19,7 +19,7 @@ class GPT2(BasicGPT):
         
         token_ids, _ = self.tokenizer.encode(text, max_length=input_max_length)
         
-        token_ids = torch.tensor(token_ids, device=self.device, dtype=torch.long).view(1, -1)
+        token_ids = torch.tensor(token_ids, device=self.device, dtype=torch.long)[:-1].view(1, -1)
         output_ids = []
         sep_id = self.word2ix["[SEP]"]
         with torch.no_grad(): 
@@ -37,9 +37,25 @@ class GPT2(BasicGPT):
                 token_ids = torch.cat((token_ids, next_token.long().unsqueeze(0)), dim=1)
 
         return self.tokenizer.decode(np.array(output_ids))
+
+
+    def _make_causal_mask(self, input_ids_shape: torch.Size):
+   
+        bsz, tgt_len = input_ids_shape
+        mask = torch.full((tgt_len, tgt_len), 0.0).to(self.device)
+        mask_cond = torch.arange(mask.size(-1)).to(self.device)
+        mask.masked_fill_(mask_cond < (mask_cond + 1).view(mask.size(-1), 1), 1.0)
+    
+        return mask[None, None, :, :].expand(bsz, 1, tgt_len, tgt_len)
+
     
     def forward(self, x, label=None):
 
-        loss, lm_logit = self.model(x, label)
+        # input_ids = torch.tensor([[1, 2, 3, 5, -100], [4, 5, 6, -100, -100]])
+        attention_mask = self._make_causal_mask(x.shape)
+        pad_mask = (x != -100).float()
+        attention_mask = attention_mask * pad_mask.unsqueeze(1).unsqueeze(1)
+
+        loss, lm_logit = self.model(x, label, attention_mask=attention_mask)
        
         return loss, lm_logit

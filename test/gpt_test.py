@@ -9,6 +9,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 vocab_path = "./state_dict/gpt_vocab.txt"
 model_path = "./state_dict/gpt_pytorch_model.bin"
+
 if __name__ == "__main__":
     word2ix = load_chinese_base_vocab(vocab_path)
     model = load_gpt(word2ix)
