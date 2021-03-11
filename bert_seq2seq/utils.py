@@ -5,6 +5,7 @@ from bert_seq2seq.bert_seq_labeling import BertSeqLabeling
 from bert_seq2seq.bert_seq_labeling_crf import BertSeqLabelingCRF
 from bert_seq2seq.bert_relation_extraction import BertRelationExtrac
 import torch.nn.functional as F 
+from bert_seq2seq.gpt2_generate_model import GPT2
 
 def load_bert(word2ix, model_name="roberta", model_class="seq2seq", target_size=0):
     """
@@ -39,6 +40,11 @@ def load_bert(word2ix, model_name="roberta", model_class="seq2seq", target_size=
         return bert_model
     else :
         raise Exception("model_name_err")
+
+
+def load_gpt(word2ix):
+    model = GPT2(word2ix)
+    return model 
 
 # def load_model_params(model, pretrain_model_path, keep_tokens=None):
         

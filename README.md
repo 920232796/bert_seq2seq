@@ -11,11 +11,17 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 3. sequence_labeling 序列标注任务，比如命名实体识别，词性标注。
 4. relation_extract 关系抽取，比如三元组抽取任务。(复现苏剑林老师的例子，不完全一样。)
 四种任务分别加载四种不同的模型，通过``` model_class="seq2seq" or "cls" or "sequence_labeling" or "sequence_labeling_crf or relation_extrac"``` 参数去设置。具体可以去看examples里面的各种例子。当然也随时可以查看修改我的源代码～
+5. 最近新增了gpt2的例子，可以查看example中的gpt_test文件进行使用，gpt2中文通用模型和字典下载地址：https://pan.baidu.com/s/1vTYc8fJUmlQrre5p0JRelw  密码: f5un
 
 部分代码参考了 https://github.com/huggingface/transformers/ 和 https://github.com/bojone/bert4keras 
 非常感谢！！！
 
 ### 目前几个小例子的效果截图
+
+#### gpt2生成
+输入：今天天气好
+输出：
+，就 和 宝 贝 们 一 起 去 那 里 看 电 影 了 ，真 的 好 好 哦 ！环 境 什 么 的 都 是 没 得 说 的 ，电 影 很 精 致 ，音 效 也 很 不 错 ，不 知 道 这 家 店 还 开 着 没 有 ，希 望 有 空 的 话 可 以 经 常 去 看 看
 #### 写诗
 ![image.png](http://www.zhxing.online/image/acb592f918894ca6b62435d2464d3cb0.png)
 #### bert+crf ner
@@ -36,6 +42,9 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 ![image.png](https://github.com/920232796/bert_seq2seq/blob/master/img/ner.jpg)
 #### 对联
 ![image.png](http://www.zhxing.online/image/42eec322d6cc419da0efdc45c02d9f25.png)
+
+#### 语义匹配
+![image.png](https://blog-image-xzh.oss-cn-beijing.aliyuncs.com/c83d27eb-3c2d-4a5c-9496-cd635a0094be.jpg)
 
 ### 安装 
 1. 安装本框架 ```pip install bert-seq2seq```
@@ -58,6 +67,10 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 多谢支持。另外，网站上面还有一些介绍unilm论文和特殊的mask如何实现的文章，可以去网站里搜索一下。http://www.blog.zhxing.online/#/  搜索unilm 即可。
 
 ### 更新记录
+
+2021.03.11: 添加了gpt2例子，可以进行文章的续写。
+
+2021.03.11: 添加了一个随机生成的解码方式，生成更加多样了。
 
 2021.03.08: beam search 返回n个结果，随机取某个作为输出。
 

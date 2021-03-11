@@ -2,8 +2,6 @@
 import torch
 import torch.nn as nn 
 
-from bert_seq2seq.tokenizer import load_chinese_base_vocab, Tokenizer
-
 class BasicBert(nn.Module):
     def __init__(self):
         super().__init__()
@@ -21,6 +19,35 @@ class BasicBert(nn.Module):
             checkpoint[embedding_weight_name] = checkpoint[embedding_weight_name][keep_tokens]
             
         self.load_state_dict(checkpoint, strict=False)
+        torch.cuda.empty_cache()
+        print("{} loaded!".format(pretrain_model_path))
+
+    def load_all_params(self, model_path, device="cuda"):
+        checkpoint = torch.load(model_path, map_location=device)
+        self.load_state_dict(checkpoint)
+        torch.cuda.empty_cache()
+        print(str(model_path) + " loaded!")
+
+    def forward(self, x):
+        raise NotImplemented
+
+    def set_device(self, device):
+        self.device = torch.device(device)
+        self.to(device)
+        
+    def save_all_params(self, save_path):
+        torch.save(self.state_dict(), save_path)
+
+class BasicGPT(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.device = torch.device("cpu")
+
+    def load_pretrain_params(self, pretrain_model_path):
+        checkpoint = torch.load(pretrain_model_path)
+        checkpoint = {"model." + k: v for k, v in checkpoint.items()}
+
+        self.load_state_dict(checkpoint, strict=True)
         torch.cuda.empty_cache()
         print("{} loaded!".format(pretrain_model_path))
 
