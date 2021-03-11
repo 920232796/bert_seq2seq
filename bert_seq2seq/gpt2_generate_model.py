@@ -31,7 +31,7 @@ class GPT2(BasicGPT):
                 logit_score[self.word2ix["[UNK]"]] = -float('Inf')
                 filtered_logits = top_k_top_p_filtering(logit_score, top_k=top_k, top_p=top_p)
                 next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
-                if sep_id == filtered_logits.argmax().item():
+                if sep_id == next_token.item():
                     break
                 output_ids.append(next_token.item())
                 token_ids = torch.cat((token_ids, next_token.long().unsqueeze(0)), dim=1)
