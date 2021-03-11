@@ -7,6 +7,37 @@ import time
 from bert_seq2seq.config import yayun_list
 import os 
 from bert_seq2seq.basic_bert import BasicBert
+import numpy as np 
+
+def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
+    """ Filter a distribution of logits using top-k and/or nucleus (top-p) filtering
+        Args:
+            logits: logits distribution shape (vocabulary size)
+            top_k > 0: keep only top k tokens with highest probability (top-k filtering).
+            top_p > 0.0: keep the top tokens with cumulative probability >= top_p (nucleus filtering).
+                Nucleus filtering is described in Holtzman et al. (http://arxiv.org/abs/1904.09751)
+        From: https://gist.github.com/thomwolf/1a5a29f6962089e871b94cbd09daf317
+    """
+    assert logits.dim() == 1  # batch size 1 for now - could be updated for more but the code would be less clear
+    top_k = min(top_k, logits.size(-1))  # Safety check
+    if top_k > 0:
+        # Remove all tokens with a probability less than the last token of the top-k
+        indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None]
+        logits[indices_to_remove] = filter_value
+
+    if top_p > 0.0:
+        sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+        cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+
+        # Remove tokens with cumulative probability above the threshold
+        sorted_indices_to_remove = cumulative_probs > top_p
+        # Shift the indices to the right to keep also the first token above the threshold
+        sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+        sorted_indices_to_remove[..., 0] = 0
+
+        indices_to_remove = sorted_indices[sorted_indices_to_remove]
+        logits[indices_to_remove] = filter_value
+    return logits
 
 class Seq2SeqModel(BasicBert):
     """
@@ -109,6 +140,30 @@ class Seq2SeqModel(BasicBert):
         out_puts_ids_list = self.beam_search_list(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=self.device)
         random_int = random.randint(0, len(out_puts_ids_list) - 1)
         return self.tokenizer.decode(out_puts_ids_list[random_int].cpu().numpy())
+
+    def sample_generate(self, text, out_max_length=40, top_k=30, top_p=0.0, max_length=256):
+        input_max_length = max_length - out_max_length
+        token_ids, token_type_ids = self.tokenizer.encode(text, max_length=input_max_length)
+
+        token_ids = torch.tensor(token_ids, device=self.device, dtype=torch.long).view(1, -1)
+        token_type_ids = torch.tensor(token_type_ids, device=self.device, dtype=torch.long).view(1, -1)
+        device = self.device
+        output_ids = []
+        sep_id = self.word2ix["[SEP]"]
+        with torch.no_grad(): 
+            for step in range(out_max_length):
+                scores = self.forward(token_ids, token_type_ids)
+                logit_score = torch.log_softmax(scores[:, -1], dim=-1).squeeze(0)
+                logit_score[self.word2ix["[UNK]"]] = -float('Inf')
+                filtered_logits = top_k_top_p_filtering(logit_score, top_k=top_k, top_p=top_p)
+                next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
+                if sep_id == next_token.item():
+                    break
+                output_ids.append(next_token.item())
+                token_ids = torch.cat((token_ids, next_token.long().unsqueeze(0)), dim=1)
+                token_type_ids = torch.cat([token_type_ids, torch.ones((1, 1), device=device, dtype=torch.long)], dim=1)
+
+        return self.tokenizer.decode(np.array(output_ids))
 
     def beam_search_list(self, token_ids, token_type_ids, word2ix, beam_size=3, device="cpu"):
         """
@@ -583,6 +638,3 @@ class Seq2SeqModel(BasicBert):
             return output_ids[output_scores.argmax()]
 
 
-
-        
-       

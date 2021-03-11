@@ -4,6 +4,7 @@ from bert_seq2seq.bert_cls_classifier import BertClsClassifier
 from bert_seq2seq.bert_seq_labeling import BertSeqLabeling
 from bert_seq2seq.bert_seq_labeling_crf import BertSeqLabelingCRF
 from bert_seq2seq.bert_relation_extraction import BertRelationExtrac
+import torch.nn.functional as F 
 
 def load_bert(word2ix, model_name="roberta", model_class="seq2seq", target_size=0):
     """

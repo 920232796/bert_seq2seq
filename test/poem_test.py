@@ -35,7 +35,8 @@ if __name__ == "__main__":
             if text[-1] == "句" or text[-1] == "诗":
                 print(bert_model.generate(text, beam_size=3, is_poem=True))
             else:
-                print(bert_model.generate_random(text, beam_size=5))
+                # print(bert_model.generate_random(text, beam_size=5))
+                print(bert_model.sample_generate(text))
 
 
 
