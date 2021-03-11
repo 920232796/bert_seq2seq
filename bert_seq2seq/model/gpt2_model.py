@@ -618,20 +618,19 @@ class GPT2LMHeadModel(nn.Module):
         return loss, lm_logits
 
 
+# if __name__ == "__main__":
+#     config = GPT2Config()
 
-if __name__ == "__main__":
-    config = GPT2Config()
+#     model = GPT2LMHeadModel(config=config)
+#     model.eval()
+#     t1 = torch.randint(1, 1000, (2, 10))
+#     print(t1.shape)
+#     for k, v in model.named_parameters():
+#         print(k)
+#         if "lm_head" in k:
+#             print(v.shape)
+#     model.load_state_dict(torch.load("./state_dict/gpt_pytorch_model.bin"))
 
-    model = GPT2LMHeadModel(config=config)
-    model.eval()
-    t1 = torch.randint(1, 1000, (2, 10))
-    print(t1.shape)
-    for k, v in model.named_parameters():
-        print(k)
-        if "lm_head" in k:
-            print(v.shape)
-    model.load_state_dict(torch.load("./state_dict/gpt_pytorch_model.bin"))
-
-    loss, out = model(t1)
-    print(out.shape)
-    print(sample_generate(model, "今天天气好", out_max_length=100))
+#     loss, out = model(t1)
+#     print(out.shape)
+#     print(sample_generate(model, "今天天气好", out_max_length=100))
