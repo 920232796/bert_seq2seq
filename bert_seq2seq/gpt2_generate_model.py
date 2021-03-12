@@ -8,10 +8,13 @@ from bert_seq2seq.tokenizer import Tokenizer
 import torch.nn.functional as F 
 
 class GPT2(BasicGPT):
-    def __init__(self, word2ix):
+    def __init__(self, word2ix, tokenizer=None):
         super().__init__()
         self.word2ix = word2ix
-        self.tokenizer = Tokenizer(word2ix)
+        if tokenizer is not None:
+            self.tokenizer = tokenizer
+        else:
+            self.tokenizer = Tokenizer(word2ix)
         self.config = GPT2Config(len(word2ix))
         self.model = GPT2LMHeadModel(self.config)
     
@@ -37,6 +40,29 @@ class GPT2(BasicGPT):
                 token_ids = torch.cat((token_ids, next_token.long().unsqueeze(0)), dim=1)
 
         return self.tokenizer.decode(np.array(output_ids))
+
+    def sample_generate_english(self, text, input_max_length=256, out_max_length=200, top_k=30, top_p=0.0):
+
+        token_ids = self.tokenizer.encode(text, max_length=input_max_length, truncation=True)
+
+        token_ids = torch.tensor(token_ids, device=self.device, dtype=torch.long)[:-1].view(1, -1)
+        output_ids = []
+        sep_id = self.word2ix["<EOS>"]
+        with torch.no_grad():
+            for step in range(out_max_length):
+                _, scores = self.model(token_ids)
+                # print(scores.shape)
+                logit_score = torch.log_softmax(scores[:, -1], dim=-1).squeeze(0)
+                # print(logit_score.shape)
+                logit_score[self.word2ix["unk"]] = -float('Inf')
+                filtered_logits = top_k_top_p_filtering(logit_score, top_k=top_k, top_p=top_p)
+                next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
+                if sep_id == next_token.item():
+                    break
+                output_ids.append(next_token.item())
+                token_ids = torch.cat((token_ids, next_token.long().unsqueeze(0)), dim=1)
+
+        return self.tokenizer.decode(output_ids)
 
 
     def _make_causal_mask(self, input_ids_shape: torch.Size):

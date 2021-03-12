@@ -44,7 +44,7 @@ class BasicGPT(nn.Module):
         self.device = torch.device("cpu")
 
     def load_pretrain_params(self, pretrain_model_path):
-        checkpoint = torch.load(pretrain_model_path)
+        checkpoint = torch.load(pretrain_model_path, map_location=self.device)
         checkpoint = {"model." + k: v for k, v in checkpoint.items()}
 
         self.load_state_dict(checkpoint, strict=True)

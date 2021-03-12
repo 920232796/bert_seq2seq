@@ -42,8 +42,8 @@ def load_bert(word2ix, model_name="roberta", model_class="seq2seq", target_size=
         raise Exception("model_name_err")
 
 
-def load_gpt(word2ix):
-    model = GPT2(word2ix)
+def load_gpt(word2ix, tokenizer=None):
+    model = GPT2(word2ix, tokenizer=tokenizer)
     return model 
 
 # def load_model_params(model, pretrain_model_path, keep_tokens=None):
