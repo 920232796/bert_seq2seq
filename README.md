@@ -3,16 +3,16 @@
 
 pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎star～ 谢谢谢谢。如果遇到问题也可以提issue，保证会回复。
 
-也欢迎加入交流群～ 可以提问题，提建议，互相交流 QQ群: 975907202 
+### 也欢迎加入交流群～ 可以提问题，提建议，互相交流 QQ群: 975907202
 
-本框架目前可以做各种NLP任务，一共分为四种：
+### 本框架目前可以做各种NLP任务，支持bert、roberta、gpt2模型：
 1. seq2seq 比如写诗，对联，自动摘要等。
 2. cls_classifier 通过提取句首的cls向量去做分类，比如情感分析，文本分类。
 3. sequence_labeling 序列标注任务，比如命名实体识别，词性标注。
 4. relation_extract 关系抽取，比如三元组抽取任务。(复现苏剑林老师的例子，不完全一样。)
 四种任务分别加载四种不同的模型，通过``` model_class="seq2seq" or "cls" or "sequence_labeling" or "sequence_labeling_crf or relation_extrac"``` 参数去设置。具体可以去看examples里面的各种例子。当然也随时可以查看修改我的源代码～
-5. 最近新增了gpt2的例子，可以查看example中的gpt_test文件进行使用，gpt2中文通用模型和字典下载地址：https://pan.baidu.com/s/1vTYc8fJUmlQrre5p0JRelw  密码: f5un
-
+5. 最近支持了gpt2模型，可以查看test文件中的gpt_test文件进行使用，gpt2中文通用模型和字典下载地址：https://pan.baidu.com/s/1vTYc8fJUmlQrre5p0JRelw  密码: f5un
+6. gpt2英文模型也支持，具体参考了https://huggingface.co/pranavpsv/gpt2-genre-story-generator 这个预训练的model，具体的训练代码可以看example中的gpt2_english_story_train.py
 部分代码参考了 https://github.com/huggingface/transformers/ 和 https://github.com/bojone/bert4keras 
 非常感谢！！！
 
@@ -68,6 +68,8 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 多谢支持。另外，网站上面还有一些介绍unilm论文和特殊的mask如何实现的文章，可以去网站里搜索一下。http://www.blog.zhxing.online/#/  搜索unilm 即可。
 
 ### 更新记录
+
+2021.03.12: 添加了gpt2中文训练的例子，周公解梦。
 
 2021.03.11: 添加了gpt2例子，可以进行文章的续写。
 
