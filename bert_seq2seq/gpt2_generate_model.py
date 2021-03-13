@@ -41,11 +41,12 @@ class GPT2(BasicGPT):
 
         return self.tokenizer.decode(np.array(output_ids))
 
-    def sample_generate_english(self, text, input_max_length=256, out_max_length=200, top_k=30, top_p=0.0):
+    def sample_generate_english(self, text, input_max_length=256, out_max_length=200, top_k=30, top_p=0.0, add_eos=False):
 
         token_ids = self.tokenizer.encode(text, max_length=input_max_length, truncation=True)
-
-        token_ids = torch.tensor(token_ids, device=self.device, dtype=torch.long)[:-1].view(1, -1)
+        if add_eos:
+            token_ids = token_ids + [self.word2ix["<EOS>"]]
+        token_ids = torch.tensor(token_ids, device=self.device, dtype=torch.long).view(1, -1)
         output_ids = []
         sep_id = self.word2ix["<EOS>"]
         with torch.no_grad():
@@ -59,6 +60,7 @@ class GPT2(BasicGPT):
                 next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
                 if sep_id == next_token.item():
                     break
+                    # pass
                 output_ids.append(next_token.item())
                 token_ids = torch.cat((token_ids, next_token.long().unsqueeze(0)), dim=1)
 
@@ -75,13 +77,15 @@ class GPT2(BasicGPT):
         return mask[None, None, :, :].expand(bsz, 1, tgt_len, tgt_len)
 
     
-    def forward(self, x, label=None):
-
+    def forward(self, x, labels=None):
+        if labels is not None:
+            labels = labels.to(self.device)
+        x = x.to(self.device)
         # input_ids = torch.tensor([[1, 2, 3, 5, -100], [4, 5, 6, -100, -100]])
         attention_mask = self._make_causal_mask(x.shape)
         pad_mask = (x != -100).float()
         attention_mask = attention_mask * pad_mask.unsqueeze(1).unsqueeze(1)
 
-        loss, lm_logit = self.model(x, label, attention_mask=attention_mask)
+        loss, lm_logit = self.model(x, labels=labels, attention_mask=attention_mask)
        
         return loss, lm_logit
