@@ -101,7 +101,7 @@ class Trainer:
         self.model = load_gpt(word2ix, tokenizer=tokenizer)
         self.model.load_pretrain_params(model_path)
         # 加载已经训练好的模型，继续训练
-
+        
         # 将模型发送到计算设备(GPU或CPU)
         self.model.set_device(self.device)
         # 声明需要优化的参数
