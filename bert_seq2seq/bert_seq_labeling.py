@@ -9,7 +9,6 @@ class BertSeqLabeling(BasicBert):
     """
     def __init__(self, word2ix, target_size, model_name="roberta"):
         super(BertSeqLabeling, self).__init__()
-        self.tokenizer = Tokenizer(word2ix)
         self.target_size = target_size
         config = ""
         if model_name == "roberta":

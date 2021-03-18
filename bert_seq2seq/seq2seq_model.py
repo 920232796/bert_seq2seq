@@ -42,10 +42,13 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
 class Seq2SeqModel(BasicBert):
     """
     """
-    def __init__(self, word2ix, model_name="roberta"):
+    def __init__(self, word2ix, model_name="roberta", tokenizer=None):
         super(Seq2SeqModel, self).__init__()
         self.word2ix = word2ix
-        self.tokenizer = Tokenizer(word2ix)
+        if tokenizer is None:
+            self.tokenizer = Tokenizer(word2ix)
+        else:
+            self.tokenizer = tokenizer
         config = ""
         if model_name == "roberta":
             from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertLMPredictionHead

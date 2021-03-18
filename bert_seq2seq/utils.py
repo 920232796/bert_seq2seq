@@ -7,14 +7,14 @@ from bert_seq2seq.bert_relation_extraction import BertRelationExtrac
 import torch.nn.functional as F 
 from bert_seq2seq.gpt2_generate_model import GPT2
 
-def load_bert(word2ix, model_name="roberta", model_class="seq2seq", target_size=0):
+def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2seq", target_size=0):
     """
     model_path: 模型位置
     这是个统一的接口，用来加载模型的
     model_class : seq2seq or encoder
     """
     if model_class == "seq2seq":
-        bert_model = Seq2SeqModel(word2ix, model_name=model_name)
+        bert_model = Seq2SeqModel(word2ix, model_name=model_name, tokenizer=tokenizer)
         return bert_model
     elif model_class == "cls":
         if target_size == 0:
