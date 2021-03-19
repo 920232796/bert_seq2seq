@@ -10,6 +10,7 @@ import json
 import time
 import bert_seq2seq
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq.extend_model_method import OtherModel
 from bert_seq2seq.utils import load_bert
 
 auto_title_model = "./state_dict/bert_model_poem_ci_duilian.bin"
@@ -36,7 +37,7 @@ if __name__ == "__main__":
                 print(bert_model.generate(text, beam_size=3, is_poem=True))
             else:
                 # print(bert_model.generate_random(text, beam_size=5))
-                print(bert_model.sample_generate(text))
+                print(bert_model.generate(text, beam_size=3, is_poem=False))
 
 
 

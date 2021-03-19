@@ -17,6 +17,6 @@ if __name__ == "__main__":
     model = load_gpt(word2ix, tokenizer=tokenizer)
     model.eval()
     model.set_device(device)
-    model.load_all_params(model_path)
+    model.load_all_params(model_path, device=device)
 
     print(model.sample_generate_english("Strong Winds", out_max_length=300, add_eos=True))
