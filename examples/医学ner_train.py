@@ -38,7 +38,6 @@ crf_lr = 1e-2 ##  crf层学习率为0.01
 # 加载字典
 word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
 
-
 def from_ann2dic(w_path):
 
     for i in range(1000):

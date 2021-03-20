@@ -1,6 +1,7 @@
 import unicodedata
 from typing import List, Dict
 import re
+import jieba
 
 
 def load_chinese_base_vocab(vocab_path, simplfied=False, startswith=["[PAD]", "[UNK]", "[CLS]", "[SEP]"]):
@@ -341,26 +342,40 @@ class Tokenizer(BasicTokenizer):
         """
         return bool(ch) and (ch[0] == '[') and (ch[-1] == ']')
 
+class T5PegasusTokenizer(Tokenizer):
+    def __init__(self, token_dict, pre_tokenizer=lambda x: jieba.cut(x, HMM=False)):
+        super().__init__(token_dict)
+        self.pre_tokenizer = pre_tokenizer
+
+    def _tokenize(self, text, *arg, **kwargs):
+        split_tokens = []
+        for text in self.pre_tokenizer(text):
+            if text in self._token_dict:
+                split_tokens.append(text)
+            else:
+                split_tokens.extend(super()._tokenize(text))
+        return split_tokens
+
 
 if __name__ == "__main__":
-    word2idx = load_chinese_base_vocab(vocab_path="./state_dict/bert-base-chinese-vocab.txt")
+    word2idx = load_chinese_base_vocab(vocab_path="./state_dict/t5-chinese/vocab.txt")
     # print(word2idx)
     # print(keep_tokens)
     # save_vocab("./save_vocab.txt", word2idx)
     # return 
-    tokenizer = Tokenizer(word2idx)
+    tokenizer = T5PegasusTokenizer(word2idx)
     # # print(word2idx["今"])
     # print(len(word2idx))
     # # print(word2idx["[PAD]"])
     # # print(word2idx["[SEP]"])
 
-    # input_ids, segment_ids = tokenizer.encode("你好啊，今天过的怎么样？", "我很好，谢谢你啦")
-    # text = tokenizer.decode(input_ids)
-    # print(text)
+    input_ids, segment_ids = tokenizer.encode("你好啊，今天过的怎么样？", "我很好，谢谢你啦")
+    text = tokenizer.decode(input_ids)
+    print(text)
     # # print(segment_ids)
-    token_ids, segment_ids = tokenizer.encode("I never thought i could do this.")
-    print(token_ids)
-    print(tokenizer.decode(token_ids))
+    # token_ids, segment_ids = tokenizer.encode("I never thought i could do this.")
+    # print(token_ids)
+    # print(tokenizer.decode(token_ids))
 
     # save_vocab("./save_vocab.txt", word2idx)
 
