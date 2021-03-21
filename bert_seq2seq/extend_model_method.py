@@ -12,6 +12,8 @@ class ExtendModel:
         self.bos_id = bos_id
         self.eos_id = eos_id
 
+    def __call__(self, *args, **kwargs):
+        return self.model(*args, **kwargs)
 
     def sample_generate_autoregressive(self, text, input_max_length=256, out_max_length=200, top_k=30, top_p=0.0, add_eos=False):
 
@@ -134,3 +136,4 @@ class ExtendModel:
                         beam_size = flag.sum()  # topk相应变化
 
             return output_ids[output_scores.argmax()]
+

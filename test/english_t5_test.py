@@ -22,4 +22,12 @@ if __name__ == "__main__":
     model = ExtendModel(model, tokenizer, bos_id=0, eos_id=1)
     print(model.sample_generate_encoder_decoder("translate English to German: That is good", out_max_length=300, add_eos=True))
 
-
+    # t1 = (torch.rand(2, 10) * 10).long()
+    # label = (torch.rand(2, 10) * 10).long()
+    # # decoder_input = label[:, :-1]
+    # # labels = label[:, 1:]
+    #
+    # out = model(input_ids=t1, decoder_input_ids=label, labels=label)
+    # print(out[0])
+    #
+    # print(out[1].shape)

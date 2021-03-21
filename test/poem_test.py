@@ -10,7 +10,6 @@ import json
 import time
 import bert_seq2seq
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.extend_model_method import OtherModel
 from bert_seq2seq.utils import load_bert
 
 auto_title_model = "./state_dict/bert_model_poem_ci_duilian.bin"
