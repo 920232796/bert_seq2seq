@@ -21,7 +21,7 @@ if __name__ == "__main__":
     bert_model.eval()
     ## 加载训练的模型参数～
     bert_model.load_all_params(model_path=cls_model, device=device)
-    test_data = ["你是不是我男朋友#你是不是俺的男友", 
+    test_data = ["你是不是我仇人#你是俺的仇人吗",
                 "这个就没意思了#我没别的意思", 
                 "查一下我的家在哪里#家在哪里?"]
     for text in test_data:
@@ -29,4 +29,3 @@ if __name__ == "__main__":
             text_ids, _ = tokenizer.encode(text)
             text_ids = torch.tensor(text_ids, device=device).view(1, -1)
             print(text + " -> res is " + str(target[torch.argmax(bert_model(text_ids)).item()]))
-        
