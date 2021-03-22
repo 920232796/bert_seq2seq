@@ -8,7 +8,7 @@ class BasicBert(nn.Module):
         self.device = torch.device("cpu")
 
     def load_pretrain_params(self, pretrain_model_path, keep_tokens=None):
-        checkpoint = torch.load(pretrain_model_path)
+        checkpoint = torch.load(pretrain_model_path, map_location=self.device)
         # 模型刚开始训练的时候, 需要载入预训练的BERT
 
         checkpoint = {k: v for k, v in checkpoint.items()
