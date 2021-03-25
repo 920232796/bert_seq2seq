@@ -57,7 +57,6 @@ def _is_cjk_character(ch):
         0xF900 <= code <= 0xFAFF or \
         0x2F800 <= code <= 0x2FA1F
 
-@staticmethod
 def _is_control(ch):
     """控制类字符判断
     """
