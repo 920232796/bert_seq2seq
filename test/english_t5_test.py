@@ -11,8 +11,6 @@ from bert_seq2seq.extend_model_method import ExtendModel
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model_path = "./state_dict/gpt_auto_story.bin"
-
 if __name__ == "__main__":
 
     tokenizer = AutoTokenizer.from_pretrained("/Users/xingzhaohu/Downloads/t5_test")
