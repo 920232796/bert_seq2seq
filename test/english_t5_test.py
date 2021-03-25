@@ -21,20 +21,3 @@ if __name__ == "__main__":
     print(model.sample_generate_encoder_decoder("translate English to German: That is good", out_max_length=300, add_eos=True))
 
 
-    t1 = (torch.rand(2, 10) * 10).long()
-    label = (torch.rand(2, 10) * 10).long()
-    # (2, 10)
-    out = model(input_ids=t1, decoder_input_ids=label, labels=label)
-    print(len(out))
-    print(out[0])
-
-
-    # # decoder_input = label[:, :-1]
-    # # labels = label[:, 1:]
-    #
-    # out = model(input_ids=t1, decoder_input_ids=label, labels=label)
-    # print(out[0])
-    #
-    # print(out[1].shape)
-
-
