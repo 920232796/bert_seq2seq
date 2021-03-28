@@ -32,18 +32,72 @@ class T5Config:
 
     def __init__(
         self,
-        vocab_size=32128,
-        d_model=512,
+        vocab_size=50000,
+        d_model=768,
         d_kv=64,
         d_ff=2048,
-        num_layers=6,
-        num_decoder_layers=None,
-        num_heads=8,
+        num_layers=12,
+        num_decoder_layers=12,
+        num_heads=12,
         relative_attention_num_buckets=32,
         dropout_rate=0.1,
         layer_norm_epsilon=1e-6,
         initializer_factor=1.0,
-        feed_forward_proj="relu",
+        feed_forward_proj="gated-gelu",
+        is_encoder_decoder=True,
+        use_cache=True,
+        pad_token_id=0,
+        eos_token_id=1,
+        is_decoder=False,
+    ):
+        self.is_decoder = is_decoder
+        self.vocab_size = vocab_size
+        self.d_model = d_model
+        self.d_kv = d_kv
+        self.d_ff = d_ff
+        self.num_layers = num_layers
+        self.num_decoder_layers = (
+            num_decoder_layers if num_decoder_layers is not None else self.num_layers
+        )  # default = symmetry
+        self.num_heads = num_heads
+        self.relative_attention_num_buckets = relative_attention_num_buckets
+        self.dropout_rate = dropout_rate
+        self.layer_norm_epsilon = layer_norm_epsilon
+        self.initializer_factor = initializer_factor
+        self.feed_forward_proj = feed_forward_proj
+        self.use_cache = use_cache
+
+    @property
+    def hidden_size(self):
+        return self.d_model
+
+    @property
+    def num_attention_heads(self):
+        return self.num_heads
+
+    @property
+    def num_hidden_layers(self):
+        return self.num_layers
+
+class T5SmallConfig:
+
+    model_type = "t5"
+    keys_to_ignore_at_inference = ["past_key_values"]
+
+    def __init__(
+        self,
+        vocab_size=50000,
+        d_model=512,
+        d_kv=64,
+        d_ff=1024,
+        num_layers=8,
+        num_decoder_layers=8,
+        num_heads=6,
+        relative_attention_num_buckets=32,
+        dropout_rate=0.1,
+        layer_norm_epsilon=1e-6,
+        initializer_factor=1.0,
+        feed_forward_proj="gated-gelu",
         is_encoder_decoder=True,
         use_cache=True,
         pad_token_id=0,
@@ -232,6 +286,65 @@ class T5Attention(nn.Module):
             self.relative_attention_bias = nn.Embedding(self.relative_attention_num_buckets, self.n_heads)
         self.pruned_heads = set()
 
+    @staticmethod
+    def _relative_position_bucket(relative_position, bidirectional=True, num_buckets=32, max_distance=128):
+        """
+        Adapted from Mesh Tensorflow:
+        https://github.com/tensorflow/mesh/blob/0cb87fe07da627bf0b7e60475d59f95ed6b5be3d/mesh_tensorflow/transformer/transformer_layers.py#L593
+        Translate relative position to a bucket number for relative attention. The relative position is defined as
+        memory_position - query_position, i.e. the distance in tokens from the attending position to the attended-to
+        position. If bidirectional=False, then positive relative positions are invalid. We use smaller buckets for
+        small absolute relative_position and larger buckets for larger absolute relative_positions. All relative
+        positions >=max_distance map to the same bucket. All relative positions <=-max_distance map to the same bucket.
+        This should allow for more graceful generalization to longer sequences than the model has been trained on
+        Args:
+            relative_position: an int32 Tensor
+            bidirectional: a boolean - whether the attention is bidirectional
+            num_buckets: an integer
+            max_distance: an integer
+        Returns:
+            a Tensor with the same shape as relative_position, containing int32 values in the range [0, num_buckets)
+        """
+        relative_buckets = 0
+        if bidirectional:
+            num_buckets //= 2
+            relative_buckets += (relative_position > 0).to(torch.long) * num_buckets
+            relative_position = torch.abs(relative_position)
+        else:
+            relative_position = -torch.min(relative_position, torch.zeros_like(relative_position))
+        # now relative_position is in the range [0, inf)
+
+        # half of the buckets are for exact increments in positions
+        max_exact = num_buckets // 2
+        is_small = relative_position < max_exact
+
+        # The other half of the buckets are for logarithmically bigger bins in positions up to max_distance
+        relative_postion_if_large = max_exact + (
+                torch.log(relative_position.float() / max_exact)
+                / math.log(max_distance / max_exact)
+                * (num_buckets - max_exact)
+        ).to(torch.long)
+        relative_postion_if_large = torch.min(
+            relative_postion_if_large, torch.full_like(relative_postion_if_large, num_buckets - 1)
+        )
+
+        relative_buckets += torch.where(is_small, relative_position, relative_postion_if_large)
+        return relative_buckets
+
+    def compute_bias(self, query_length, key_length):
+        """ Compute binned relative position bias """
+        context_position = torch.arange(query_length, dtype=torch.long)[:, None]
+        memory_position = torch.arange(key_length, dtype=torch.long)[None, :]
+        relative_position = memory_position - context_position  # shape (query_length, key_length)
+        relative_position_bucket = self._relative_position_bucket(
+            relative_position,  # shape (query_length, key_length)
+            bidirectional=(not self.is_decoder),
+            num_buckets=self.relative_attention_num_buckets,
+        )
+        relative_position_bucket = relative_position_bucket.to(self.relative_attention_bias.weight.device)
+        values = self.relative_attention_bias(relative_position_bucket)  # shape (query_length, key_length, num_heads)
+        values = values.permute([2, 0, 1]).unsqueeze(0)  # shape (1, num_heads, query_length, key_length)
+        return values
 
     def forward(
         self,
@@ -528,6 +641,7 @@ class T5Block(nn.Module):
 class T5Stack(nn.Module):
     def __init__(self, config, embed_tokens=None):
         super().__init__()
+        self.config = config
 
         self.embed_tokens = embed_tokens
         self.is_decoder = config.is_decoder
@@ -546,6 +660,88 @@ class T5Stack(nn.Module):
 
     def set_input_embeddings(self, new_embeddings):
         self.embed_tokens = new_embeddings
+
+    def get_extended_attention_mask(self, attention_mask, input_shape, device):
+        """
+        Makes broadcastable attention and causal masks so that future and masked tokens are ignored.
+        Arguments:
+            attention_mask (:obj:`torch.Tensor`):
+                Mask with ones indicating tokens to attend to, zeros for tokens to ignore.
+            input_shape (:obj:`Tuple[int]`):
+                The shape of the input to the model.
+            device: (:obj:`torch.device`):
+                The device of the input to the model.
+        Returns:
+            :obj:`torch.Tensor` The extended attention mask, with a the same dtype as :obj:`attention_mask.dtype`.
+        """
+        # We can provide a self-attention mask of dimensions [batch_size, from_seq_length, to_seq_length]
+        # ourselves in which case we just need to make it broadcastable to all heads.
+        if attention_mask.dim() == 3:
+            extended_attention_mask = attention_mask[:, None, :, :]
+        elif attention_mask.dim() == 2:
+            # Provided a padding mask of dimensions [batch_size, seq_length]
+            # - if the model is a decoder, apply a causal mask in addition to the padding mask
+            # - if the model is an encoder, make the mask broadcastable to [batch_size, num_heads, seq_length, seq_length]
+            if self.config.is_decoder:
+                batch_size, seq_length = input_shape
+                seq_ids = torch.arange(seq_length, device=device)
+                causal_mask = seq_ids[None, None, :].repeat(batch_size, seq_length, 1) <= seq_ids[None, :, None]
+                # in case past_key_values are used we need to add a prefix ones mask to the causal mask
+                # causal and attention masks must have same type with pytorch version < 1.3
+                causal_mask = causal_mask.to(attention_mask.dtype)
+
+                if causal_mask.shape[1] < attention_mask.shape[1]:
+                    prefix_seq_len = attention_mask.shape[1] - causal_mask.shape[1]
+                    causal_mask = torch.cat(
+                        [
+                            torch.ones(
+                                (batch_size, seq_length, prefix_seq_len), device=device, dtype=causal_mask.dtype
+                            ),
+                            causal_mask,
+                        ],
+                        axis=-1,
+                    )
+
+                extended_attention_mask = causal_mask[:, None, :, :] * attention_mask[:, None, None, :]
+            else:
+                extended_attention_mask = attention_mask[:, None, None, :]
+        else:
+            raise ValueError(
+                "Wrong shape for input_ids (shape {}) or attention_mask (shape {})".format(
+                    input_shape, attention_mask.shape
+                )
+            )
+
+            # Since attention_mask is 1.0 for positions we want to attend and 0.0 for
+            # masked positions, this operation will create a tensor which is 0.0 for
+            # positions we want to attend and -10000.0 for masked positions.
+            # Since we are adding it to the raw scores before the softmax, this is
+            # effectively the same as removing these entirely.
+        extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
+        return extended_attention_mask
+
+    def invert_attention_mask(self, encoder_attention_mask):
+        """
+        Invert an attention mask (e.g., switches 0. and 1.).
+        Args:
+            encoder_attention_mask (:obj:`torch.Tensor`): An attention mask.
+        Returns:
+            :obj:`torch.Tensor`: The inverted attention mask.
+        """
+        if encoder_attention_mask.dim() == 3:
+            encoder_extended_attention_mask = encoder_attention_mask[:, None, :, :]
+        if encoder_attention_mask.dim() == 2:
+            encoder_extended_attention_mask = encoder_attention_mask[:, None, None, :]
+        # T5 has a mask that can compare sequence ids, we can simulate this here with this transposition
+        # Cf. https://github.com/tensorflow/mesh/blob/8d2465e9bc93129b913b5ccc6a59aa97abd96ec6/mesh_tensorflow
+        # /transformer/transformer_layers.py#L270
+        # encoder_extended_attention_mask = (encoder_extended_attention_mask ==
+        # encoder_extended_attention_mask.transpose(-1, -2))
+
+
+        encoder_extended_attention_mask = (1.0 - encoder_extended_attention_mask) * -1e9
+
+        return encoder_extended_attention_mask
 
     def forward(
         self,
@@ -567,11 +763,7 @@ class T5Stack(nn.Module):
             torch.cuda.set_device(self.first_device)
             self.embed_tokens = self.embed_tokens.to(self.first_device)
         use_cache = use_cache if use_cache is not None else self.config.use_cache
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-        )
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
 
         if input_ids is not None and inputs_embeds is not None:
             err_msg_prefix = "decoder_" if self.is_decoder else ""
@@ -622,10 +814,8 @@ class T5Stack(nn.Module):
             encoder_extended_attention_mask = None
 
         # Prepare head mask if needed
-        head_mask = self.get_head_mask(head_mask, self.config.num_layers)
-        encoder_head_mask = self.get_head_mask(encoder_head_mask, self.config.num_layers)
         present_key_value_states = () if use_cache else None
-        all_hidden_states = () if output_hidden_states else None
+        all_hidden_states = None
         all_attentions = () if output_attentions else None
         all_cross_attentions = () if (output_attentions and self.is_decoder) else None
         position_bias = None
@@ -634,8 +824,8 @@ class T5Stack(nn.Module):
         hidden_states = self.dropout(inputs_embeds)
 
         for i, (layer_module, past_key_value) in enumerate(zip(self.block, past_key_values)):
-            layer_head_mask = head_mask[i]
-            encoder_layer_head_mask = encoder_head_mask[i]
+            layer_head_mask = None
+            encoder_layer_head_mask = None
             # Model parallel
             if self.model_parallel:
                 torch.cuda.set_device(hidden_states.device)
@@ -664,8 +854,8 @@ class T5Stack(nn.Module):
                 encoder_hidden_states=encoder_hidden_states,
                 encoder_attention_mask=encoder_extended_attention_mask,
                 encoder_decoder_position_bias=encoder_decoder_position_bias,
-                layer_head_mask=layer_head_mask,
-                encoder_layer_head_mask=encoder_layer_head_mask,
+                layer_head_mask=None,
+                encoder_layer_head_mask=None,
                 past_key_value=past_key_value,
                 use_cache=use_cache,
                 output_attentions=output_attentions,
@@ -717,6 +907,7 @@ class T5Model(nn.Module):
 
     def __init__(self, config: T5Config):
         super().__init__()
+        self.config = config
         self.shared = nn.Embedding(config.vocab_size, config.d_model)
 
         encoder_config = copy.deepcopy(config)
@@ -787,7 +978,6 @@ class T5Model(nn.Module):
             >>> last_hidden_states = outputs.last_hidden_state
         """
         use_cache = use_cache if use_cache is not None else self.config.use_cache
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         # Encode if needed (training, first prediction pass)
         if encoder_outputs is None:
@@ -820,7 +1010,7 @@ class T5Model(nn.Module):
         )
 
 
-        return (decoder_outputs.last_hidden_state, )
+        return (decoder_outputs[0], )
 
 
 class T5ForConditionalGeneration(nn.Module):
@@ -836,7 +1026,7 @@ class T5ForConditionalGeneration(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.model_dim = config.d_model
-
+        self.config = config
         self.shared = nn.Embedding(config.vocab_size, config.d_model)
 
         encoder_config = copy.deepcopy(config)
@@ -852,8 +1042,6 @@ class T5ForConditionalGeneration(nn.Module):
         self.decoder = T5Stack(decoder_config, self.shared)
 
         self.lm_head = nn.Linear(config.d_model, config.vocab_size, bias=False)
-
-        self.init_weights()
 
         # Model parallel
         self.model_parallel = False
@@ -916,7 +1104,6 @@ class T5ForConditionalGeneration(nn.Module):
             >>> outputs = model.generate(input_ids)
         """
         use_cache = use_cache if use_cache is not None else self.config.use_cache
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         # FutureWarning: head_mask was separated into two input args - head_mask, decoder_head_mask
 
@@ -973,9 +1160,9 @@ class T5ForConditionalGeneration(nn.Module):
             loss_fct = CrossEntropyLoss(ignore_index=-100)
             loss = loss_fct(lm_logits.view(-1, lm_logits.size(-1)), labels.view(-1))
             # TODO(thom): Add z_loss https://github.com/tensorflow/mesh/blob/fa19d69eafc9a482aff0b59ddd96b025c0cb207d/mesh_tensorflow/layers.py#L666
+            return (loss, lm_logits)
 
-
-        return (loss, lm_logits)
+        return (lm_logits, )
 
     def prepare_inputs_for_generation(
         self, input_ids, past=None, attention_mask=None, use_cache=None, encoder_outputs=None, **kwargs
@@ -996,8 +1183,77 @@ class T5ForConditionalGeneration(nn.Module):
     def prepare_decoder_input_ids_from_labels(self, labels: torch.Tensor):
         return self._shift_right(labels)
 
+def get_extended_attention_mask(attention_mask, input_shape, device, is_decoder=False):
+    """
+    Makes broadcastable attention and causal masks so that future and masked tokens are ignored.
+    Arguments:
+        attention_mask (:obj:`torch.Tensor`):
+            Mask with ones indicating tokens to attend to, zeros for tokens to ignore.
+        input_shape (:obj:`Tuple[int]`):
+            The shape of the input to the model.
+        device: (:obj:`torch.device`):
+            The device of the input to the model.
+    Returns:
+        :obj:`torch.Tensor` The extended attention mask, with a the same dtype as :obj:`attention_mask.dtype`.
+    """
+    # We can provide a self-attention mask of dimensions [batch_size, from_seq_length, to_seq_length]
+    # ourselves in which case we just need to make it broadcastable to all heads.
+    if attention_mask.dim() == 3:
+        extended_attention_mask = attention_mask[:, None, :, :]
+    elif attention_mask.dim() == 2:
+        # Provided a padding mask of dimensions [batch_size, seq_length]
+        # - if the model is a decoder, apply a causal mask in addition to the padding mask
+        # - if the model is an encoder, make the mask broadcastable to [batch_size, num_heads, seq_length, seq_length]
+        if is_decoder:
+            batch_size, seq_length = input_shape
+            seq_ids = torch.arange(seq_length, device=device)
+            causal_mask = seq_ids[None, None, :].repeat(batch_size, seq_length, 1) <= seq_ids[None, :, None]
+            # in case past_key_values are used we need to add a prefix ones mask to the causal mask
+            # causal and attention masks must have same type with pytorch version < 1.3
+            causal_mask = causal_mask.to(attention_mask.dtype)
+
+            if causal_mask.shape[1] < attention_mask.shape[1]:
+                prefix_seq_len = attention_mask.shape[1] - causal_mask.shape[1]
+                causal_mask = torch.cat(
+                    [
+                        torch.ones(
+                            (batch_size, seq_length, prefix_seq_len), device=device, dtype=causal_mask.dtype
+                        ),
+                        causal_mask,
+                    ],
+                    axis=-1,
+                )
+
+            extended_attention_mask = causal_mask[:, None, :, :] * attention_mask[:, None, None, :]
+        else:
+            extended_attention_mask = attention_mask[:, None, None, :]
+    else:
+        raise ValueError(
+            "Wrong shape for input_ids (shape {}) or attention_mask (shape {})".format(
+                input_shape, attention_mask.shape
+            )
+        )
+
+        # Since attention_mask is 1.0 for positions we want to attend and 0.0 for
+        # masked positions, this operation will create a tensor which is 0.0 for
+        # positions we want to attend and -10000.0 for masked positions.
+        # Since we are adding it to the raw scores before the softmax, this is
+        # effectively the same as removing these entirely.
+    extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
+    return extended_attention_mask
+
 if __name__ == '__main__':
     config = T5Config()
     model = T5Model(config)
+    t1 = (torch.rand(1, 10)*10).long()
+    t2 = (torch.rand(1, 12) * 10).long()
+    out = model(input_ids=t1, decoder_input_ids=t2)
+    print(len(out))
+    print(out[0].shape)
 
-    print(model)
+    # attention_mask = torch.ones(1, 5)
+    # out = get_extended_attention_mask(attention_mask, attention_mask.shape, device="cpu", is_decoder=True)
+    #
+    # print(out)
+    # print(out.shape)
+

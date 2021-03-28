@@ -84,7 +84,7 @@ class GPT2(BasicGPT):
         x = x.to(self.device)
         # input_ids = torch.tensor([[1, 2, 3, 5, -100], [4, 5, 6, -100, -100]])
         attention_mask = self._make_causal_mask(x.shape)
-        pad_mask = (x != -100).float()
+        pad_mask = (labels != -100).float()
         attention_mask = attention_mask * pad_mask.unsqueeze(1).unsqueeze(1)
 
         loss, lm_logit = self.model(x, labels=labels, attention_mask=attention_mask)

@@ -32,18 +32,18 @@ class T5Config:
 
     def __init__(
         self,
-        vocab_size=32128,
-        d_model=512,
+        vocab_size=50000,
+        d_model=768,
         d_kv=64,
         d_ff=2048,
-        num_layers=6,
-        num_decoder_layers=None,
-        num_heads=8,
+        num_layers=12,
+        num_decoder_layers=12,
+        num_heads=12,
         relative_attention_num_buckets=32,
         dropout_rate=0.1,
-        layer_norm_epsilon=1e-6,
+        layer_norm_epsilon=1e-06,
         initializer_factor=1.0,
-        feed_forward_proj="relu",
+        feed_forward_proj="gated-gelu",
         is_encoder_decoder=True,
         use_cache=True,
         pad_token_id=0,
@@ -732,7 +732,7 @@ class T5Stack(nn.Module):
             past_key_values = [None] * len(self.block)
 
         # ourselves in which case we just need to make it broadcastable to all heads.
-        extended_attention_mask = get_extended_attention_mask(attention_mask, input_shape, inputs_embeds.device)
+        extended_attention_mask = get_extended_attention_mask(attention_mask, input_shape, inputs_embeds.device, is_decoder=self.is_decoder)
 
         if self.is_decoder and encoder_attention_mask is not None:
             encoder_extended_attention_mask = self.invert_attention_mask(encoder_attention_mask)
@@ -958,7 +958,7 @@ class T5ForConditionalGeneration(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.model_dim = config.d_model
-
+        self.config = config
         self.shared = nn.Embedding(config.vocab_size, config.d_model)
 
         encoder_config = copy.deepcopy(config)
@@ -974,8 +974,6 @@ class T5ForConditionalGeneration(nn.Module):
         self.decoder = T5Stack(decoder_config, self.shared)
 
         self.lm_head = nn.Linear(config.d_model, config.vocab_size, bias=False)
-
-        self.init_weights()
 
         # Model parallel
         self.model_parallel = False
@@ -1038,7 +1036,6 @@ class T5ForConditionalGeneration(nn.Module):
             >>> outputs = model.generate(input_ids)
         """
         use_cache = use_cache if use_cache is not None else self.config.use_cache
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         # FutureWarning: head_mask was separated into two input args - head_mask, decoder_head_mask
 
@@ -1097,7 +1094,9 @@ class T5ForConditionalGeneration(nn.Module):
             # TODO(thom): Add z_loss https://github.com/tensorflow/mesh/blob/fa19d69eafc9a482aff0b59ddd96b025c0cb207d/mesh_tensorflow/layers.py#L666
 
 
-        return (loss, lm_logits)
+            return (loss, lm_logits)
+        else:
+            return (lm_logits, )
 
     def prepare_inputs_for_generation(
         self, input_ids, past=None, attention_mask=None, use_cache=None, encoder_outputs=None, **kwargs

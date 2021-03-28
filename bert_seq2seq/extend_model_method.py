@@ -5,10 +5,10 @@ from bert_seq2seq.seq2seq_model import top_k_top_p_filtering
 import torch.nn.functional as F 
 
 class ExtendModel:
-    def __init__(self, model, tokenizer, bos_id, eos_id) -> None:
+    def __init__(self, model, tokenizer, bos_id, eos_id, device="cpu") -> None:
         self.model = model 
         self.tokenizer = tokenizer
-        self.device = model.device
+        self.device = device
         self.bos_id = bos_id
         self.eos_id = eos_id
 
@@ -40,7 +40,12 @@ class ExtendModel:
 
     def sample_generate_encoder_decoder(self, text, input_max_length=256, out_max_length=200, top_k=30, top_p=0.0, add_eos=False):
 
-            token_ids = self.tokenizer.encode(text, max_length=input_max_length, truncation=True)
+
+            token_out = self.tokenizer.encode(text, max_length=input_max_length)
+            if len(token_out) == 2:
+                token_ids = token_out[0]
+            else:
+                token_ids = token_out
             if add_eos:
                 token_ids = token_ids + [self.eos_id]
             token_ids = torch.tensor(token_ids, device=self.device, dtype=torch.long).view(1, -1)
@@ -51,8 +56,8 @@ class ExtendModel:
                 for step in range(out_max_length):
                     scores = self.model(input_ids=token_ids, decoder_input_ids=input_decoder_ids)[0]
                     logit_score = torch.log_softmax(scores[:, -1], dim=-1).squeeze(0)
-                    if self.tokenizer.unk_token_id is not None:
-                        logit_score[self.tokenizer.unk_token_id] = -float('Inf')
+                    # if self.tokenizer.unk_token_id is not None:
+                    #     logit_score[self.tokenizer.unk_token_id] = -float('Inf')
                     filtered_logits = top_k_top_p_filtering(logit_score, top_k=top_k, top_p=top_p)
                     next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
                     if self.eos_id == next_token.item():

@@ -108,7 +108,8 @@ class BasicTokenizer(object):
                second_text=None,
                max_length=None,
                first_length=None,
-               second_length=None):
+               second_length=None,
+               is_segment=True):
         """输出文本对应token id和segment id
         如果传入first_length，则强行padding第一个句子到指定长度；
         同理，如果传入second_length，则强行padding第二个句子到指定长度。
@@ -142,8 +143,10 @@ class BasicTokenizer(object):
 
             first_token_ids.extend(second_token_ids)
             first_segment_ids.extend(second_segment_ids)
-
-        return first_token_ids, first_segment_ids
+        if is_segment:
+            return first_token_ids, first_segment_ids
+        else:
+            return first_token_ids
     
     def id_to_token(self, i):
         """id序列为对应的token
