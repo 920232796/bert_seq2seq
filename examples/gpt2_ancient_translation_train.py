@@ -1,3 +1,4 @@
+## gpt2 进行文言文翻译
 import torch
 from bert_seq2seq.utils import load_gpt
 import sys

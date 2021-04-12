@@ -1,4 +1,4 @@
-
+# gpt2模型进行英文讲故事 给一个开头 继续讲五句话
 import torch
 from tqdm import tqdm
 import torch.nn as nn
