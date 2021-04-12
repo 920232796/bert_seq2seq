@@ -50,7 +50,6 @@ class BertConfig(object):
         self.initializer_range = initializer_range
         self.layer_norm_eps = layer_norm_eps
 
-
 class BertLayerNorm(nn.Module):
     """LayerNorm层, 见Transformer(一), 讲编码器(encoder)的第3部分"""
     def __init__(self, hidden_size, eps=1e-12, conditional=False):

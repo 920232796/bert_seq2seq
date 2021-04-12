@@ -29,3 +29,4 @@ text = '从那之后，一发不可收拾。此后的近百年间，一共有十
 out = model.sample_generate_encoder_decoder(text)
 print(out)
 
+

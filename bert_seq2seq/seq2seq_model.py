@@ -120,7 +120,13 @@ class Seq2SeqModel(BasicBert):
         self.out_max_length = out_max_length
         input_max_length = max_length - out_max_length
         # print(text)
-        token_ids, token_type_ids = self.tokenizer.encode(text, max_length=input_max_length)
+        try:
+            token_ids, token_type_ids = self.tokenizer.encode(text, max_length=input_max_length)
+        except:
+            # 可能是transformer的tokenizer
+            tokenizer_out = self.tokenizer.encode_plus(text, max_length=input_max_length, truncation=True)
+            token_ids = tokenizer_out["input_ids"]
+            token_type_ids = tokenizer_out["token_type_ids"]
         token_ids = torch.tensor(token_ids, device=self.device).view(1, -1)
         token_type_ids = torch.tensor(token_type_ids, device=self.device).view(1, -1)
         if is_poem:## 古诗的beam-search稍有不同

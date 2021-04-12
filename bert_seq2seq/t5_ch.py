@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 class T5Model(BasicT5):
 
-    def __init__(self, vocab_path, size="base"):
+    def __init__(self, word2idx, size="base"):
         super().__init__()
         if size == "base":
             config = T5Config()
@@ -18,13 +18,17 @@ class T5Model(BasicT5):
             raise Exception("not support this model type")
         self.model = T5ForConditionalGeneration(config)
 
-        self.word2idx = load_chinese_base_vocab(vocab_path)
+        self.word2idx = word2idx
         self.tokenizer = T5PegasusTokenizer(self.word2idx)
         self.bos_id = self.word2idx["[CLS]"]
         self.eos_id = self.word2idx["[SEP]"]
         self.unk_id = self.word2idx["[UNK]"]
 
     def forward(self, input_ids, decoder_input_ids, labels=None):
+        input_ids = input_ids.to(self.device)
+        decoder_input_ids = decoder_input_ids.to(self.device)
+        if labels is not None:
+            labels = labels.to(self.device)
         return self.model(input_ids=input_ids, decoder_input_ids=decoder_input_ids, labels=labels)
 
 
