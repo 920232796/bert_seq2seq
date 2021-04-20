@@ -187,7 +187,7 @@ class Trainer:
 if __name__ == '__main__':
 
     trainer = Trainer()
-    train_epoches = 10
+    train_epoches = 100
     for epoch in range(train_epoches):
         # 训练一个epoch
         trainer.train(epoch)

@@ -17,4 +17,4 @@ if __name__ == "__main__":
     model.set_device(device)
     model.load_all_params(model_path)
 
-    print(model.sample_generate("自昔羲后，因以物命官，事简人淳，唯以道化，上无求欲於下，下无干进於上，百姓自足，海内乂安，不是贤而非愚，不沽名而尚行，推择之典，无所闻焉。", out_max_length=300, add_eos=True))
+    print(model.sample_generate("余忆童稚时，能张目对日。", out_max_length=300, add_eos=True))
