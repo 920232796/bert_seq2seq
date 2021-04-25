@@ -8,6 +8,7 @@ import numpy as np
 import os
 import json
 import time
+from rouge import Rouge
 import glob
 import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
@@ -18,7 +19,6 @@ from transformers import AutoTokenizer
 vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
 model_name = "roberta"  # 选择模型名字
 model_path = "./state_dict/roberta_wwm_pytorch_model.bin"  # 模型位置
-recent_model_path = "./state_dict/bert_auto_title_model.bin"  # 用于把已经训练好的模型继续训练
 model_save_path = "./state_dict/bert_english_auto_title_model.bin"
 batch_size = 4
 lr = 1e-5
@@ -40,6 +40,34 @@ def read_data():
             sents_src.append(title)
             sents_tgt.append(content)
     return sents_src, sents_tgt
+
+
+def test_score(bert_model):
+    test_file = glob.glob("./corpus/english_autotitle_test/*.json")
+    num_file = len(test_file)
+    rouge_1_item = [0.0, 0.0, 0.0]
+    rouge = Rouge()
+    for s_file in test_file:
+        with open(s_file, "r") as f:
+            c = f.read()
+            j = json.loads(c)
+            title = j["Title"]
+            text = j["abstract"]
+            out = bert_model.generate(text, beam_size=3, out_max_length=100, max_length=maxlen)
+            print(out)
+            rouge_score = rouge.get_scores(title, out)
+            print(rouge_score)
+            rouge_1 = rouge_score[0]["rouge-1"]
+            rouge_1_item[0] += rouge_1["f"]
+            rouge_1_item[1] += rouge_1["p"]
+            rouge_1_item[2] += rouge_1["r"]
+            # print(rouge_score[0]["rouge-2"])
+            # print(rouge_score[0]["rouge-l"])
+    for i in range(len(rouge_1_item)):
+        rouge_1_item[i] = rouge_1_item[i] / num_file
+
+    print(rouge_1_item)
+    return rouge_1_item
 
 
 class BertDataset(Dataset):
@@ -107,7 +135,7 @@ def collate_fn(batch):
 class Trainer:
     def __init__(self):
         # 判断是否有可用GPU
-        self.device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # self.bert_model.load_pretrain_params(model_path, keep_tokens=keep_tokens)
         # 加载已经训练好的模型，继续训练
@@ -123,6 +151,8 @@ class Trainer:
         # 声明自定义的数据加载器
         dataset = BertDataset()
         self.dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
+        self.best_rouge_1 = [0.0, 0.0, 0.0]
+        self.global_step = 0
 
     def train(self, epoch):
         # 一个epoch的训练
@@ -139,23 +169,25 @@ class Trainer:
     def iteration(self, epoch, dataloader, train=True):
         total_loss = 0
         start_time = time.time()  ## 得到当前时间
-        step = 0
         report_loss = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader, position=0, leave=True):
-            step += 1
-            if step % 1000 == 0:
+            self.global_step += 1
+            if self.global_step % 1000 == 0:
                 self.bert_model.eval()
-                test_data = [
-                        "BACKGROUND: On March 20 2020, the Argentine Ministry of Health enforced a mandatory quarantine throughout the country in response to the COVID-19 pandemic. AIMS: The object of this study is to determine the initial impact on mental health of Argentine population, by measuring the prevalence of anxiety, depression, insomnia, and self-perceived stress and by determining the associated risk factors, and to analyze that impact in relation to the number of confirmed cases and deaths. METHOD: A cross-sectional survey was conducted through a digital questionnaire, which was completed by 1,985 respondents between March 29 and April 12. The prevalence of anxiety, depression, stress and insomnia was measured with the Generalized Anxiety Disorder-7 Scale (GAD-7), the 9-Item Patients Health Questionnaire (PHQ-9); the Perceived Stress Scale (PSS-10) and the Pittsburgh Sleep Quality Index (PSQI), respectively. RESULTS: The 62.4% of the surveyed population reported signs of psychological distress. It was found that being a woman, being 18 to 27 years old, living with family members or a partner, smoking, and having a poor sleep quality were the significant risk factors. CONCLUSION: Despite the low number of COVID-19 confirmed cases and deaths at that time, a strong impact on mental health indicators was revealed. The authors of this study recommend the monitoring of the population at risk over time and early interventions in order to avoid long-lasting mental health problems."
-                    ]
-                for text in test_data:
-                    print(self.bert_model.generate(text, beam_size=3, out_max_length=100, max_length=maxlen))
+                rouge_1 = test_score(self.bert_model)
+                if sum(rouge_1) > sum(self.best_rouge_1):
+                    self.save(model_save_path)
+                    print("model is saved. ")
+                report_loss = report_loss / (batch_size * 1000)
                 print("loss is " + str(report_loss))
+
+                with open("./english_autotile_res.txt", "a+") as f:
+                    f.write("step: {}, loss: {}, rouge_1: {}".format(self.global_step, report_loss, rouge_1) )
+                    f.write("\n")
                 report_loss = 0
                 # self.eval(epoch)
                 self.bert_model.train()
-            if step % 8000 == 0:
-                self.save(model_save_path)
+
 
             # 因为传入了target标签，因此会计算loss并且返回
             predictions, loss = self.bert_model(token_ids,
