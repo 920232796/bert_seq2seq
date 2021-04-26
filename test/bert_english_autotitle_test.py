@@ -34,24 +34,25 @@ if __name__ == "__main__":
     test_file = glob.glob("./corpus/english_autotitle_test/*.json")
     num_file = len(test_file)
     rouge_1_item = [0.0, 0.0, 0.0]
+    with open("./auto_title_res.txt", "a+") as fw:
+        for s_file in test_file :
+            with open(s_file, "r") as f:
+                c = f.read()
+                j = json.loads(c)
+                title = j["Title"]
+                text = j["abstract"]
+                out = bert_model.generate(text, beam_size=3, out_max_length=100, max_length=maxlen)
+                print(out)
+                fw.write(title + "\t" + out + "\t" + text + "\n")
 
-    for s_file in test_file :
-        with open(s_file, "r") as f:
-            c = f.read()
-            j = json.loads(c)
-            title = j["Title"]
-            text = j["abstract"]
-            out = bert_model.generate(text, beam_size=3, out_max_length=100, max_length=maxlen)
-            print(out)
-            
-            rouge_score = rouge.get_scores(title, out)
-            print(rouge_score)
-            rouge_1 = rouge_score[0]["rouge-1"]
-            rouge_1_item[0] += rouge_1["f"]
-            rouge_1_item[1] += rouge_1["p"]
-            rouge_1_item[2] += rouge_1["r"]
-            # print(rouge_score[0]["rouge-2"])
-            # print(rouge_score[0]["rouge-l"])
+                rouge_score = rouge.get_scores(title, out)
+                print(rouge_score)
+                rouge_1 = rouge_score[0]["rouge-1"]
+                rouge_1_item[0] += rouge_1["f"]
+                rouge_1_item[1] += rouge_1["p"]
+                rouge_1_item[2] += rouge_1["r"]
+                # print(rouge_score[0]["rouge-2"])
+                # print(rouge_score[0]["rouge-l"])
     for i in range(len(rouge_1_item)):
         rouge_1_item[i] = rouge_1_item[i] / num_file 
 

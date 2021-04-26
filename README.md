@@ -13,6 +13,8 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 四种任务分别加载四种不同的模型，通过``` model_class="seq2seq" or "cls" or "sequence_labeling" or "sequence_labeling_crf or relation_extrac"``` 参数去设置。具体可以去看examples里面的各种例子。当然也随时可以查看修改我的源代码～
 5. 最近支持了gpt2模型，可以查看test文件中的gpt_test文件进行使用，gpt2中文通用模型和字典下载地址：https://pan.baidu.com/s/1vTYc8fJUmlQrre5p0JRelw  密码: f5un
 6. gpt2英文模型也支持，具体参考了https://huggingface.co/pranavpsv/gpt2-genre-story-generator 这个预训练的model，具体的训练代码可以看example中的gpt2_english_story_train.py
+7. 支持t5模型，英文中文都支持，具体可以看examples文件夹中的相关例子。
+
 
 部分代码参考了 https://github.com/huggingface/transformers/ 和 https://github.com/bojone/bert4keras 非常感谢！！！
 
