@@ -19,7 +19,8 @@ from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 word2idx = tokenizer.get_vocab()
 auto_title_model = "./state_dict/bert_english_auto_title_model.bin"
-device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 maxlen = 256
 
 if __name__ == "__main__":
