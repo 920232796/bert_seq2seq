@@ -16,9 +16,6 @@ from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert
 from transformers import AutoTokenizer
 
-vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
-model_name = "roberta"  # 选择模型名字
-model_path = "./state_dict/roberta_wwm_pytorch_model.bin"  # 模型位置
 model_save_path = "./state_dict/bert_english_auto_title_model.bin"
 batch_size = 4
 lr = 1e-5
@@ -81,7 +78,6 @@ class BertDataset(Dataset):
         ## 拿到所有文件名字
         self.txts = glob.glob("./corpus/pdf_full_texts/*.json")
 
-
         self.idx2word = {k: v for v, k in word2idx.items()}
 
     def __getitem__(self, i):
@@ -131,6 +127,7 @@ def collate_fn(batch):
 
     return token_ids_padded, token_type_ids_padded, target_ids_padded
 
+# cls hello hello hello sep hello
 
 class Trainer:
     def __init__(self):

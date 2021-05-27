@@ -7,7 +7,7 @@ from torch.optim import Adam
 import pandas as pd
 import numpy as np
 import os
-import glob 
+import glob
 import json
 import time
 import bert_seq2seq
