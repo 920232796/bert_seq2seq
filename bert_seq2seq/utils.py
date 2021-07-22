@@ -4,7 +4,8 @@ from bert_seq2seq.bert_cls_classifier import BertClsClassifier
 from bert_seq2seq.bert_seq_labeling import BertSeqLabeling
 from bert_seq2seq.bert_seq_labeling_crf import BertSeqLabelingCRF
 from bert_seq2seq.bert_relation_extraction import BertRelationExtrac
-import torch.nn.functional as F 
+import torch.nn.functional as F
+from bert_seq2seq.simbert_model import SimBertModel
 from bert_seq2seq.gpt2_generate_model import GPT2
 
 def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2seq", target_size=0):
@@ -37,6 +38,9 @@ def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2se
         if target_size == 0:
             raise Exception("必须传入参数 target_size 表示预测predicate的种类")
         bert_model = BertRelationExtrac(word2ix, target_size, model_name=model_name)
+        return bert_model
+    elif model_class == "simbert":
+        bert_model = SimBertModel(word2ix, model_name=model_name)
         return bert_model
     else :
         raise Exception("model_name_err")

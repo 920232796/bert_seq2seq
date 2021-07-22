@@ -14,6 +14,7 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 5. 最近支持了gpt2模型，可以查看test文件中的gpt_test文件进行使用，gpt2中文通用模型和字典下载地址：https://pan.baidu.com/s/1vTYc8fJUmlQrre5p0JRelw  密码: f5un
 6. gpt2英文模型也支持，具体参考了https://huggingface.co/pranavpsv/gpt2-genre-story-generator 这个预训练的model，具体的训练代码可以看example中的gpt2_english_story_train.py
 7. 支持t5模型，英文中文都支持，具体可以看examples文件夹中的相关例子。
+8. SimBert模型，支持相似句的生成。
 
 
 部分代码参考了 https://github.com/huggingface/transformers/ 和 https://github.com/bojone/bert4keras 非常感谢！！！
@@ -70,6 +71,8 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 多谢支持。另外，网站上面还有一些介绍unilm论文和特殊的mask如何实现的文章，可以去网站里搜索一下。http://www.blog.zhxing.online/#/  搜索unilm 即可。
 
 ### 更新记录
+
+2021.07.20: 复现了SimBert模型，可以进行相似句的输出，不过由于数据量太少，还有待测试。
 
 2021.03.19: 支持模型扩展，可以不仅仅使用框架自带的模型了，可以直接加载hugging face上面的模型进行训练 预测。
 

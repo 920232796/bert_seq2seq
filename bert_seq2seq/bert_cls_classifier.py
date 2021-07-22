@@ -1,6 +1,6 @@
 ## bert encoder模型
-import torch 
-import torch.nn as nn 
+import torch
+import torch.nn as nn
 from bert_seq2seq.tokenizer import Tokenizer
 from bert_seq2seq.basic_bert import BasicBert
 

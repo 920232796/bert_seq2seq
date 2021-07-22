@@ -1,7 +1,6 @@
 import torch
 from bert_seq2seq.utils import load_gpt
 import sys
-
 sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 import torch
 from tqdm import tqdm
