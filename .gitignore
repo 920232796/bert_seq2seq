@@ -5,7 +5,7 @@ __pycache__/
 
 /state_dict/*
 /corpus/*
-
+./*.json
 # C extensions
 *.so
 

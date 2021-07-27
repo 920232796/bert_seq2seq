@@ -78,8 +78,6 @@ class Seq2SeqModel(BasicBert):
         return (loss(predictions, labels) * target_mask).sum() / target_mask.sum() ## 通过mask 取消 pad 和句子a部分预测的影响
     
     def forward(self, input_tensor, token_type_id, position_enc=None, labels=None):
-        ## 传入输入，位置编码，token type id ，还有句子a 和句子b的长度，注意都是传入一个batch数据
-        ##  传入的几个值，在seq2seq 的batch iter 函数里面都可以返回
         input_tensor = input_tensor.to(self.device)
         token_type_id = token_type_id.to(self.device)
         if position_enc is not None:
@@ -91,21 +89,19 @@ class Seq2SeqModel(BasicBert):
         seq_len = input_shape[1]
         ## 构建特殊的mask
         ones = torch.ones((1, 1, seq_len, seq_len), dtype=torch.float32, device=self.device)
-        a_mask = ones.tril() # 下三角矩阵
+        a_mask = ones.tril()
         s_ex12 = token_type_id.unsqueeze(1).unsqueeze(2).float()
         s_ex13 = token_type_id.unsqueeze(1).unsqueeze(3).float()
         a_mask = (1.0 - s_ex12) * (1.0 - s_ex13) + s_ex13 * a_mask 
             
         enc_layers, _ = self.bert(input_tensor, position_ids=position_enc, token_type_ids=token_type_id, attention_mask=a_mask, 
                                     output_all_encoded_layers=True)
-        squence_out = enc_layers[-1] ## 取出来最后一层输出
+        squence_out = enc_layers[-1] ## 取出来最后一层输出 (batch, seq_len, 768)
 
         predictions = self.decoder(squence_out)
 
         if labels is not None:
-            ## 计算loss
-            ## 需要构建特殊的输出mask 才能计算正确的loss
-            # 预测的值不用取最后sep符号的结果 因此是到-1
+
             predictions = predictions[:, :-1].contiguous()
             target_mask = token_type_id[:, 1:].contiguous()
             loss = self.compute_loss(predictions, labels, target_mask)
@@ -115,8 +111,7 @@ class Seq2SeqModel(BasicBert):
 
     
     def generate(self, text, out_max_length=40, beam_size=1, is_poem=False, max_length=256):
-        # 对 一个 句子生成相应的结果
-        ## 通过输出最大长度得到输入的最大长度，这里问题不大，如果超过最大长度会进行截断
+
         self.out_max_length = out_max_length
         input_max_length = max_length - out_max_length
         # print(text)
