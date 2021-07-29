@@ -72,6 +72,8 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 
 ### 更新记录
 
+2021.07.29： 优化部分代码，更简洁了。
+
 2021.07.20: 复现了SimBert模型，可以进行相似句的输出，不过由于数据量太少，还有待测试。
 
 2021.03.19: 支持模型扩展，可以不仅仅使用框架自带的模型了，可以直接加载hugging face上面的模型进行训练 预测。
@@ -139,4 +141,4 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 2020.04.01: 重构了代码，开始训练一个新的任务花费时间更少。
 
 python setup.py sdist
-twine upload dist/bert_seq2seq-1.2.1.tar.gz
+twine upload dist/bert_seq2seq-1.3.1.tar.gz
