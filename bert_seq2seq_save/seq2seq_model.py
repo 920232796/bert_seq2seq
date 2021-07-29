@@ -43,14 +43,27 @@ class Seq2SeqModel(BasicBert):
     """
     """
     def __init__(self, word2ix, model_name="roberta", tokenizer=None):
-        super(Seq2SeqModel, self).__init__(word2ix=word2ix, model_name=model_name)
+        super(Seq2SeqModel, self).__init__()
         self.word2ix = word2ix
         if tokenizer is None:
             self.tokenizer = Tokenizer(word2ix)
         else:
             self.tokenizer = tokenizer
+        config = ""
+        if model_name == "roberta":
+            from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertLMPredictionHead
+            config = BertConfig(len(word2ix))
+            self.bert = BertModel(config)
+            self.decoder = BertLMPredictionHead(config, self.bert.embeddings.word_embeddings.weight)
+        elif model_name == "bert":
+            from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertLMPredictionHead
+            config = BertConfig(len(word2ix))
+            self.bert = BertModel(config)
+            self.decoder = BertLMPredictionHead(config, self.bert.embeddings.word_embeddings.weight)
+        else :
+            raise Exception("model_name_err")
             
-        self.hidden_dim = self.config.hidden_size
+        self.hidden_dim = config.hidden_size
         self.vocab_size = len(word2ix)
 
 

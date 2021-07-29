@@ -10,9 +10,22 @@ class BertSeqLabeling(BasicBert):
     def __init__(self, word2ix, target_size, model_name="roberta"):
         super(BertSeqLabeling, self).__init__(word2ix=word2ix, model_name=model_name)
         self.target_size = target_size
-
+        config = ""
+        if model_name == "roberta":
+            from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertPredictionHeadTransform
+            config = BertConfig(len(word2ix))
+            self.bert = BertModel(config)
+            self.transform = BertPredictionHeadTransform(config)
+        elif model_name == "bert":
+            from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertPredictionHeadTransform
+            config = BertConfig(len(word2ix))
+            self.bert = BertModel(config)
+            self.transform = BertPredictionHeadTransform(config)
+        else :
+            raise Exception("model_name_err")
         
-        self.final_dense = nn.Linear(self.config.hidden_size, self.target_size)
+        
+        self.final_dense = nn.Linear(config.hidden_size, self.target_size)
     
     def compute_loss(self, predictions, labels):
         """

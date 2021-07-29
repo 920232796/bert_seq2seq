@@ -10,7 +10,22 @@ class BertRelationExtrac(BasicBert):
     def __init__(self, word2ix, predicate_num, model_name="roberta"):
         super(BertRelationExtrac, self).__init__(word2ix=word2ix, model_name=model_name)
         
-        self.predicate_num = predicate_num
+        self.predicate_num = predicate_num 
+        # config = ""
+        # if model_name == "roberta":
+        #     from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertPredictionHeadTransform, BertLayerNorm
+        #     config = BertConfig(len(word2ix))
+        #     self.bert = BertModel(config)
+        #     self.layer_norm = BertLayerNorm(config.hidden_size)
+        #     self.layer_norm_cond = BertLayerNorm(config.hidden_size, conditional=True)
+        # elif model_name == "bert":
+        #     from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertPredictionHeadTransform, BertLayerNorm
+        #     config = BertConfig(len(word2ix))
+        #     self.bert = BertModel(config)
+        #     self.layer_norm = BertLayerNorm(config.hidden_size)
+        #     self.layer_norm_cond = BertLayerNorm(config.hidden_size, conditional=True)
+        # else :
+        #     raise Exception("model_name_err")
         
         self.subject_pred = nn.Linear(self.config.hidden_size, 2)
         self.activation = nn.Sigmoid()

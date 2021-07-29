@@ -14,7 +14,6 @@ def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2se
     这是个统一的接口，用来加载模型的
     model_class : seq2seq or encoder
     """
-
     if model_class == "seq2seq":
         bert_model = Seq2SeqModel(word2ix, model_name=model_name, tokenizer=tokenizer)
         return bert_model
@@ -50,5 +49,28 @@ def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2se
 def load_gpt(word2ix, tokenizer=None):
     model = GPT2(word2ix, tokenizer=tokenizer)
     return model 
+
+# def load_model_params(model, pretrain_model_path, keep_tokens=None):
+        
+#         checkpoint = torch.load(pretrain_model_path)
+#         # 模型刚开始训练的时候, 需要载入预训练的BERT
+
+#         checkpoint = {k: v for k, v in checkpoint.items()
+#                                             if k[:4] == "bert" and "pooler" not in k}
+#         if keep_tokens is not None:
+#             ## 说明精简词表了，embeedding层也要过滤下
+#             embedding_weight_name = "bert.embeddings.word_embeddings.weight"
+            
+#             checkpoint[embedding_weight_name] = checkpoint[embedding_weight_name][keep_tokens]
+            
+#         model.load_state_dict(checkpoint, strict=False)
+#         torch.cuda.empty_cache()
+#         print("{} loaded!".format(pretrain_model_path))
+
+# def load_recent_model(model, recent_model_path, device="cuda"):
+#     checkpoint = torch.load(recent_model_path, map_location=device)
+#     model.load_state_dict(checkpoint)
+#     torch.cuda.empty_cache()
+#     print(str(recent_model_path) + " loaded!")
 
 

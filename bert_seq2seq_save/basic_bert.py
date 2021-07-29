@@ -8,25 +8,19 @@ class BasicBert(nn.Module):
         self.config = ""
         self.word2ix = word2ix
         if model_name == "roberta":
-            from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
+            from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertLayerNorm
             self.config = BertConfig(len(self.word2ix))
             self.bert = BertModel(self.config)
             self.layer_norm = BertLayerNorm(self.config.hidden_size)
             self.layer_norm_cond = BertLayerNorm(self.config.hidden_size, conditional=True)
-            self.transform = BertPredictionHeadTransform(self.config)
-            self.decoder = BertLMPredictionHead(self.config, self.bert.embeddings.word_embeddings.weight)
         elif model_name == "bert":
-            from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
+            from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertLayerNorm
             self.config = BertConfig(len(self.word2ix))
             self.bert = BertModel(self.config)
             self.layer_norm = BertLayerNorm(self.config.hidden_size)
             self.layer_norm_cond = BertLayerNorm(self.config.hidden_size, conditional=True)
-            self.transform = BertPredictionHeadTransform(self.config)
-            self.decoder = BertLMPredictionHead(self.config, self.bert.embeddings.word_embeddings.weight)
         else:
             raise Exception("model_name_err")
-
-
         self.device = torch.device("cpu")
 
     def load_pretrain_params(self, pretrain_model_path, keep_tokens=None):
