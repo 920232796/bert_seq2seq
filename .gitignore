@@ -8,7 +8,7 @@ __pycache__/
 ./*.json
 # C extensions
 *.so
-
+bert_seq2seq_save
 # Distribution / packaging
 .Python
 build/
