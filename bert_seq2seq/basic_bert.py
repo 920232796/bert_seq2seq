@@ -46,7 +46,7 @@ class BasicBert(nn.Module):
 
     def load_all_params(self, model_path, device="cuda"):
         checkpoint = torch.load(model_path, map_location=device)
-        self.load_state_dict(checkpoint)
+        self.load_state_dict(checkpoint, strict=False)
         torch.cuda.empty_cache()
         print(str(model_path) + " loaded!")
 
@@ -75,7 +75,7 @@ class BasicGPT(nn.Module):
 
     def load_all_params(self, model_path, device="cuda"):
         checkpoint = torch.load(model_path, map_location=device)
-        self.load_state_dict(checkpoint)
+        self.load_state_dict(checkpoint, strict=False)
         torch.cuda.empty_cache()
         print(str(model_path) + " loaded!")
 
@@ -105,7 +105,7 @@ class BasicT5(nn.Module):
 
     def load_all_params(self, model_path, device="cuda"):
         checkpoint = torch.load(model_path, map_location=device)
-        self.load_state_dict(checkpoint)
+        self.load_state_dict(checkpoint, strict=False)
         torch.cuda.empty_cache()
         print(str(model_path) + " loaded!")
 
