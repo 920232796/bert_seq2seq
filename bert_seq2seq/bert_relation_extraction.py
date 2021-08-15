@@ -104,7 +104,7 @@ class BertRelationExtrac(BasicBert):
         # subject_pred_act = (subject_pred_act > 0.5).long() 
         return subject_pred_act
 
-    def predict_object_predicate(self, text, subject_ids, use_layer_num=-1, device="cpu"):
+    def predict_object_predicate(self, text, subject_ids, use_layer_num=-1):
         if use_layer_num != -1:
             if use_layer_num < 0 or use_layer_num > 7:
                 # 越界

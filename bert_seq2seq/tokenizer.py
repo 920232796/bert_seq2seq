@@ -183,6 +183,8 @@ class Tokenizer(BasicTokenizer):
                 _token_id = token_dict[getattr(self, "_token_"+str(token))]
                 # print(_token_id)
                 setattr(self, "_token_"+str(token)+"_id", _token_id)
+                self.token_start_id = self._token_cls_id
+                self.token_end_id = self._token_sep_id
             except Exception as e :
                 # print(e)
                 # print("err")
@@ -198,6 +200,32 @@ class Tokenizer(BasicTokenizer):
         """id转换为对应的token
         """
         return self._token_dict_inv[i]
+
+    def rematch(self, text, tokens):
+        """给出原始的text和tokenize后的tokens的映射关系
+        """
+
+        normalized_text, char_mapping = '', []
+        for i, ch in enumerate(text):
+            ch = ''.join([
+                c for c in ch
+                if not (ord(c) == 0 or ord(c) == 0xfffd or self._is_control(c))
+            ])
+            normalized_text += ch
+            char_mapping.extend([i] * len(ch))
+
+        text, token_mapping, offset = normalized_text, [], 0
+        for token in tokens:
+            if self._is_special(token):
+                token_mapping.append([])
+            else:
+                token = self.stem(token)
+                start = text[offset:].index(token) + offset
+                end = start + len(token)
+                token_mapping.append(char_mapping[start:end])
+                offset = end
+
+        return token_mapping
     
     def decode(self, ids, tokens=None):
         """转为可读文本

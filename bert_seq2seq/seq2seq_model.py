@@ -53,7 +53,6 @@ class Seq2SeqModel(BasicBert):
         self.hidden_dim = self.config.hidden_size
         self.vocab_size = len(word2ix)
 
-
     def compute_loss(self, predictions, labels, target_mask):
         """
         target_mask : 句子a部分和pad部分全为0， 而句子b部分为1

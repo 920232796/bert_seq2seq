@@ -141,4 +141,4 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 2020.04.01: 重构了代码，开始训练一个新的任务花费时间更少。
 
 python setup.py sdist
-twine upload dist/bert_seq2seq-1.3.1.tar.gz
+twine upload dist/bert_seq2seq-1.3.2.tar.gz

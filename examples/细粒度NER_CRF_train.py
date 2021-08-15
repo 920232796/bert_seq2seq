@@ -274,7 +274,6 @@ class Trainer:
         start_time = time.time() ## 得到当前时间
         step = 0
         for token_ids, token_type_ids, target_ids in tqdm(dataloader,position=0, leave=True):
-            # print(target_ids.shape)
             step += 1
             if step % 300 == 0:
                 test_data = ["在广州经营小古董珠宝店的潘凝已经收藏了200多款泰迪熊，其中不少更是老牌泰迪熊厂商史蒂夫、赫曼。", 
