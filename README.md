@@ -50,6 +50,9 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 #### 语义匹配
 ![image.png](https://blog-image-xzh.oss-cn-beijing.aliyuncs.com/c83d27eb-3c2d-4a5c-9496-cd635a0094be.jpg)
 
+#### 分词
+![image.png](/img/fenci.png)
+
 ### 安装 
 1. 安装本框架 ```pip install bert-seq2seq```
 2. 安装pytorch 
@@ -71,6 +74,8 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 多谢支持。另外，网站上面还有一些介绍unilm论文和特殊的mask如何实现的文章，可以去网站里搜索一下。http://www.blog.zhxing.online/#/  搜索unilm 即可。
 
 ### 更新记录
+
+2021.08.5: 添加了分词的例子，tokenizer中添加了rematch代码。
 
 2021.07.29： 优化部分代码，更简洁了。
 
@@ -141,4 +146,4 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 2020.04.01: 重构了代码，开始训练一个新的任务花费时间更少。
 
 python setup.py sdist
-twine upload dist/bert_seq2seq-1.3.2.tar.gz
+twine upload dist/bert_seq2seq-1.3.3.tar.gz
