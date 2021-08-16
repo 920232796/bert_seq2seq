@@ -45,7 +45,7 @@ class BasicBert(nn.Module):
         # 模型刚开始训练的时候, 需要载入预训练的BERT
         if self.model_name == "nezha":
             checkpoint = {k: v for k, v in checkpoint.items()
-                          if k[:5] == "bert" and "pooler" not in k}
+                          if k[:4] == "bert" and "pooler" not in k}
         else:
             checkpoint = {k: v for k, v in checkpoint.items()
                                             if k[:4] == "bert" and "pooler" not in k}
