@@ -346,15 +346,6 @@ class BertLMPredictionHead(nn.Module):
         return hidden_states
 
 
-class BertOnlyMLMHead(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.predictions = BertLMPredictionHead(config)
-
-    def forward(self, sequence_output):
-        prediction_scores = self.predictions(sequence_output)
-        return prediction_scores
-
 
 class BertOnlyNSPHead(nn.Module):
     def __init__(self, config):

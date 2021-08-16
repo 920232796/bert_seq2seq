@@ -7,6 +7,7 @@ class BasicBert(nn.Module):
         super().__init__()
         self.config = ""
         self.word2ix = word2ix
+        self.model_name = model_name
         if model_name == "roberta":
             from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
             self.config = BertConfig(len(self.word2ix))
@@ -23,6 +24,16 @@ class BasicBert(nn.Module):
             self.layer_norm_cond = BertLayerNorm(self.config.hidden_size, conditional=True)
             self.transform = BertPredictionHeadTransform(self.config)
             self.decoder = BertLMPredictionHead(self.config, self.bert.embeddings.word_embeddings.weight)
+
+        elif model_name == "nezha":
+            from bert_seq2seq.model.nezha_model import NeZhaConfig, NeZhaModel, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
+            self.config = NeZhaConfig(vocab_size=len(self.word2ix))
+            self.bert = NeZhaModel(self.config)
+            self.layer_norm = BertLayerNorm(self.config.hidden_size)
+            self.layer_norm_cond = BertLayerNorm(self.config.hidden_size, conditional=True)
+            self.transform = BertPredictionHeadTransform(self.config)
+            self.decoder = BertLMPredictionHead(self.config, self.bert.embeddings.word_embeddings.weight)
+
         else:
             raise Exception("model_name_err")
 
@@ -32,8 +43,11 @@ class BasicBert(nn.Module):
     def load_pretrain_params(self, pretrain_model_path, keep_tokens=None):
         checkpoint = torch.load(pretrain_model_path, map_location=self.device)
         # 模型刚开始训练的时候, 需要载入预训练的BERT
-
-        checkpoint = {k: v for k, v in checkpoint.items()
+        if self.model_name == "nezha":
+            checkpoint = {k: v for k, v in checkpoint.items()
+                          if k[:5] == "bert" and "pooler" not in k}
+        else:
+            checkpoint = {k: v for k, v in checkpoint.items()
                                             if k[:4] == "bert" and "pooler" not in k}
         if keep_tokens is not None:
             ## 说明精简词表了，embeedding层也要过滤下

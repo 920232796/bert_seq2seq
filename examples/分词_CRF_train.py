@@ -41,7 +41,6 @@ def read_corpus():
             D.append(re.split(' +', l.strip()))
     return D
 
-
 ## 自定义dataset
 class WSDataset(Dataset):
     """
