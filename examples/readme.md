@@ -1,6 +1,6 @@
 ## 训练文件说明
 
-1. [THUCNews自动摘要.py](https://github.com/920232796/bert_seq2seq/blob/master/examples/THUCNews%E8%87%AA%E5%8A%A8%E6%91%98%E8%A6%81.py): 自动摘要任务，使用THUCNews数据集，数据量较大。
+1. [THUCNews自动摘要.py](https://github.com/920232796/bert_seq2seq/blob/master/examples/THUCNews%E8%87%AA%E5%8A%A8%E6%91%98%E8%A6%81.py) 自动摘要任务，使用THUCNews数据集，数据量较大。
 2. [auto_chat_train.py](https://github.com/920232796/bert_seq2seq/blob/master/examples/auto_chat_train.py) 自动聊天任务。
 3. [auto_title_train.py](https://github.com/920232796/bert_seq2seq/blob/master/examples/auto_title_train.py) 自动摘要任务，使用了另一个小的数据集。
 4. [explain_dream_train.py](https://github.com/920232796/bert_seq2seq/blob/master/examples/explain_dream_train.py) 使用周公解梦数据集。
