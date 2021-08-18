@@ -1,11 +1,5 @@
 import torch 
-import sys
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-import os
-import json
-import time
-import bert_seq2seq
 from bert_seq2seq.utils import load_bert
 
 target = ["other", "address", "book", "company", "game", "government", "movie", "name", "organization", "position", "scene"]
@@ -34,8 +28,7 @@ def viterbi_decode(nodes, trans):
             M = scores + trans + nodes[l].view(1, -1)
             scores, ids = M.max(0)
             path = torch.cat((path[:, ids], labels), dim=0)
-            # print(scores)
-        # print(scores)
+
         return path[:, scores.argmax()]
 
 def ner_print(model, test_data, device="cpu"):

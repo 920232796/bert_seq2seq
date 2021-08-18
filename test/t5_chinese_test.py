@@ -1,5 +1,3 @@
-import sys
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 import torch
 from bert_seq2seq.tokenizer import  load_chinese_base_vocab, T5PegasusTokenizer
 from transformers.models.mt5.modeling_mt5 import MT5ForConditionalGeneration

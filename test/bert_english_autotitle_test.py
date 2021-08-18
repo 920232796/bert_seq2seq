@@ -1,26 +1,15 @@
 ## 英文自动摘要测试文件
-import torch 
-import torch.nn as nn 
-import sys
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
-from torch.optim import Adam
-import pandas as pd
-import numpy as np
-import os
+import torch
 import glob
 import json
-import time
-import bert_seq2seq
 from rouge import Rouge
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert
 from transformers import AutoTokenizer
 
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 word2idx = tokenizer.get_vocab()
 auto_title_model = "./state_dict/bert_english_auto_title_model.bin"
-# device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 maxlen = 256
 
 if __name__ == "__main__":

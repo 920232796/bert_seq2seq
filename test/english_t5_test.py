@@ -1,12 +1,6 @@
-import sys
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 
 import torch
-from bert_seq2seq.utils import load_gpt
-from bert_seq2seq.tokenizer import load_chinese_base_vocab
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-
-import os
 from bert_seq2seq.extend_model_method import ExtendModel
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

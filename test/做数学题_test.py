@@ -1,11 +1,5 @@
 import torch 
-import sys
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-import os
-import json
-import time
-import bert_seq2seq
 from bert_seq2seq.utils import load_bert
 
 vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
