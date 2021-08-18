@@ -2,8 +2,8 @@ import torch
 from tqdm import tqdm
 import time
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert
+from bert_seq2seq import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq import load_bert
 
 data_path = "./corpus/相似句/simtrain_to05sts.txt"
 vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置

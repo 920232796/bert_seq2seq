@@ -3,8 +3,8 @@ import torch
 from tqdm import tqdm
 import time
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert
+from bert_seq2seq import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq import load_bert
 
 target = [0, 1]
 train_path = "./data/语义匹配/train.tsv"

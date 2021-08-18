@@ -4,8 +4,8 @@ from tqdm import tqdm
 import pandas as pd
 import time
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert
+from bert_seq2seq import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq import load_bert
 
 data_path = "./person.xlsx"
 vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置

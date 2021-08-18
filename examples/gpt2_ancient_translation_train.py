@@ -1,11 +1,11 @@
 ## gpt2 进行文言文翻译
-from bert_seq2seq.utils import load_gpt
+from bert_seq2seq import load_gpt
 import torch
 from tqdm import tqdm
 import time
 import  glob
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq import Tokenizer, load_chinese_base_vocab
 
 vocab_path = "./state_dict/gpt2通用中文模型/vocab.txt"
 model_path = "./state_dict/gpt2通用中文模型/pytorch_model.bin"

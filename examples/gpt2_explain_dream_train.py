@@ -1,11 +1,11 @@
 ## gpt2模型进行周公解梦
-from bert_seq2seq.utils import load_gpt
+from bert_seq2seq import load_gpt
 import torch
 from tqdm import tqdm
 import pandas as pd
 import time
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq import Tokenizer, load_chinese_base_vocab
 
 vocab_path = "./state_dict/gpt_vocab.txt"
 model_path = "./state_dict/gpt_pytorch_model.bin"

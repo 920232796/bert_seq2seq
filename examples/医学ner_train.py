@@ -4,8 +4,8 @@ from tqdm import tqdm
 import time
 import unicodedata
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert
+from bert_seq2seq import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq import load_bert
 
 # target = ["O", "B-DRUG", "B-DRUG_INGREDIENT", "B-DISEASE", "B-SYMPTOM", "B-SYNDROME", "B-DISEASE_GROUP",
 #         "B-FOOD", "B-FOOD_GROUP", "B-PERSON_GROUP", "B-DRUG_GROUP", "B-DRUG_DOSAGE", "B-DRUG_TASTE",

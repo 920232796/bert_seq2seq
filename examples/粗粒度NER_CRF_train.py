@@ -5,8 +5,8 @@ import unicodedata
 import os
 import time
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert
+from bert_seq2seq import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq import load_bert
 
 data_path = "./state_dict/corase_train_update.txt"
 

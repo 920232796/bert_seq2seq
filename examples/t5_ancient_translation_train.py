@@ -2,8 +2,8 @@ import torch
 import time
 import  glob
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.tokenizer import T5PegasusTokenizer, load_chinese_base_vocab
-from bert_seq2seq.t5_ch import T5Model
+from bert_seq2seq import T5PegasusTokenizer, load_chinese_base_vocab
+from bert_seq2seq import T5Model
 
 vocab_path = "./state_dict/t5-chinese/vocab.txt"
 model_path = "./state_dict/t5-chinese/pytorch_model.bin"

@@ -1,6 +1,6 @@
 import torch
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert
+from bert_seq2seq import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq import load_bert
 
 auto_title_model = "./state_dict/bert_auto_title_model2.bin"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

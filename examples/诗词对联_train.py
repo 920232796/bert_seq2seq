@@ -4,8 +4,8 @@ import pandas as pd
 import os
 import time
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert
+from bert_seq2seq import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq import load_bert
 import opencc 
 
 data_dir = "./Poetry_ci_duilian"

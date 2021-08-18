@@ -4,7 +4,7 @@ from tqdm import tqdm
 import time
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.utils import load_gpt
+from bert_seq2seq import load_gpt
 from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("pranavpsv/gpt2-genre-story-generator")
 word2ix = tokenizer.get_vocab()
