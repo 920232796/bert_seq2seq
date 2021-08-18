@@ -21,13 +21,9 @@ def mish(x):
 ACT2FN = {"gelu": gelu, "relu": torch.nn.functional.relu, "swish": swish, "mish": mish}
 
 
-_CONFIG_FOR_DOC = "NeZhaConfig"
-_TOKENIZER_FOR_DOC = "NeZhaTokenizer"
-
-
 NEZHA_PRETRAINED_CONFIG_ARCHIVE_MAP = {}
 
-class NeZhaConfig:
+class BertConfig:
     r"""
         This is the configuration class to store the configuration of an :class:`~transformers.AlbertModel`.
         It is used to instantiate an ALBERT model according to the specified arguments, defining the model
@@ -481,7 +477,7 @@ class BertLMPredictionHead(nn.Module):
         hidden_states = self.decoder(hidden_states)
         return hidden_states
 
-class NeZhaModel(nn.Module):
+class BertModel(nn.Module):
     """
     The model can behave as an encoder (with only self-attention) as well
     as a decoder, in which case a layer of cross-attention is added between
@@ -572,8 +568,6 @@ class NeZhaModel(nn.Module):
         device = input_ids.device
         input_shape = input_ids.shape
 
-        if attention_mask is None:
-            attention_mask = torch.ones(input_shape, device=device)
         if token_type_ids is None:
             token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=device)
 
@@ -600,34 +594,3 @@ class NeZhaModel(nn.Module):
         )
 
         return encoder_outputs, None
-
-if __name__ == '__main__':
-    config = NeZhaConfig()
-
-    model = NeZhaModel(config)
-
-    t1 = (torch.rand(1, 20) * 10).long()
-
-    # out = model(t1)
-
-    # print(out[-1].shape)
-    for k, v in model.named_parameters():
-        if "relative" in k:
-            print(k)
-
-    print("~~~~~~~~~~~~~~~~~~~~~~~")
-
-    state_dict = torch.load("./state_dict/nezha-base-www/pytorch_model.bin")
-    for k, v in state_dict.items():
-        # if "relative" in k:
-        print(k)
-        # print("~~")
-
-    checkpoints = {k[5:]: v for k, v in state_dict.items() if k[:4] == "bert" and "pooler" not in k}
-
-    # print(checkpoints)
-    # for k, v in checkpoints.items():
-    #     print(k)
-    #
-
-    model.load_state_dict(checkpoints, strict=False)

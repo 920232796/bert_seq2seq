@@ -84,7 +84,7 @@ class BertRelationExtrac(BasicBert):
         else :
             return predictions
 
-    def predict_subject(self, text,use_layer_num=-1, device="cpu"):
+    def predict_subject(self, text,use_layer_num=-1):
         if use_layer_num != -1:
             if use_layer_num < 0 or use_layer_num > 7:
                 # 越界

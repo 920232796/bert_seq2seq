@@ -12,10 +12,10 @@ import bert_seq2seq
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert
 
-relation_extrac_model = "./state_dict/bert_model_relation_extrac.bin"
+relation_extrac_model = "./state_dict/nezha_relation_extract.bin"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
-model_name = "roberta"  # 选择模型名字
+model_name = "nezha"  # 选择模型名字
 # model_path = "./state_dict/bert-base-chinese-pytorch_model.bin"  # roberta模型位
 # 加载字典
 word2idx = load_chinese_base_vocab(vocab_path, simplfied=False)

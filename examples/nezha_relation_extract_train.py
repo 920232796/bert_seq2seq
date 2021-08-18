@@ -13,11 +13,10 @@ from bert_seq2seq.utils import load_bert
 import numpy as np
 import time
 
-vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
-model_name = "roberta" # 选择模型名字
-model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
-recent_model_path = ""  # 用于把已经训练好的模型继续训练
-model_save_path = "./state_dict/bert_model_relation_extrac.bin"
+vocab_path = "./state_dict/nezha-base-www/vocab.txt"  # roberta模型字典的位置
+model_name = "nezha"  # 选择模型名字
+model_path = "./state_dict/nezha-base-www/pytorch_model.bin"  # roberta模型位置
+model_save_path = "./nezha_relation_extract.bin"
 batch_size = 16
 lr = 1e-5
 

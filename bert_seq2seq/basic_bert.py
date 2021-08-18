@@ -10,44 +10,26 @@ class BasicBert(nn.Module):
         self.model_name = model_name
         if model_name == "roberta":
             from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
-            self.config = BertConfig(len(self.word2ix))
-            self.bert = BertModel(self.config)
-            self.layer_norm = BertLayerNorm(self.config.hidden_size)
-            self.layer_norm_cond = BertLayerNorm(self.config.hidden_size, conditional=True)
-            self.transform = BertPredictionHeadTransform(self.config)
-            self.decoder = BertLMPredictionHead(self.config, self.bert.embeddings.word_embeddings.weight)
         elif model_name == "bert":
             from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
-            self.config = BertConfig(len(self.word2ix))
-            self.bert = BertModel(self.config)
-            self.layer_norm = BertLayerNorm(self.config.hidden_size)
-            self.layer_norm_cond = BertLayerNorm(self.config.hidden_size, conditional=True)
-            self.transform = BertPredictionHeadTransform(self.config)
-            self.decoder = BertLMPredictionHead(self.config, self.bert.embeddings.word_embeddings.weight)
-
         elif model_name == "nezha":
-            from bert_seq2seq.model.nezha_model import NeZhaConfig, NeZhaModel, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
-            self.config = NeZhaConfig(vocab_size=len(self.word2ix))
-            self.bert = NeZhaModel(self.config)
-            self.layer_norm = BertLayerNorm(self.config.hidden_size)
-            self.layer_norm_cond = BertLayerNorm(self.config.hidden_size, conditional=True)
-            self.transform = BertPredictionHeadTransform(self.config)
-            self.decoder = BertLMPredictionHead(self.config, self.bert.embeddings.word_embeddings.weight)
-
+            from bert_seq2seq.model.nezha_model import BertConfig, BertModel, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
         else:
             raise Exception("model_name_err")
 
+        self.config = BertConfig(vocab_size=len(self.word2ix))
+        self.bert = BertModel(self.config)
+        self.layer_norm = BertLayerNorm(self.config.hidden_size)
+        self.layer_norm_cond = BertLayerNorm(self.config.hidden_size, conditional=True)
+        self.transform = BertPredictionHeadTransform(self.config)
+        self.decoder = BertLMPredictionHead(self.config, self.bert.embeddings.word_embeddings.weight)
 
         self.device = torch.device("cpu")
 
     def load_pretrain_params(self, pretrain_model_path, keep_tokens=None):
         checkpoint = torch.load(pretrain_model_path, map_location=self.device)
-        # 模型刚开始训练的时候, 需要载入预训练的BERT
-        if self.model_name == "nezha":
-            checkpoint = {k: v for k, v in checkpoint.items()
-                          if k[:4] == "bert" and "pooler" not in k}
-        else:
-            checkpoint = {k: v for k, v in checkpoint.items()
+
+        checkpoint = {k: v for k, v in checkpoint.items()
                                             if k[:4] == "bert" and "pooler" not in k}
         if keep_tokens is not None:
             ## 说明精简词表了，embeedding层也要过滤下
@@ -59,6 +41,7 @@ class BasicBert(nn.Module):
         print("{} loaded!".format(pretrain_model_path))
 
     def load_all_params(self, model_path, device="cuda"):
+
         checkpoint = torch.load(model_path, map_location=device)
         self.load_state_dict(checkpoint, strict=False)
         torch.cuda.empty_cache()
@@ -72,6 +55,12 @@ class BasicBert(nn.Module):
         self.to(device)
         
     def save_all_params(self, save_path):
+        if self.model_name == "nezha":
+            # 不要保存相对位置编码权重
+            checkpoints = {k: v for k, v in self.state_dict().items()
+                                        if "relative" not in k}
+            torch.save(checkpoints, save_path)
+            return
         torch.save(self.state_dict(), save_path)
 
 class BasicGPT(nn.Module):
