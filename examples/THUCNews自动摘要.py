@@ -1,14 +1,8 @@
 ## THUCNews 原始数据集
 import torch 
 from tqdm import tqdm
-import torch.nn as nn 
-from torch.optim import Adam
-import numpy as np
-import os
-import json
 import time
 import glob
-import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq.utils import load_bert

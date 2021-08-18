@@ -1,25 +1,13 @@
 # gpt2模型进行英文讲故事 给一个开头 继续讲五句话
 import torch
 from tqdm import tqdm
-import torch.nn as nn
-from torch.optim import Adam
-import numpy as np
-import os
-import json
 import time
-import glob
 import pandas as pd
-import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.utils import load_gpt
 from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("pranavpsv/gpt2-genre-story-generator")
 word2ix = tokenizer.get_vocab()
-# print(len(word2ix))
-# print(word2ix["<EOS>"])
-# print(word2ix["<PAD>"])
-# print(tokenizer.eos_token_id)
-
 data_path = "./corpus/英文讲故事数据集/train.csv"
 model_path = "./state_dict/english_gpt_model/english_gpt_story.bin"
 model_save_path = "./state_dict/gpt_auto_story.bin"

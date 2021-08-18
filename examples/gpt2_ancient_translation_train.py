@@ -1,20 +1,9 @@
 ## gpt2 进行文言文翻译
-import torch
 from bert_seq2seq.utils import load_gpt
-import sys
-
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
 import torch
 from tqdm import tqdm
-import torch.nn as nn
-from torch.optim import Adam
-import pandas as pd
-import numpy as np
-import os
-import json
 import time
 import  glob
-import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
 

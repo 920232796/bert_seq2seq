@@ -1,10 +1,7 @@
 """
 """
-import sys
-# from numpy import random
 import random
 import torch
-import torch.nn as nn
 from tqdm import tqdm
 import json
 from torch.utils.data import Dataset, DataLoader

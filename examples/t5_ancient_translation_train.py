@@ -1,20 +1,7 @@
 import torch
-from bert_seq2seq.utils import load_gpt
-import sys
-sys.path.append("/Users/xingzhaohu/Downloads/code/python/ml/ml_code/bert/bert_seq2seq")
-import torch
-from tqdm import tqdm
-import torch.nn as nn
-from torch.optim import Adam
-import pandas as pd
-import numpy as np
-import os
-import json
 import time
 import  glob
-import bert_seq2seq
 from torch.utils.data import Dataset, DataLoader
-from bert_seq2seq.t5_ch import T5Model
 from bert_seq2seq.tokenizer import T5PegasusTokenizer, load_chinese_base_vocab
 from bert_seq2seq.t5_ch import T5Model
 
