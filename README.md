@@ -76,6 +76,8 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 
 ### 更新记录
 
+2021.08.18: 优化了大量代码，目前框架代码看起来更加清晰了，删除了大量冗余的代码。
+
 2021.08.17: 支持了华为的nezha模型，很简单，改一下model_name参数即可，欢迎测试效果。
 
 2021.08.15: 添加了分词的例子，tokenizer中添加了rematch代码。
@@ -149,4 +151,4 @@ pytorch实现bert做seq2seq任务，使用unilm方案。如果喜欢的话欢迎
 2020.04.01: 重构了代码，开始训练一个新的任务花费时间更少。
 
 python setup.py sdist
-twine upload dist/bert_seq2seq-1.3.3.tar.gz
+twine upload dist/bert_seq2seq-2.0.0.tar.gz
