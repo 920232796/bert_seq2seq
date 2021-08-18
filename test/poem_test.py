@@ -1,6 +1,6 @@
 import torch
-from bert_seq2seq.tokenizer import Tokenizer, load_chinese_base_vocab
-from bert_seq2seq.utils import load_bert
+from bert_seq2seq import Tokenizer, load_chinese_base_vocab
+from bert_seq2seq import load_bert
 
 auto_title_model = "./state_dict/bert_model_poem_ci_duilian.bin"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -25,7 +25,6 @@ if __name__ == "__main__":
             if text[-1] == "句" or text[-1] == "诗":
                 print(bert_model.generate(text, beam_size=3, is_poem=True))
             else:
-                # print(bert_model.generate_random(text, beam_size=5))
                 print(bert_model.generate(text, beam_size=3, is_poem=False))
 
 

@@ -3,7 +3,7 @@ import torch
 import glob
 import json
 from rouge import Rouge
-from bert_seq2seq.utils import load_bert
+from bert_seq2seq import load_bert
 from transformers import AutoTokenizer
 
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")

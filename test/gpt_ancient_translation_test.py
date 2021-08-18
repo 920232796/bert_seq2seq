@@ -1,7 +1,7 @@
 
 import torch
-from bert_seq2seq.utils import load_gpt
-from bert_seq2seq.tokenizer import load_chinese_base_vocab
+from bert_seq2seq import load_gpt
+from bert_seq2seq import load_chinese_base_vocab
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
