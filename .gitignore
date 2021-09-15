@@ -3,8 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-/state_dict/*
-/corpus/*
+state_dict/*
+corpus/*
 ./*.json
 # C extensions
 *.so
@@ -12,6 +12,7 @@ state_dict/bert_seq2seq_save
 # Distribution / packaging
 .Python
 build/
+nouse/*
 develop-eggs/
 dist/
 downloads/
