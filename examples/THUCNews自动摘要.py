@@ -26,7 +26,6 @@ class BertDataset(Dataset):
         super(BertDataset, self).__init__()
         ## 拿到所有文件名字
         self.txts = glob.glob('./state_dict/THUCNews/*/*.txt')
-    
         self.idx2word = {k: v for v, k in word2idx.items()}
         self.tokenizer = Tokenizer(word2idx)
 
@@ -49,7 +48,7 @@ class BertDataset(Dataset):
             }
             return output
 
-        self.__getitem__(i + 1)
+        return self.__getitem__(i + 1)
 
     def __len__(self):
 
