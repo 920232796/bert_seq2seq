@@ -12,6 +12,7 @@ state_dict/bert_seq2seq_save
 # Distribution / packaging
 .Python
 build/
+./test.py
 nouse/*
 develop-eggs/
 dist/
