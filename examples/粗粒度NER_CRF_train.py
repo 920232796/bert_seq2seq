@@ -84,7 +84,7 @@ def read_corpus(data_path):
     sents_src = []
     sents_tgt = []
 
-    with open(data_path) as f:
+    with open(data_path, encoding="utf-8") as f:
         lines = f.readlines()
     row = ""
     t = []
