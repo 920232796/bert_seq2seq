@@ -38,7 +38,7 @@ def ner_print(model, test_data, device="cpu"):
     trans = model.state_dict()["crf_layer.trans"]
     for text in test_data:
         decode = []
-        text_encode, text_ids = tokenier.encode(text)
+        text_encode, _ = tokenier.encode(text)
         text_tensor = torch.tensor(text_encode, device=device).view(1, -1)
         out = model(text_tensor).squeeze(0) # 其实是nodes
         labels = viterbi_decode(out, trans)
@@ -57,6 +57,8 @@ def ner_print(model, test_data, device="cpu"):
         for index, each_entity in enumerate(decode):
             if each_entity != "other":
                 if flag != each_entity:
+                    # cur_text = "".join([text[t] for t in mapping[index]])
+
                     cur_text = decode_text[index]
                     if each_entity in res.keys():
                         res[each_entity].append(cur_text)

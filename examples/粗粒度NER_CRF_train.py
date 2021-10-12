@@ -188,11 +188,14 @@ def viterbi_decode(nodes, trans):
 
 def ner_print(model, test_data, device="cpu"):
     model.eval()
+    idxtword = {v: k for k, v in word2idx.items()}
+
     tokenier = Tokenizer(word2idx)
     trans = model.state_dict()["crf_layer.trans"]
     for text in test_data:
         decode = []
         text_encode, text_ids = tokenier.encode(text)
+        
         text_tensor = torch.tensor(text_encode, device=device).view(1, -1)
         out = model(text_tensor).squeeze(0) # 其实是nodes
         labels = viterbi_decode(out, trans)
@@ -211,21 +214,26 @@ def ner_print(model, test_data, device="cpu"):
             else :
                 decode.append("O")
         flag = 0
+
         res = {}
+        text_decode = [idxtword[i] for i in text_encode]
         for index, each_entity in enumerate(decode):
             if each_entity != "O":
                 if flag != each_entity:
-                    cur_text = text[index - 1]
+                    # cur_text = "".join([text[t] for t in mapping[index]])
+                    cur_text = text_decode[index]
                     if each_entity in res.keys():
                         res[each_entity].append(cur_text)
                     else :
                         res[each_entity] = [cur_text]
                     flag = each_entity
                 elif flag == each_entity:
-                    res[each_entity][-1] += text[index - 1]
+                    res[each_entity][-1] += text_decode[index]
+                    # res[each_entity][-1] += "".join([text[t] for t in mapping[index]])
             else :
                 flag = 0
         print(res)
+
 
 class Trainer:
     def __init__(self):

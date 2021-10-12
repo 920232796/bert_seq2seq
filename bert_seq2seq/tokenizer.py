@@ -400,6 +400,19 @@ if __name__ == "__main__":
     # # print(word2idx["[PAD]"])
     # # print(word2idx["[SEP]"])
 
+
+    text = "2020你好"
+    tokens = tokenizer.tokenize(text)
+    print(tokens)
+
+    text_encode, _ = tokenizer.encode(text)
+
+    mapping = tokenizer.rematch(text, tokens)
+
+    print(mapping)
+
+    print("~~~~~~~~~~`")
+
     input_ids, segment_ids = tokenizer.encode("你好啊")
     input_ids = input_ids[1:-1]
     print(f"fisrt encode text is {input_ids}")
