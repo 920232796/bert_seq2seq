@@ -3,9 +3,11 @@ import torch
 import numpy as np 
 from bert_seq2seq.seq2seq_model import top_k_top_p_filtering
 import torch.nn.functional as F 
+import torch.nn as nn 
+
 
 class ExtendModel:
-    def __init__(self, model, tokenizer, bos_id, eos_id, device="cpu") -> None:
+    def __init__(self, model:nn.Module, tokenizer, bos_id, eos_id, device="cpu") -> None:
         self.model = model 
         self.tokenizer = tokenizer
         self.device = device
@@ -14,6 +16,24 @@ class ExtendModel:
 
     def __call__(self, *args, **kwargs):
         return self.model(*args, **kwargs)
+
+    def to(self, device):
+        self.model.to(device)
+
+    def load_state_dict(self, model_param, strict=True):
+        self.model.load_state_dict(model_param, strict=strict)
+
+    def state_dict(self):
+        return self.model.state_dict()
+
+    def train(self):
+        self.model.train()
+
+    def eval(self):
+        self.model.eval()
+
+    def parameters(self):
+        return self.model.parameters()
 
     def sample_generate_autoregressive(self, text, input_max_length=256, out_max_length=200, top_k=30, top_p=0.0, add_eos=False):
 

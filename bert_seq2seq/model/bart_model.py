@@ -145,18 +145,18 @@ class BartConfig():
 
     def __init__(
         self,
-        vocab_size=50265,
-        max_position_embeddings=1024,
-        encoder_layers=12,
-        encoder_ffn_dim=4096,
-        encoder_attention_heads=16,
-        decoder_layers=12,
-        decoder_ffn_dim=4096,
-        decoder_attention_heads=16,
+        vocab_size=21128,
+        max_position_embeddings=512,
+        encoder_layers=6,
+        encoder_ffn_dim=3072,
+        encoder_attention_heads=12,
+        decoder_layers=6,
+        decoder_ffn_dim=3072,
+        decoder_attention_heads=12,
         encoder_layerdrop=0.0,
         decoder_layerdrop=0.0,
         activation_function="gelu",
-        d_model=1024,
+        d_model=768,
         dropout=0.1,
         attention_dropout=0.0,
         activation_dropout=0.0,
@@ -167,11 +167,11 @@ class BartConfig():
         force_bos_token_to_be_generated=False,
         use_cache=True,
         num_labels=3,
-        pad_token_id=1,
-        bos_token_id=0,
-        eos_token_id=2,
+        pad_token_id=0,
+        bos_token_id=101,
+        eos_token_id=102,
         is_encoder_decoder=True,
-        decoder_start_token_id=2,
+        decoder_start_token_id=102,
     ):
         self.pad_token_id = pad_token_id
         self.bos_token_id = bos_token_id
@@ -899,6 +899,7 @@ class BartDecoder(nn.Module):
             return_dict (:obj:`bool`, `optional`):
                 Whether or not to return a :class:`~transformers.file_utils.ModelOutput` instead of a plain tuple.
         """
+        device = input_ids.device
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
@@ -931,6 +932,7 @@ class BartDecoder(nn.Module):
             combined_attention_mask = _make_causal_mask(
                 input_shape, inputs_embeds.dtype, past_key_values_length=past_key_values_length
             )
+            combined_attention_mask = combined_attention_mask.to(device)
 
         if attention_mask is not None and combined_attention_mask is not None:
             # [bsz, seq_len] -> [bsz, 1, tgt_seq_len, src_seq_len]
@@ -1179,13 +1181,4 @@ if __name__ == "__main__":
     # out_lm = out[1]
     # print(out_lm.shape)
     names = []
-    for name, _ in model.named_parameters():
-        print(name)
-        names.append(name)
     
-    print("~~~~~~~~~")
-    checkpoint = torch.load("./state_dict/bart_model.bin", map_location="cpu")
-    ks = []
-    for k, v in checkpoint.items():
-        print(k)
-        ks.append(k)
