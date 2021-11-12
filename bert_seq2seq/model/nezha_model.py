@@ -444,6 +444,29 @@ class NeZhaEncoder(nn.Module):
 
         return outputs  # last-layer hidden state, (all hidden states), (all attentions)
 
+
+class Predictions(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.transform = BertPredictionHeadTransform(config)
+        self.decoder = nn.Linear(config.hidden_size, config.vocab_size)  
+        self.bias = nn.Parameter(torch.zeros(config.vocab_size))
+        # Need a link between the two variables so that the bias is correctly resized with `resize_token_embeddings`
+        self.decoder.bias = self.bias
+
+    def forward(self, x):
+        x = self.transform(x)
+
+        return x, self.decoder(x)
+
+class CLS(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.predictions = Predictions(config)
+
+    def forward(self, x):
+        return self.predictions(x)
+        
 class BertPredictionHeadTransform(nn.Module):
     def __init__(self, config):
         super().__init__()

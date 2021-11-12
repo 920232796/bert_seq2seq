@@ -50,6 +50,37 @@ class BertConfig(object):
         self.initializer_range = initializer_range
         self.layer_norm_eps = layer_norm_eps
 
+class RobertaLargeConfig(object):
+    
+    def __init__(
+        self,
+        vocab_size,
+        hidden_size=1024,
+        num_hidden_layers=24,
+        num_attention_heads=16,
+        intermediate_size=4096,
+        hidden_act="gelu",
+        hidden_dropout_prob=0.1,
+        attention_probs_dropout_prob=0.1,
+        max_position_embeddings=512,
+        type_vocab_size=2,
+        initializer_range=0.02,
+        layer_norm_eps=1e-12,
+    ):
+
+        self.vocab_size = vocab_size
+        self.hidden_size = hidden_size
+        self.num_hidden_layers = num_hidden_layers
+        self.num_attention_heads = num_attention_heads
+        self.hidden_act = hidden_act
+        self.intermediate_size = intermediate_size
+        self.hidden_dropout_prob = hidden_dropout_prob
+        self.attention_probs_dropout_prob = attention_probs_dropout_prob
+        self.max_position_embeddings = max_position_embeddings
+        self.type_vocab_size = type_vocab_size
+        self.initializer_range = initializer_range
+        self.layer_norm_eps = layer_norm_eps
+
 
 class BertLayerNorm(nn.Module):
     """LayerNorm层, 见Transformer(一), 讲编码器(encoder)的第3部分"""
@@ -326,17 +357,38 @@ class BertPredictionHeadTransform(nn.Module):
         hidden_states = self.LayerNorm(hidden_states)
         return hidden_states
 
+class Predictions(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.transform = BertPredictionHeadTransform(config)
+        self.decoder = nn.Linear(config.hidden_size, config.vocab_size)  
+        self.bias = nn.Parameter(torch.zeros(config.vocab_size))
+        # Need a link between the two variables so that the bias is correctly resized with `resize_token_embeddings`
+        self.decoder.bias = self.bias
+
+    def forward(self, x):
+        x = self.transform(x)
+
+        return x, self.decoder(x)
+
+class CLS(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.predictions = Predictions(config)
+
+    def forward(self, x):
+        return self.predictions(x)
 
 class BertLMPredictionHead(nn.Module):
-    def __init__(self, config, bert_model_embedding_weights):
+    def __init__(self, config):
         super().__init__()
         self.transform = BertPredictionHeadTransform(config)
 
         # The output weights are the same as the input embeddings, but there is
         # an output-only bias for each token.
-        self.decoder = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
+        self.decoder = nn.Linear(config.hidden_size, config.vocab_size)
 
-        self.decoder.weight = bert_model_embedding_weights
+        # self.decoder.weight = bert_model_embedding_weights
         self.bias = nn.Parameter(torch.zeros(config.vocab_size))
 
         # Need a link between the two variables so that the bias is correctly resized with `resize_token_embeddings`
@@ -387,7 +439,7 @@ class BertPreTrainedModel(nn.Module):
 
     def __init__(self, config, *inputs, **kwargs):
         super(BertPreTrainedModel, self).__init__()
-        if not isinstance(config, BertConfig):
+        if not isinstance(config, BertConfig) and not isinstance(config, RobertaLargeConfig):
             raise ValueError(
                 "Parameter config in `{}(config)` should be an instance of class `BertConfig`. "
                 "To create a model from a Google pretrained model use "

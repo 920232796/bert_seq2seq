@@ -41,8 +41,8 @@ class BertSeqLabeling(BasicBert):
                                     output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num] 
 
-        transform_out = self.transform(squence_out)
-        predictions = self.final_dense(transform_out)
+        tokens_hidden_state, _ = self.cls(squence_out)
+        predictions = self.final_dense(tokens_hidden_state)
         if labels is not None:
             ## 计算loss
             loss = self.compute_loss(predictions, labels)

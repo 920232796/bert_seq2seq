@@ -13,7 +13,7 @@ state_dict/bert_seq2seq_save
 .Python
 build/
 ./test.py
-nouse/*
+nouse
 test.py
 develop-eggs/
 dist/

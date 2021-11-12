@@ -24,21 +24,16 @@ class BertClsClassifier(BasicBert):
     
     def forward(self, text, position_enc=None, labels=None, use_layer_num=-1):
         if use_layer_num != -1:
-            if use_layer_num < 0 or use_layer_num > 7:
-                # 越界
-                raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
+            raise Exception("暂时只支持用最后一层进行分类")
         text = text.to(self.device)
         if position_enc is not None:
             position_enc = position_enc.to(self.device)
         if labels is not None:
             labels = labels.to(self.device)
-        enc_layers, _ = self.bert(text, 
+        _, pooled_out = self.bert(text, 
                                     output_all_encoded_layers=True)
-        squence_out = enc_layers[use_layer_num] 
 
-        cls_token = squence_out[:, 0]# 取出cls向量 进行分类
-        # print(cls_token)
-        predictions = self.final_dense(cls_token)
+        predictions = self.final_dense(pooled_out)
         if labels is not None:
             ## 计算loss
             loss = self.compute_loss(predictions, labels)

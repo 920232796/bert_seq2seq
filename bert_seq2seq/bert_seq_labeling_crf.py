@@ -25,9 +25,8 @@ class BertSeqLabelingCRF(BasicBert):
     
     def forward(self, text, position_enc=None, labels=None, use_layer_num=-1):
         if use_layer_num != -1:
-            if use_layer_num < 0 or use_layer_num > 7:
-                # 越界
-                raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
+            # 越界
+            raise Exception("use_layer_num目前只支持-1")
         # 计算target mask
         self.target_mask = (text > 0).float().to(self.device)
         text = text.to(self.device)
@@ -39,9 +38,9 @@ class BertSeqLabelingCRF(BasicBert):
                                     output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num] 
 
-        transform_out = self.transform(squence_out)
+        tokens_hidden_state, _ = self.cls(squence_out)
         # print(cls_token)
-        predictions = self.final_dense(transform_out)
+        predictions = self.final_dense(tokens_hidden_state)
 
         if labels is not None:
             ## 计算loss

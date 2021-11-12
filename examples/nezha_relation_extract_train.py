@@ -15,8 +15,13 @@ vocab_path = "./state_dict/nezha-base-www/vocab.txt"  # roberta模型字典的�
 model_name = "nezha"  # 选择模型名字
 model_path = "./state_dict/nezha-base-www/pytorch_model.bin"  # roberta模型位置
 model_save_path = "./nezha_relation_extract.bin"
+all_p_path = "./corpus/三元组抽取/all_50_schemas" # 穷举所有p。
+data_path = "./corpus/三元组抽取/train_data.json" # 训练集
+data_dev = "./corpus/三元组抽取/dev_data.json" # 验证集
+
 batch_size = 16
 lr = 1e-5
+
 
 word2idx = load_chinese_base_vocab(vocab_path)
 idx2word = {v: k for k, v in word2idx.items()}
@@ -35,7 +40,7 @@ def load_data(filename):
     return D
 
 predicate2id, id2predicate = {}, {}
-with open('./state_dict/extract/all_50_schemas') as f:
+with open(all_p_path, encoding="utf-8") as f:
     for l in f:
         l = json.loads(l)
         if l['predicate'] not in predicate2id:
@@ -213,8 +218,7 @@ def collate_fn(batch):
 class ExtractTrainer:
     def __init__(self):
         # 加载数据
-        data_path = "./state_dict/extract/train_data.json"
-        data_dev = "./state_dict/extract/dev_data.json"
+       
         self.data = load_data(data_path)
         self.data_dev = load_data(data_dev)
 

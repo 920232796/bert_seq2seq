@@ -11,10 +11,11 @@ class BertRelationExtrac(BasicBert):
         super(BertRelationExtrac, self).__init__(word2ix=word2ix, model_name=model_name)
         
         self.predicate_num = predicate_num
-        
+        self.subject_pred_norm = nn.LayerNorm(self.config.hidden_size)
         self.subject_pred = nn.Linear(self.config.hidden_size, 2)
         self.activation = nn.Sigmoid()
         self.object_pred = nn.Linear(self.config.hidden_size, 2 * self.predicate_num)
+        
     
     def binary_crossentropy(self, labels, pred):
         labels = labels.float()
@@ -45,9 +46,8 @@ class BertRelationExtrac(BasicBert):
 
     def forward(self, text, subject_ids, position_enc=None, subject_labels=None, object_labels=None, use_layer_num=-1):
         if use_layer_num != -1:
-            if use_layer_num < 0 or use_layer_num > 7:
-                # 越界
-                raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
+            
+            raise Exception("目前 use_layer_num 只支持-1")
         # 计算target mask
         text = text.to(self.device)
         subject_ids = subject_ids.to(self.device)
@@ -56,16 +56,17 @@ class BertRelationExtrac(BasicBert):
                                     output_all_encoded_layers=True)
 
         squence_out = enc_layers[use_layer_num] 
-        sub_out = enc_layers[-1]
 
-        subject_pred_out = self.subject_pred(squence_out)
+        tokens_hidden_state, _ = self.cls(squence_out)
+
+        subject_pred_out = self.subject_pred(self.subject_pred_norm(tokens_hidden_state))
 
         subject_pred_act = self.activation(subject_pred_out)
 
         subject_pred_act = subject_pred_act**2 
 
-        subject_vec = self.extrac_subject(sub_out, subject_ids)
-        object_layer_norm = self.layer_norm_cond([sub_out, subject_vec])
+        subject_vec = self.extrac_subject(tokens_hidden_state, subject_ids)
+        object_layer_norm = self.layer_norm_cond([tokens_hidden_state, subject_vec])
         object_pred_out = self.object_pred(object_layer_norm)
         object_pred_act = self.activation(object_pred_out)
 
@@ -86,17 +87,15 @@ class BertRelationExtrac(BasicBert):
 
     def predict_subject(self, text,use_layer_num=-1):
         if use_layer_num != -1:
-            if use_layer_num < 0 or use_layer_num > 7:
-                # 越界
-                raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
+            
+            raise Exception("use_layer_num目前只支持-1")
         text = text.to(self.device)
 
         self.target_mask = (text > 0).float()
         enc_layers, _ = self.bert(text, output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num]
-        sub_out = enc_layers[-1]
-        # transform_out = self.layer_norm(squence_out)
-        subject_pred_out = self.subject_pred(squence_out)
+        tokens_hidden_state, _ = self.cls(squence_out)
+        subject_pred_out = self.subject_pred(self.subject_pred_norm(tokens_hidden_state))
         subject_pred_act = self.activation(subject_pred_out)
 
         subject_pred_act = subject_pred_act**2
@@ -106,18 +105,18 @@ class BertRelationExtrac(BasicBert):
 
     def predict_object_predicate(self, text, subject_ids, use_layer_num=-1):
         if use_layer_num != -1:
-            if use_layer_num < 0 or use_layer_num > 7:
-                # 越界
-                raise Exception("层数选择错误，因为bert base模型共8层，所以参数只只允许0 - 7， 默认为-1，取最后一层")
+            
+                raise Exception("use_layer_num目前只支持-1")
         # 计算target mask
         text = text.to(self.device)
         subject_ids = subject_ids.to(self.device)
 
         enc_layers, _ = self.bert(text, output_all_encoded_layers=True)
         squence_out = enc_layers[use_layer_num]
-        sub_out = enc_layers[-1]
-        subject_vec = self.extrac_subject(sub_out, subject_ids)
-        object_layer_norm = self.layer_norm_cond([sub_out, subject_vec])
+        tokens_hidden_state, _ = self.cls(squence_out)
+
+        subject_vec = self.extrac_subject(tokens_hidden_state, subject_ids)
+        object_layer_norm = self.layer_norm_cond([tokens_hidden_state, subject_vec])
         object_pred_out = self.object_pred(object_layer_norm)
         object_pred_act = self.activation(object_pred_out)
 

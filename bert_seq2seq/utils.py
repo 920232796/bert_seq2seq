@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from bert_seq2seq.simbert_model import SimBertModel
 from bert_seq2seq.gpt2_generate_model import GPT2
 
+
 def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2seq", target_size=0):
     """
     model_path: 模型位置

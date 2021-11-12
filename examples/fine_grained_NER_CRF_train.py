@@ -2,6 +2,7 @@ import torch
 import unicodedata
 from tqdm import tqdm
 import os
+import json 
 import time
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq import Tokenizer, load_chinese_base_vocab
@@ -9,11 +10,11 @@ from bert_seq2seq import load_bert
 # 共11个标签
 target = ["other", "address", "book", "company", "game", "government", "movie", "name", "organization", "position", "scene"]
 
-data_path = "./state_dict/train.json"
+data_path = "./corpus/细粒度NER/train.json"
 vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
 
-model_name = "roberta" # 选择模型名字
-model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
+model_name = "roberta-large" # 选择模型名字
+model_path = "./state_dict/roberta-large/pytorch_model.bin" # roberta模型位置
 recent_model_path = "" # 用于把已经训练好的模型继续训练
 model_save_path = "./细粒度_bert_ner_model_crf.bin"
 batch_size = 8
@@ -84,7 +85,7 @@ def cons_data():
     # # # 按照句号构造输入输出
     sents = []
     tgts = []
-    with open("./state_dict/ner_train_update.txt", "r", encoding="utf-8") as f :
+    with open("./corpus/细粒度NER/ner_train_update.txt", "r", encoding="utf-8") as f :
         lines = f.readlines()
         sent = ""
         tgt = []
@@ -309,7 +310,7 @@ if __name__ == '__main__':
 
     # with open("./state_dict/ner_train.txt", "a+") as f :
 
-    #     for l in open("./state_dict/train.json") :
+    #     for l in open(data_path, encoding="utf-8") :
     #         l = json.loads(l)
             
     #         text = l["text"]

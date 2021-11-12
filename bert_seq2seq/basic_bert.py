@@ -1,6 +1,41 @@
 
 import torch
-import torch.nn as nn 
+import torch.nn as nn
+    
+def get_model(model_name, word2ix):
+    if model_name == "roberta":
+        from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead, CLS
+        config = BertConfig(vocab_size=len(word2ix))
+        bert = BertModel(config)
+        layer_norm_cond = BertLayerNorm(config.hidden_size, conditional=True)
+
+        CLS = CLS(config)
+
+    elif model_name == "bert":
+        from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead,CLS
+        config = BertConfig(vocab_size=len(word2ix))
+        bert = BertModel(config)
+        layer_norm_cond = BertLayerNorm(config.hidden_size, conditional=True)
+        CLS = CLS(config)
+
+    elif model_name == "nezha":
+        from bert_seq2seq.model.nezha_model import BertConfig, BertModel, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead,CLS
+        config = BertConfig(vocab_size=len(word2ix))
+        bert = BertModel(config)
+        layer_norm_cond = BertLayerNorm(config.hidden_size, conditional=True)
+        CLS = CLS(config)
+
+    elif model_name == "roberta-large":
+        from bert_seq2seq.model.roberta_model import BertModel, RobertaLargeConfig, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead, CLS
+        config = RobertaLargeConfig(vocab_size=len(word2ix))
+        bert = BertModel(config)
+        layer_norm_cond = BertLayerNorm(config.hidden_size, conditional=True)
+        CLS = CLS(config)
+        
+    else:
+        raise Exception("model_name_err")
+
+    return config, bert, layer_norm_cond, CLS
 
 class BasicBert(nn.Module):
     def __init__(self, word2ix, model_name="roberta"):
@@ -8,35 +43,23 @@ class BasicBert(nn.Module):
         self.config = ""
         self.word2ix = word2ix
         self.model_name = model_name
-        if model_name == "roberta":
-            from bert_seq2seq.model.roberta_model import BertModel, BertConfig, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
-        elif model_name == "bert":
-            from bert_seq2seq.model.bert_model import BertConfig, BertModel, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
-        elif model_name == "nezha":
-            from bert_seq2seq.model.nezha_model import BertConfig, BertModel, BertLayerNorm, BertPredictionHeadTransform,BertLMPredictionHead
-        else:
-            raise Exception("model_name_err")
-
-        self.config = BertConfig(vocab_size=len(self.word2ix))
-        self.bert = BertModel(self.config)
-        self.layer_norm = BertLayerNorm(self.config.hidden_size)
-        self.layer_norm_cond = BertLayerNorm(self.config.hidden_size, conditional=True)
-        self.transform = BertPredictionHeadTransform(self.config)
-        self.decoder = BertLMPredictionHead(self.config, self.bert.embeddings.word_embeddings.weight)
+        
+        self.config, self.bert, self.layer_norm_cond, self.cls = get_model(model_name, word2ix)
+       
 
         self.device = torch.device("cpu")
 
-    def load_pretrain_params(self, pretrain_model_path, keep_tokens=None):
+    def load_pretrain_params(self, pretrain_model_path, keep_tokens=None, strict=False):
         checkpoint = torch.load(pretrain_model_path, map_location=self.device)
 
         checkpoint = {k: v for k, v in checkpoint.items()
-                                            if k[:4] == "bert" and "pooler" not in k}
+                                            }
         if keep_tokens is not None:
             ## 说明精简词表了，embeedding层也要过滤下
             embedding_weight_name = "bert.embeddings.word_embeddings.weight"
             checkpoint[embedding_weight_name] = checkpoint[embedding_weight_name][keep_tokens]
             
-        self.load_state_dict(checkpoint, strict=False)
+        self.load_state_dict(checkpoint, strict=strict)
         torch.cuda.empty_cache()
         print("{} loaded!".format(pretrain_model_path))
 

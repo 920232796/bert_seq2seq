@@ -15,6 +15,10 @@ model_name = "roberta" # 选择模型名字
 model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
 recent_model_path = ""  # 用于把已经训练好的模型继续训练
 model_save_path = "./state_dict/bert_model_relation_extrac.bin"
+all_p_path = "./corpus/三元组抽取/all_50_schemas" # 穷举所有p。
+data_path = "./corpus/三元组抽取/train_data.json" # 训练集
+data_dev = "./corpus/三元组抽取/dev_data.json" # 验证集
+
 batch_size = 16
 lr = 1e-5
 
@@ -35,7 +39,7 @@ def load_data(filename):
     return D
 
 predicate2id, id2predicate = {}, {}
-with open('./state_dict/extract/all_50_schemas') as f:
+with open(all_p_path, encoding="utf-8") as f:
     for l in f:
         l = json.loads(l)
         if l['predicate'] not in predicate2id:
@@ -213,8 +217,7 @@ def collate_fn(batch):
 class ExtractTrainer:
     def __init__(self):
         # 加载数据
-        data_path = "./state_dict/extract/train_data.json"
-        data_dev = "./state_dict/extract/dev_data.json"
+        
         self.data = load_data(data_path)
         self.data_dev = load_data(data_dev)
 
@@ -316,15 +319,10 @@ class ExtractTrainer:
         start_time = time.time()  # 得到当前时间
         step = 0
         report_loss = 0.0
-        last_report_loss = 10000000.0
         for token_ids, token_type_ids, subject_lables, object_labels, subject_ids in tqdm(dataloader):
             step += 1
             if step % 300 == 0:
                 print("report loss is " + str(report_loss))
-                if report_loss > last_report_loss:
-                    self.optimizer.param_groups[0]['lr'] = self.optimizer.param_groups[0]['lr'] / 2
-                    print("lr is " + str(self.optimizer.param_groups[0]["lr"]))
-                last_report_loss = report_loss
                 
                 report_loss = 0.0
                 text = ["查尔斯·阿兰基斯（Charles Aránguiz），1989年4月17日出生于智利圣地亚哥，智利职业足球运动员，司职中场，效力于德国足球甲级联赛勒沃库森足球俱乐部", 

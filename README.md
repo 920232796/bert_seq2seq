@@ -3,7 +3,7 @@
 
 ## 欢迎加入交流群～ 可以提问题，提建议，互相交流 QQ群: 975907202
 
-### 本框架目前可以做各种NLP任务，支持bert、roberta、gpt2、t5、华为nezha模型：
+### 本框架目前可以做各种NLP任务，支持bert、roberta、roberta-large、gpt2、t5、华为nezha模型：
 1. seq2seq 比如写诗，对联，自动摘要等。
 2. cls_classifier 通过提取句首的cls向量去做分类，比如情感分析，文本分类。
 3. sequence_labeling 序列标注任务，比如命名实体识别，词性标注，中文分词。
@@ -12,7 +12,7 @@
 5. simbert SimBert模型，生成相似句子，并且给相似句子进行相似度判断。
 五种任务分别加载四种不同的模型，通过``` model_class="seq2seq" or "cls" or "sequence_labeling" or "sequence_labeling_crf" or "relation_extrac" or "simbert"``` 参数去设置。具体可以去看examples里面的各种例子。当然也随时可以查看修改我的源代码～
 ### 预训练模型下载地址汇总：
-1. 使用roberta模型，模型和字典文件需要去 https://drive.google.com/file/d/1iNeYFhCBJWeUsIlnW_2K6SMwXkM4gLb_/view 这里下载。 具体可以参考这个github仓库～ https://github.com/ymcui/Chinese-BERT-wwm
+1. 使用roberta模型，模型和字典文件需要去 https://drive.google.com/file/d/1iNeYFhCBJWeUsIlnW_2K6SMwXkM4gLb_/view 这里下载。 具体可以参考这个github仓库～ https://github.com/ymcui/Chinese-BERT-wwm ，roberta-large模型也是在里面进行下载即可。
 2. 如果使用普通的bert模型，下载bert中文预训练权重 "bert-base-chinese": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-pytorch_model.bin", 下载bert中文字典 "bert-base-chinese": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt".
 3. 如果使用nezha模型，字典权重位置（目前只支持base）：nezha-base模型下载：链接: https://pan.baidu.com/s/1Z0SJbISsKzAgs0lT9hFyZQ 提取码: 4awe
 4. gpt2模型，可以查看test文件中的gpt_test文件进行文本续写测试，gpt2中文通用模型和字典下载地址：https://pan.baidu.com/s/1vTYc8fJUmlQrre5p0JRelw  密码: f5un
@@ -75,6 +75,8 @@
 多谢支持。
 
 ### 更新记录
+
+2021.11.12: 优化代码，支持了roberta-large模型。
 
 2021.10.12: 优化了ner的解码方法，以前粗粒度的解码方式存在bug。
 

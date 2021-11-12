@@ -84,7 +84,7 @@ class Seq2SeqModel(BasicBert):
                                     output_all_encoded_layers=True)
         squence_out = enc_layers[-1] ## 取出来最后一层输出 (batch, seq_len, 768)
 
-        predictions = self.decoder(squence_out)
+        tokens_hidden_state, predictions = self.cls(squence_out)
 
         if labels is not None:
 
