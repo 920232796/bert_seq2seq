@@ -57,7 +57,11 @@ class BasicBert(nn.Module):
         if keep_tokens is not None:
             ## 说明精简词表了，embeedding层也要过滤下
             embedding_weight_name = "bert.embeddings.word_embeddings.weight"
+            cls_pre_weight = "cls.predictions.decoder.weight"
+            cls_pre_bias = "cls.predictions.bias"
             checkpoint[embedding_weight_name] = checkpoint[embedding_weight_name][keep_tokens]
+            checkpoint[cls_pre_weight] = checkpoint[cls_pre_weight][keep_tokens]
+            checkpoint[cls_pre_bias] = checkpoint[cls_pre_bias][keep_tokens]
             
         self.load_state_dict(checkpoint, strict=strict)
         torch.cuda.empty_cache()

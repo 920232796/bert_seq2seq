@@ -95,7 +95,7 @@ class Trainer:
         self.sents_src, self.sents_tgt = read_corpus(train_path)
         self.tokenier = Tokenizer(word2idx)
         # 判断是否有可用GPU
-        self.device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
         self.bert_model = load_bert(word2idx, model_name=model_name, model_class="cls", target_size=len(target))

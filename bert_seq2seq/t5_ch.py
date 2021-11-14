@@ -33,7 +33,7 @@ class T5Model(BasicT5):
 
 
     def sample_generate_encoder_decoder(self, text, input_max_length=256, out_max_length=200, top_k=30, top_p=0.0, add_eos=True):
-
+        
         token_out = self.tokenizer.encode(text, max_length=input_max_length)
         if len(token_out) == 2:
             token_ids = token_out[0]
@@ -51,9 +51,18 @@ class T5Model(BasicT5):
                 logit_score = torch.log_softmax(scores[:, -1], dim=-1).squeeze(0)
                 logit_score[self.unk_id] = -float('Inf')
                 filtered_logits = top_k_top_p_filtering(logit_score, top_k=top_k, top_p=top_p)
-                next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
-                if self.eos_id == next_token.item():
+
+                filterd_logits_prob = F.softmax(filtered_logits, dim=-1)
+                
+                next_token = torch.multinomial(filterd_logits_prob, num_samples=1)
+                _, max_prob_tokens = filtered_logits.max(dim=-1)
+                if self.eos_id == next_token.item() or self.eos_id == max_prob_tokens.item():
                     break
+                if next_token.item() not in repeat_list:
+                    repeat_list[next_token.item()] = 1
+                else :
+                    repeat_list[next_token.item()] += 1
+
                 output_ids.append(next_token.item())
                 input_decoder_ids = torch.cat((input_decoder_ids, next_token.long().unsqueeze(0)), dim=1)
 

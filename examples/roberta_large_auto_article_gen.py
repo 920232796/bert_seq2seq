@@ -1,59 +1,62 @@
-## 自动摘要的例子
+## roberta-large 自动摘要的例子
 import torch
 from tqdm import tqdm
 import time
 from torch.utils.data import Dataset, DataLoader
 from bert_seq2seq import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq import load_bert
+import glob 
 
-
-vocab_path = "./state_dict/nezha-base-www/vocab.txt"  # roberta模型字典的位置
-model_name = "nezha"  # 选择模型名字
-model_path = "./state_dict/nezha-base-www/pytorch_model.bin"  # roberta模型位置
-model_save_path = "./nezha_auto_title.bin"
-
-batch_size = 16
+vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
+word2idx = load_chinese_base_vocab(vocab_path, simplfied=False)
+model_name = "roberta-large"  # 选择模型名字
+model_path = "./state_dict/roberta-large/pytorch_model.bin"  # 模型位置
+model_save_path = "./state_dict/bert_auto_gen_model.bin"
+batch_size = 4
 lr = 1e-5
-word2idx = load_chinese_base_vocab(vocab_path)
-tokenizer = Tokenizer(word2idx)
 
-def read_file(src_dir, tgt_dir):
-    src = []
-    tgt = []
 
-    with open(src_dir,'r',encoding='utf-8') as f:
-        lines = f.readlines()
-        for line in lines:
-            src.append(line.strip('\n').lower())
+data_path = glob.glob("./corpus/THUCNews/*/*.txt")
 
-    with open(tgt_dir,'r',encoding='utf-8') as f:
-        lines = f.readlines()
-        for line in lines:
-            tgt.append(line.strip('\n').lower())
-
-    return src,tgt
-    
 class BertDataset(Dataset):
     """
     针对特定数据集，定义一个相关的取数据的方式
     """
-    def __init__(self, sents_src, sents_tgt) :
+    def __init__(self) :
         ## 一般init函数是加载所有数据
         super(BertDataset, self).__init__()
         # 读原始数据
-        # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir)
-        self.sents_src = sents_src
-        self.sents_tgt = sents_tgt
+        # self.sents_src, self.sents_tgt = read_corpus(poem_corpus_dir
         
         self.idx2word = {k: v for v, k in word2idx.items()}
         self.tokenizer = Tokenizer(word2idx)
 
     def __getitem__(self, i):
         ## 得到单个数据
-        # print(i)
-        src = self.sents_src[i]
-        tgt = self.sents_tgt[i]
-        token_ids, token_type_ids = self.tokenizer.encode(src, tgt)
+        file_path = data_path[i]
+        with open(file_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        title = lines[0].strip("\n")
+        content = lines[1:]
+        content = "".join(content)
+        content = content.replace(" ", "").replace("\t", "").replace("\n", "").replace("”", "").replace("“", "").replace("　　", "")
+        content = content.split("。")
+        cons_text = ""
+        index = 0
+        while len(cons_text) < 400 and index < len(content):
+            cons_text += content[index] + "。"
+            index += 1
+        # print(title)
+        # print(cons_text)
+        # print(content)
+        if len(title) + len(content) > 500:
+            return self.__getitem__(i + 1)
+        
+        if len(cons_text) == 0:
+            return self.__getitem__(i + 1)
+
+        token_ids, token_type_ids = self.tokenizer.encode(title, cons_text, max_length=512)
+        
         output = {
             "token_ids": token_ids,
             "token_type_ids": token_type_ids,
@@ -61,8 +64,7 @@ class BertDataset(Dataset):
         return output
 
     def __len__(self):
-
-        return len(self.sents_src)
+        return len(data_path)
         
 def collate_fn(batch):
     """
@@ -89,10 +91,8 @@ def collate_fn(batch):
 class Trainer:
     def __init__(self):
         # 加载数据
-        src_dir = './corpus/auto_title/train.src'
-        tgt_dir = './corpus/auto_title/train.tgt'
-        self.sents_src, self.sents_tgt = read_file(src_dir, tgt_dir)
-
+       
+      
         # self.sents_src= torch.load("./corpus/auto_title/train_clean.src")
         # self.sents_tgt = torch.load("./corpus/auto_title/train_clean.tgt")
 
@@ -109,7 +109,7 @@ class Trainer:
         self.optim_parameters = list(self.bert_model.parameters())
         self.optimizer = torch.optim.Adam(self.optim_parameters, lr=lr, weight_decay=1e-3)
         # 声明自定义的数据加载器
-        dataset = BertDataset(self.sents_src, self.sents_tgt)
+        dataset = BertDataset()
         self.dataloader =  DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 
     def train(self, epoch):
@@ -133,12 +133,20 @@ class Trainer:
             step += 1
             if step % 300 == 0:
                 self.bert_model.eval()
-                test_data = ["本文总结了十个可穿戴产品的设计原则而这些原则同样也是笔者认为是这个行业最吸引人的地方1为人们解决重复性问题2从人开始而不是从机器开始3要引起注意但不要刻意4提升用户能力而不是取代人",
-                 "2007年乔布斯向人们展示iPhone并宣称它将会改变世界还有人认为他在夸大其词然而在8年后以iPhone为代表的触屏智能手机已经席卷全球各个角落未来智能手机将会成为真正的个人电脑为人类发展做出更大的贡献", 
-                 "雅虎发布2014年第四季度财报并推出了免税方式剥离其持有的阿里巴巴集团15％股权的计划打算将这一价值约400亿美元的宝贵投资分配给股东截止发稿前雅虎股价上涨了大约7％至5145美元"]
-                for text in test_data:
-                    print(self.bert_model.generate(text, beam_size=3))
-                print("loss is " + str(report_loss))
+                test_data = ["国足大胜意大利。",
+                 "阿里巴巴股票大涨。", 
+                 "特斯拉发布第三季度财报。"]
+                with open("./res_gen_article.txt", "a+", encoding="utf-8") as f :
+                    for text in test_data:
+                        out = self.bert_model.sample_generate(text, out_max_length=400, top_k=30, max_length=512)
+                        f.write(out)
+                        f.write("\n")
+                
+                    print("loss is " + str(report_loss))
+                    f.write(f"loss is {report_loss} \n ")
+
+
+                
                 report_loss = 0
                 # self.eval(epoch)
                 self.bert_model.train()

@@ -104,7 +104,7 @@ class Trainer:
         self.sents_src, self.sents_tgt = read_corpus()
 
         # 判断是否有可用GPU
-        self.device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
         self.gpt_model = load_gpt(word2idx)

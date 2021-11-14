@@ -25,7 +25,7 @@ class BertDataset(Dataset):
         ## 一般init函数是加载所有数据
         super(BertDataset, self).__init__()
         ## 拿到所有文件名字
-        self.txts = glob.glob('./state_dict/THUCNews/*/*.txt')
+        self.txts = glob.glob('./corpus/THUCNews/*/*.txt')
         self.idx2word = {k: v for v, k in word2idx.items()}
         self.tokenizer = Tokenizer(word2idx)
 
