@@ -55,14 +55,9 @@ class T5Model(BasicT5):
                 filterd_logits_prob = F.softmax(filtered_logits, dim=-1)
                 
                 next_token = torch.multinomial(filterd_logits_prob, num_samples=1)
-                _, max_prob_tokens = filtered_logits.max(dim=-1)
-                if self.eos_id == next_token.item() or self.eos_id == max_prob_tokens.item():
+                if self.eos_id == next_token.item():
                     break
-                if next_token.item() not in repeat_list:
-                    repeat_list[next_token.item()] = 1
-                else :
-                    repeat_list[next_token.item()] += 1
-
+                
                 output_ids.append(next_token.item())
                 input_decoder_ids = torch.cat((input_decoder_ids, next_token.long().unsqueeze(0)), dim=1)
 

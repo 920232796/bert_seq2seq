@@ -155,4 +155,4 @@
 2020.04.01: 重构了代码，开始训练一个新的任务花费时间更少。
 
 python setup.py sdist
-twine upload dist/bert_seq2seq-2.1.0.tar.gz
+twine upload dist/bert_seq2seq-2.2.0.tar.gz
