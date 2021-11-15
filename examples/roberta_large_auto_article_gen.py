@@ -39,21 +39,28 @@ class BertDataset(Dataset):
         title = lines[0].strip("\n")
         content = lines[1:]
         content = "".join(content)
-        content = content.replace(" ", "").replace("\t", "").replace("\n", "").replace("”", "").replace("“", "").replace("　　", "")
-        content = content.split("。")
+        content = content.replace("\n", "&").replace("　　", "").replace("&&", "").replace("”", "").replace("“", "")
+        content = content.split("&")
         cons_text = ""
         index = 0
-        while len(cons_text) < 400 and index < len(content):
-            cons_text += content[index] + "。"
+        title = title + "&"
+        while len(cons_text) < 500 and index < len(content):
+            cons_text += content[index] + "&"
             index += 1
         # print(title)
         # print(cons_text)
-        # print(content)
-        if len(title) + len(content) > 500:
-            return self.__getitem__(i + 1)
+        # # print(content)328
+        if len(title) + len(content) > 512:
+            if i == 0:
+                return self.__getitem__(i + 1)
+            else :
+                return self.__getitem__(i - 1)
         
         if len(cons_text) == 0:
-            return self.__getitem__(i + 1)
+            if i == 0:
+                return self.__getitem__(i + 1)
+            else :
+                return self.__getitem__(i - 1)
 
         token_ids, token_type_ids = self.tokenizer.encode(title, cons_text, max_length=512)
         
@@ -91,10 +98,6 @@ def collate_fn(batch):
 class Trainer:
     def __init__(self):
         # 加载数据
-       
-      
-        # self.sents_src= torch.load("./corpus/auto_title/train_clean.src")
-        # self.sents_tgt = torch.load("./corpus/auto_title/train_clean.tgt")
 
         # 判断是否有可用GPU
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -134,16 +137,14 @@ class Trainer:
             if step % 300 == 0:
                 self.bert_model.eval()
                 test_data = ["国足大胜意大利。",
-                 "阿里巴巴股票大涨。", 
-                 "特斯拉发布第三季度财报。"]
-                with open("./res_gen_article.txt", "a+", encoding="utf-8") as f :
-                    for text in test_data:
-                        out = self.bert_model.sample_generate(text, out_max_length=400, top_k=30, max_length=512)
-                        f.write(out)
-                        f.write("\n")
-                
-                    print("loss is " + str(report_loss))
-                    f.write(f"loss is {report_loss} \n ")
+                                "阿里巴巴股票大涨。", 
+                                "特斯拉发布第三季度财报。"]
+
+                for text in test_data:
+                    out = self.bert_model.sample_generate(text, out_max_length=400, top_k=15, max_length=512, top_p=0.7, repetition_penalty=1.5, temperature=3.0)
+                    print(out)
+            
+                print("loss is " + str(report_loss))
 
 
                 
@@ -154,7 +155,7 @@ class Trainer:
                 self.save(model_save_path)
 
             # 因为传入了target标签，因此会计算loss并且返回
-            predictions, loss = self.bert_model(token_ids,
+            _, loss = self.bert_model(token_ids,
                                                 token_type_ids,
                                                 labels=target_ids,
                                                 )
