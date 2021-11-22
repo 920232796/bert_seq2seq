@@ -104,10 +104,10 @@ def collate_fn(batch):
 class Trainer:
     def __init__(self):
         # 加载数据
-        self.sents_src, self.sents_tgt = read_file(src_dir, tgt_dir)
+        self.sents_src, self.sents_tgt = read_file()
 
         # 判断是否有可用GPU
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
         print("device: " + str(self.device))
         # 定义模型
         self.model = ExtendModel(model, tokenizer=tokenizer, bos_id=word2idx["[CLS]"], eos_id=word2idx["[SEP]"], device=self.device)
