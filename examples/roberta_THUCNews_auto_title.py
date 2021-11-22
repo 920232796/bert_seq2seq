@@ -8,7 +8,7 @@ from bert_seq2seq import Tokenizer, load_chinese_base_vocab
 from bert_seq2seq import load_bert
 
 vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
-word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
+word2idx = load_chinese_base_vocab(vocab_path)
 model_name = "roberta"  # 选择模型名字
 model_path = "./state_dict/roberta_wwm_pytorch_model.bin"  # 模型位置
 recent_model_path = "./state_dict/bert_auto_title_model.bin"   # 用于把已经训练好的模型继续训练
@@ -85,7 +85,7 @@ class Trainer:
         self.bert_model = load_bert(word2idx, model_name=model_name)
         ## 加载预训练的模型参数～
         
-        self.bert_model.load_pretrain_params(model_path, keep_tokens=keep_tokens)
+        self.bert_model.load_pretrain_params(model_path)
         # 加载已经训练好的模型，继续训练
 
         # 将模型发送到计算设备(GPU或CPU)

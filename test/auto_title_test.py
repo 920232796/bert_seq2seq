@@ -9,7 +9,7 @@ if __name__ == "__main__":
     vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
     model_name = "roberta"  # 选择模型名字
     # 加载字典
-    word2idx, keep_tokens = load_chinese_base_vocab(vocab_path, simplfied=True)
+    word2idx = load_chinese_base_vocab(vocab_path)
     # 定义模型
     bert_model = load_bert(word2idx, model_name=model_name)
     bert_model.set_device(device)
