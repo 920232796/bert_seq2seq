@@ -20,7 +20,7 @@
 4. relation_extract 关系抽取，比如三元组抽取任务。(复现苏剑林老师的例子，不完全一样。)
 5. simbert SimBert模型，生成相似句子，并且给相似句子进行相似度判断。
 
-五种任务分别加载四种不同的模型，通过``` model_class="seq2seq" or "cls" or "sequence_labeling" or "sequence_labeling_crf" or "relation_extrac" or "simbert"``` 参数去设置。具体可以去看examples里面的各种例子。
+加载不同模型通过设置“model_name”参数实现，不同任务通过设置“model_class”参数实现，具体可以去看examples里面的各种例子。
 ### 预训练模型下载地址汇总：
 1. roberta模型，模型和字典文件需要去 https://drive.google.com/file/d/1iNeYFhCBJWeUsIlnW_2K6SMwXkM4gLb_/view 这里下载。 具体可以参考这个github仓库～ https://github.com/ymcui/Chinese-BERT-wwm ，roberta-large模型也是在里面进行下载即可。
 2. bert模型(目前不支持large)，下载bert中文预训练权重 "bert-base-chinese": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-pytorch_model.bin", 下载bert中文字典 "bert-base-chinese": "https://s3.amazonaws.com/models.huggingface.co/bert/bert-base-chinese-vocab.txt".
