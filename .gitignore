@@ -11,6 +11,7 @@ corpus/*
 state_dict/bert_seq2seq_save
 # Distribution / packaging
 .Python
+tmp_no_avilable
 build/
 poems
 ./test.py

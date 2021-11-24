@@ -19,6 +19,7 @@
 4. sequence_labeling_crf 加入CRF Loss的序列标注任务，效果更好。
 4. relation_extract 关系抽取，比如三元组抽取任务。(复现苏剑林老师的例子，不完全一样。)
 5. simbert SimBert模型，生成相似句子，并且给相似句子进行相似度判断。
+6. multi_label_cls 多标签分类。
 
 加载不同模型通过设置“model_name”参数实现，不同任务通过设置“model_class”参数实现，具体可以去看examples里面的各种例子。
 ### 预训练模型下载地址汇总：

@@ -8,6 +8,7 @@ from bert_seq2seq import load_bert
 
 target = ["财经", "彩票", "房产", "股票", "家居", "教育", "科技", "社会", "时尚", "时政", "体育", "星座", "游戏", "娱乐"]
 
+data_path = "./corpus/新闻标题文本分类/Train.txt"
 vocab_path = "./state_dict/roberta_wwm_vocab.txt" # roberta模型字典的位置
 model_name = "roberta" # 选择模型名字
 model_path = "./state_dict/roberta_wwm_pytorch_model.bin" # roberta模型位置
@@ -18,7 +19,7 @@ lr = 1e-5
 # 加载字典
 word2idx = load_chinese_base_vocab(vocab_path)
 
-def read_corpus(data_path):
+def read_corpus():
     """
     读原始数据
     """
@@ -92,8 +93,7 @@ def collate_fn(batch):
 class Trainer:
     def __init__(self):
         # 加载数据
-        data_path = "./corpus/新闻标题文本分类/Train.txt"
-        self.sents_src, self.sents_tgt = read_corpus(data_path)
+        self.sents_src, self.sents_tgt = read_corpus()
         self.tokenier = Tokenizer(word2idx)
         # 判断是否有可用GPU
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
