@@ -6,11 +6,12 @@ from bert_seq2seq.bert_seq_labeling_crf import BertSeqLabelingCRF
 from bert_seq2seq.bert_relation_extraction import BertRelationExtrac
 from bert_seq2seq.bert_cls_multi_classifier import BertClsMultiClassifier
 import torch.nn.functional as F
+from bert_seq2seq.bert_cls_multi_seq2seq import ClsMultiSeq2SeqModel
 from bert_seq2seq.simbert_model import SimBertModel
 from bert_seq2seq.gpt2_generate_model import GPT2
 
 
-def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2seq", target_size=0):
+def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2seq", target_size=0, target=None):
     """
     model_path: 模型位置
     这是个统一的接口，用来加载模型的
@@ -48,6 +49,9 @@ def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2se
     elif model_class == "multi_label_cls":
         bert_model = BertClsMultiClassifier(word2ix, target_size, model_name=model_name)
         return bert_model
+    elif model_class == "multi_label_cls_seq2seq":
+        bert_model = ClsMultiSeq2SeqModel(word2ix, target, model_name=model_name)
+        return bert_model 
     else :
         raise Exception("model_name_err")
 

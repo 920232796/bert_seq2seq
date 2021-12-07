@@ -70,18 +70,12 @@ class SimBertModel(BasicBert):
         y_true = self.get_labels_of_similarity(y_pred)  # 构建标签
         y_true = y_true.to(self.device)
         norm_a = torch.nn.functional.normalize(y_pred, dim=-1, p=2)
-        # y_pred = K.l2_normalize(y_pred, axis=1)  # 句向量归一化
         similarities = norm_a.matmul(norm_a.t())
 
-        # similarities = K.dot(y_pred, K.transpose(y_pred))  # 相似度矩阵
         similarities = similarities - (torch.eye(y_pred.shape[0]) * 1e12).to(self.device)  # 排除对角线
-        similarities = similarities * 30  # scale
-        similarities = similarities
+        similarities = similarities * 20  # scale
         loss_f = nn.CrossEntropyLoss()
         loss = loss_f(similarities, y_true)
-        # loss = K.categorical_crossentropy(
-        #     y_true, similarities, from_logits=True
-        # )
         return loss
 
     def get_labels_of_similarity(self, y_pred):
@@ -114,7 +108,7 @@ class SimBertModel(BasicBert):
                                     output_all_encoded_layers=True)
         squence_out = enc_layers[-1] ## 取出来最后一层输出
 
-        predictions = self.decoder(squence_out)
+        _, predictions = self.cls(squence_out)
 
         if labels is not None:
             ## 计算loss
@@ -128,7 +122,7 @@ class SimBertModel(BasicBert):
             return predictions
 
     
-    def generate(self, text, out_max_length=40, beam_size=1, is_poem=False, max_length=256):
+    def generate(self, text, out_max_length=40, beam_size=1, max_length=256):
         # 对 一个 句子生成相应的结果
         ## 通过输出最大长度得到输入的最大长度，这里问题不大，如果超过最大长度会进行截断
         self.out_max_length = out_max_length
@@ -141,13 +135,11 @@ class SimBertModel(BasicBert):
             tokenizer_out = self.tokenizer.encode_plus(text, max_length=input_max_length, truncation=True)
             token_ids = tokenizer_out["input_ids"]
             token_type_ids = tokenizer_out["token_type_ids"]
+
         token_ids = torch.tensor(token_ids, device=self.device).view(1, -1)
         token_type_ids = torch.tensor(token_type_ids, device=self.device).view(1, -1)
-        if is_poem:## 古诗的beam-search稍有不同
-            
-            out_puts_ids = self.beam_search_poem(text, token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=self.device)
-        else :   
-            out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=self.device)
+       
+        out_puts_ids = self.beam_search(token_ids, token_type_ids, self.word2ix, beam_size=beam_size, device=self.device)
         
         return self.tokenizer.decode(out_puts_ids.cpu().numpy())
 
