@@ -100,7 +100,7 @@ class BertConfig:
         hidden_act="gelu",
         hidden_dropout_prob=0.1,
         attention_probs_dropout_prob=0.1,
-        max_position_embeddings=2048,
+        max_position_embeddings=1024,
         max_relative_position=64,
         type_vocab_size=2,
         initializer_range=0.02,
