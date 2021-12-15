@@ -1,6 +1,7 @@
 
 import torch
 import torch.nn as nn
+from bert_seq2seq.tokenizer import Tokenizer
     
 def get_model(model_name, word2ix):
     if model_name == "roberta":
@@ -38,15 +39,20 @@ def get_model(model_name, word2ix):
     return config, bert, layer_norm_cond, CLS
 
 class BasicBert(nn.Module):
-    def __init__(self, word2ix, model_name="roberta"):
+    def __init__(self, word2ix, model_name="roberta", tokenizer=None):
         super().__init__()
         self.config = ""
         self.word2ix = word2ix
+
+        if tokenizer is None:
+            self.tokenizer = Tokenizer(word2ix)
+        else:
+            self.tokenizer = tokenizer
+
         self.model_name = model_name
         
         self.config, self.bert, self.layer_norm_cond, self.cls = get_model(model_name, word2ix)
        
-
         self.device = torch.device("cpu")
 
     def load_pretrain_params(self, pretrain_model_path, keep_tokens=None, strict=False):
@@ -74,8 +80,18 @@ class BasicBert(nn.Module):
         torch.cuda.empty_cache()
         print(str(model_path) + " loaded!")
 
-    def forward(self, x):
-        raise NotImplemented
+    def forward(self, input_text):
+        ## 返回bert编码后得到的向量
+        input_ids, _ = self.tokenizer.encode(input_text, max_length=512)
+        input_ids = torch.tensor(input_ids, dtype=torch.long, device=self.device).view(1, -1)
+
+        enc_layers, _ = self.bert(input_ids, position_ids=None, token_type_ids=None, 
+                                    output_all_encoded_layers=True)
+        squence_out = enc_layers[-1] ## 取出来最后一层输出 (batch, seq_len, 768)
+
+        tokens_hidden_state, _ = self.cls(squence_out)
+
+        return tokens_hidden_state
 
     def set_device(self, device):
         self.device = torch.device(device)

@@ -25,6 +25,7 @@ class BertClsClassifier(BasicBert):
     def forward(self, text, position_enc=None, labels=None, use_layer_num=-1):
         if use_layer_num != -1:
             raise Exception("暂时只支持用最后一层进行分类")
+        
         text = text.to(self.device)
         if position_enc is not None:
             position_enc = position_enc.to(self.device)

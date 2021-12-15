@@ -23,7 +23,7 @@ class GPT2(BasicGPT):
         self.model = GPT2LMHeadModel(self.config)
     
     def sample_generate(self, text, input_max_length=256, out_max_length=200, 
-                        top_k=30, top_p=0.0, add_eos=False, repetition_penalty=1.0, 
+                        top_k=30, top_p=1.0, add_eos=False, repetition_penalty=1.0, 
                         temperature=1.0):
 
         lp = [RepetitionPenaltyLogitsProcessor(penalty=repetition_penalty), 

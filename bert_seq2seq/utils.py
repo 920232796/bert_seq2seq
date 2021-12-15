@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from bert_seq2seq.bert_cls_multi_seq2seq import ClsMultiSeq2SeqModel
 from bert_seq2seq.simbert_model import SimBertModel
 from bert_seq2seq.gpt2_generate_model import GPT2
+from bert_seq2seq.basic_bert import BasicBert
 
 
 def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2seq", target_size=0, target=None):
@@ -44,7 +45,7 @@ def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2se
         bert_model = BertRelationExtrac(word2ix, target_size, model_name=model_name)
         return bert_model
     elif model_class == "simbert":
-        bert_model = SimBertModel(word2ix, model_name=model_name)
+        bert_model = SimBertModel(word2ix, model_name=model_name, tokenizer=tokenizer)
         return bert_model
     elif model_class == "multi_label_cls":
         bert_model = BertClsMultiClassifier(word2ix, target_size, model_name=model_name)
@@ -52,6 +53,9 @@ def load_bert(word2ix, tokenizer=None, model_name="roberta", model_class="seq2se
     elif model_class == "multi_label_cls_seq2seq":
         bert_model = ClsMultiSeq2SeqModel(word2ix, target, model_name=model_name)
         return bert_model 
+    elif model_class == "embedding":
+        bert_model = BasicBert(word2ix, model_name=model_name, tokenizer=tokenizer)
+        return bert_model
     else :
         raise Exception("model_name_err")
 

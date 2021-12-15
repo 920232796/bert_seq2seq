@@ -506,7 +506,7 @@ class BertModel(BertPreTrainedModel):
             extended_attention_mask = attention_mask * extended_attention_mask
 
         if token_type_ids is None:
-            token_type_ids = torch.zeros_like(input_ids)
+            token_type_ids = torch.zeros_like(input_ids, dtype=torch.long, device=input_ids.device)
 
         # print(extended_attention_mask)
         # extended_attention_mask = extended_attention_mask.to(dtype=next(self.parameters()).dtype)  # fp16 compatibility

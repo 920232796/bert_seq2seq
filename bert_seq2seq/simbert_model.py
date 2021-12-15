@@ -47,13 +47,8 @@ class SimBertModel(BasicBert):
     """
     """
     def __init__(self, word2ix, model_name="roberta", tokenizer=None):
-        super(SimBertModel, self).__init__(word2ix=word2ix, model_name=model_name)
+        super(SimBertModel, self).__init__(word2ix=word2ix, model_name=model_name, tokenizer=tokenizer)
         self.word2ix = word2ix
-        if tokenizer is None:
-            self.tokenizer = Tokenizer(word2ix)
-        else:
-            self.tokenizer = tokenizer
-            
         self.hidden_dim = self.config.hidden_size
         self.vocab_size = len(word2ix)
 
