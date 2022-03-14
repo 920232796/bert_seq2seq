@@ -3,10 +3,8 @@ sys.path.append("/home/bert_seq2seq/paddle_model")
 import paddle
 import numpy as np
 from paddle import nn
-from paddlenlp.transformers import AutoTokenizer, AutoModel, BertModel, BertTokenizer, CTRLTokenizer, RobertaTokenizer, \
-    RobertaModel
-from paddlenlp.transformers.roberta.modeling import robertaSeq2Seq
-from paddlenlp.transformers.roberta.modeling import RobertaPretrainedModel
+from bert_seq2seq.paddle_model.transformers import  BertModel, BertTokenizer, RobertaTokenizer, RobertaModel
+from bert_seq2seq.paddle_model.transformers.roberta.modeling import robertaSeq2Seq
 import paddle.nn.functional as F
 from tqdm import tqdm
 from paddle.io import Dataset
@@ -89,16 +87,9 @@ def load_data(filename):
 
 
 tokenizer = RobertaTokenizer.from_pretrained("roberta-wwm-ext")
-# tokenizer = BPETokenizer.from_pretrained("bert-wwm-ext-chinese")
 
-# print(tokenizer)
-# text = tokenizer('自然语言处理')
 pretrain_model = RobertaModel.from_pretrained("roberta-wwm-ext")
 model = robertaSeq2Seq(pretrain_model)
-# text_ids = tokenizer.encode("天气好", "北京", max_seq_len=64)
-# print(text_ids)
-
-
 
 class MyDataset(Dataset):
     """
@@ -157,15 +148,6 @@ class MyDataset(Dataset):
 
 
 data = load_data(train_data_path)
-print(data[:5])
-single_data = data[0]
-original_text = single_data[0]
-ans_text = single_data[1]
-
-token_ids, token_type_ids = tokenizer.encode(original_text, ans_text)
-
-print(token_ids)
-print(token_type_ids)
 
 dataset = MyDataset(data)
 loader = paddle.io.DataLoader(dataset, batch_size=16, shuffle=True, collate_fn=dataset.collate_fn)
@@ -208,10 +190,7 @@ class Predictor:
         """
         sep_id = word2ix["[SEP]"]
 
-        # 用来保存输出序列
-        # output_ids = paddle.empty([1, 0]).astype("int")
         output_ids = None
-        # output_ids = np.empty([1, 0]).astype(np.int)
         # 用来保存累计得分
         with paddle.no_grad():
             output_scores = np.zeros([token_ids.shape[0]])
@@ -309,16 +288,6 @@ def validation():
 
 best_acc = 0
 
-
-"""测试代码"""
-
-
-
-
-
-
-
-
 def train():
     paddle.set_device(device="gpu")
 
@@ -369,72 +338,12 @@ def train():
             optimizer.step()
             optimizer.clear_grad()
 
-            
-
-
-def returnForecastForCouplet(data, modelAddress=None, tokenizerAddress=None):
-    if modelAddress is None:
-        model = robertaSeq2Seq.from_pretrained('./FinallyModelON/')
-
-    else:
-        model = robertaSeq2Seq.from_pretrained(modelAddress)
-
-    if tokenizerAddress is None:
-        tokenizer = RobertaTokenizer.from_pretrained('./FinallyTokenizerTO/')
-
-    else:
-        tokenizer = RobertaTokenizer.from_pretrained(tokenizerAddress)
-
-    predictor = Predictor(model, tokenizer, beam_size=2, out_max_length=40, max_length=512)
-
-    import collections
-
-    OutCouplet = {}
-
-    OutCouplet = collections.OrderedDict()
-
-    for simply_in in data:
-        out = predictor.generate(simply_in)
-        OutCouplet[simply_in] = out
-
-    return OutCouplet
-
-
-def forecastForCouplet(data, modelAddress=None, tokenizerAddress=None):
-    Couplet = returnForecastForCouplet(data, modelAddress, tokenizerAddress)
-
-    for Uplink, Downlink in Couplet.items():
-        print(f"问题：{Uplink}，答案：{Downlink}。")
 
 
 if __name__ == '__main__':
     
     train()
 
-    model.save_pretrained('./auto/model')
-    tokenizer.save_pretrained('./auto/tokenizer')
-
-                
-
-    # predictor = Predictor(model, tokenizer, beam_size=2, out_max_length=10)
-    # out = predictor.generate("今天天气好。")
-    # print(out)
-
-    # import torch
-    # t1 = torch.tensor([[3022]])
-    # t2 = torch.tensor([0])
-    # print(f"torch 结果：{t1[t2]}")
-    #
-    # t1 = paddle.to_tensor(np.array([[3022]]))
-    # print(t1)
-    # t2 = paddle.to_tensor(np.array([0]))
-    # print(t2)
-    # print(f"paddle 结果：{t1[t2]}")
-    #
-    # import numpy as np
-    # t1 = np.array([[3022]])
-    # t2 = np.array([0])
-    # print(f"numpy 结果：{t1[t2]}")
 
 
 

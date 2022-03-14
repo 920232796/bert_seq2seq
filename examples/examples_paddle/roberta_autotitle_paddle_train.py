@@ -204,9 +204,6 @@ def train():
     for epoch in range(10):
         for inputs, token_type_ids, label in tqdm(loader(), total=len(loader)):
             model.train()
-            # print(inputs)
-            # print(token_type_ids)
-            # print(label)
 
             step += 1
             if step % 300 == 0:
@@ -218,64 +215,13 @@ def train():
                 for text in test_data:
                     out = predictor.generate(text)
                     print(f"新闻: {text}, 标题：{out}")
-                # print(out)
                 print(f"loss is {report_loss}")
                 report_loss = 0.0
-                pass
             loss = model(inputs, token_type_ids=token_type_ids, label=label)
             loss.backward()
             report_loss += loss.item()
             optimizer.step()
             optimizer.clear_grad()
-
-
-
-
-            if step == 250000:
-                STEP = str(step)
-                EPOCH = str(epoch)
-
-                saveParam = f'./auto/{EPOCH}/{STEP}/bert.pdparams'
-
-                layer_state_dict = model.state_dict()
-                paddle.save(layer_state_dict, saveParam)
-                model.save_pretrained('./auto/{EPOCH}/{STEP}/model')
-                tokenizer.save_pretrained('./auto/{EPOCH}/{STEP}/tokenizer')
-
-
-def returnForecast(data, modelAddress=None, tokenizerAddress=None):
-    if modelAddress is None:
-        model = robertaSeq2Seq.from_pretrained('./FinallyModelON/')
-
-    else:
-        model = robertaSeq2Seq.from_pretrained(modelAddress)
-
-    if tokenizerAddress is None:
-        tokenizer = RobertaTokenizer.from_pretrained('./FinallyTokenizerTO/')
-
-    else:
-        tokenizer = RobertaTokenizer.from_pretrained(tokenizerAddress)
-
-    predictor = Predictor(model, tokenizer, beam_size=2, out_max_length=40, max_length=512)
-
-    import collections
-
-    OutCouplet = {}
-
-    OutCouplet = collections.OrderedDict()
-
-    for simply_in in data:
-        out = predictor.generate(simply_in)
-        OutCouplet[simply_in] = out
-
-    return OutCouplet
-
-
-def forecastForCouplet(data, modelAddress=None, tokenizerAddress=None):
-    Couplet = returnForecast(data, modelAddress, tokenizerAddress)
-
-    for Uplink, Downlink in Couplet.items():
-        print(f"上联：{Uplink}，下联：{Downlink}。")
 
 
 if __name__ == '__main__':

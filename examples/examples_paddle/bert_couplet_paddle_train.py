@@ -1,26 +1,21 @@
-import sys
-sys.path.append("/home/bert_seq2seq/paddle_model")
 import paddle
 import numpy as np
 from paddle import nn
-from paddlenlp.transformers import AutoTokenizer, AutoModel, BertModel, BertTokenizer, BPETokenizer, CTRLTokenizer
-from paddlenlp.transformers.bert.modeling import BertSeq2Seq
+from bert_seq2seq.paddle_model.transformers import  BertModel, BertTokenizer
+from bert_seq2seq.paddle_model.transformers.bert.modeling import BertSeq2Seq
 import paddle.nn.functional as F
 from tqdm import tqdm
 from paddle.io import Dataset
 
-model_path = "./paddlenlp_models/bert-wwm-ext-chinese"
 tokenizer = BertTokenizer.from_pretrained("bert-wwm-ext-chinese")
-# tokenizer = BPETokenizer.from_pretrained("bert-wwm-ext-chinese")
 
-# print(tokenizer)
-# text = tokenizer('自然语言处理')
 pretrain_model = BertModel.from_pretrained("bert-wwm-ext-chinese")
 model = BertSeq2Seq(pretrain_model)
-# text_ids = tokenizer.encode("天气好", "北京", max_seq_len=64)
-# print(text_ids)
 
-data_path = "./corpus/对联/"
+data_path = "../../corpus/对联/"
+
+device = "gpu"
+# device = "cpu"
 
 def read_corpus():
     src_in = []
@@ -188,56 +183,39 @@ class Predictor:
             return output_ids[output_scores.argmax()]
 
 def train():
-    paddle.set_device(device="gpu")
+    paddle.set_device(device=device)
 
     step = 0
     report_loss = 0.0
     for epoch in range(1):
         for inputs, token_type_ids, label in tqdm(loader(), total=len(loader)):
+            step += 1
             model.train()
-        loss = model(inputs, token_type_ids=token_type_ids, label=label)
-        loss.backward()
-        report_loss += loss.item()
-        optimizer.step()
-        optimizer.clear_grad()
 
-        predictor = Predictor(model, tokenizer, beam_size=2, out_max_length=40, max_length=512)
-        test_data = ["花海总涵功德水", "广汉飞霞诗似玉", "执政为民，德行天下"]
-        for text in test_data:
-            out = predictor.generate(text)
-            print(f"上联: {text}, 下联：{out}")
+            if step % 10 == 0 :
+                print(f"loss is {report_loss}")
+                report_loss = 0.0
 
-        print(f"loss is {report_loss}")
-        report_loss = 0.0
-            # print(inputs)
-            # print(token_type_ids)
-            # print(label)
+                predictor = Predictor(model, tokenizer, beam_size=2, out_max_length=40, max_length=512)
+                test_data = ["花海总涵功德水", "广汉飞霞诗似玉", "执政为民，德行天下"]
+                for text in test_data:
+                    out = predictor.generate(text)
+                    print(f"上联: {text}, 下联：{out}")
+                # print(out)
+                print(f"loss is {report_loss}")
+                report_loss = 0.0
 
-        step += 1
-        if step % 1000 == 0 :
-            predictor = Predictor(model, tokenizer, beam_size=2, out_max_length=40, max_length=512)
-            test_data = ["花海总涵功德水", "广汉飞霞诗似玉", "执政为民，德行天下"]
-            for text in test_data:
-                out = predictor.generate(text)
-                print(f"上联: {text}, 下联：{out}")
-            # print(out)
-            print(f"loss is {report_loss}")
-            report_loss = 0.0
-            pass
-
-
-        if step == 385240:
-
-            model.save_pretrained('./FinallyModelON/')
-            tokenizer.save_pretrained('./FinallyTokenizerTO/')
+            loss = model(inputs, token_type_ids=token_type_ids, label=label)
+            loss.backward()
+            report_loss += loss.item()
+            optimizer.step()
+            optimizer.clear_grad()
 
 
 if __name__ == '__main__':
 
     train()
 
-    model.save_pretrained('./FinallyModel/')
-    tokenizer.save_pretrained('./FinallyTokenizer/')
 
 
 
