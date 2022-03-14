@@ -1,11 +1,9 @@
 import sys
-sys.path.append("/home/bert_seq2seq/paddle_model")
 import paddle
 import numpy as np
 from paddle import nn
-from paddlenlp.transformers import AutoTokenizer, AutoModel, BertModel, BertTokenizer, CTRLTokenizer,RobertaTokenizer,RobertaModel
-from paddlenlp.transformers.roberta.modeling import robertaSeq2Seq
-from paddlenlp.transformers.roberta.modeling import RobertaPretrainedModel
+from bert_seq2seq.paddle_model.transformers import BertModel, BertTokenizer,RobertaTokenizer,RobertaModel
+from bert_seq2seq.paddle_model.transformers.roberta.modeling import robertaSeq2Seq
 import paddle.nn.functional as F
 from tqdm import tqdm
 from paddle.io import Dataset
