@@ -32,7 +32,7 @@ class T5Model(BasicT5):
         return self.model(input_ids=input_ids, decoder_input_ids=decoder_input_ids, labels=labels)
 
 
-    def sample_generate_encoder_decoder(self, text, input_max_length=256, out_max_length=200, top_k=30, top_p=0.0, add_eos=True):
+    def sample_generate_encoder_decoder(self, text, input_max_length=256, out_max_length=200, top_k=30, top_p=1.0, add_eos=True):
         
         token_out = self.tokenizer.encode(text, max_length=input_max_length)
         if len(token_out) == 2:

@@ -76,7 +76,7 @@ class Seq2SeqModel(BasicBert):
         a_mask = ones.tril()
         s_ex12 = token_type_id.unsqueeze(1).unsqueeze(2).float()
         s_ex13 = token_type_id.unsqueeze(1).unsqueeze(3).float()
-        a_mask = (1.0 - s_ex12) * (1.0 - s_ex13) + s_ex13 * a_mask 
+        a_mask = (1.0 - s_ex12) * (1.0 - s_ex13) + s_ex13 * a_mask
             
         enc_layers, _ = self.bert(input_tensor, position_ids=position_enc, token_type_ids=token_type_id, attention_mask=a_mask, 
                                     output_all_encoded_layers=True)

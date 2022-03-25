@@ -91,7 +91,6 @@ class BertLayerNorm(nn.Module):
             return weight * x + bias
 
 
-
 class BertEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings.
     """
@@ -456,7 +455,7 @@ class BertModel(BertPreTrainedModel):
         output_attentions=False
     ):  
         
-        extended_attention_mask = (input_ids > 0).float()
+        extended_attention_mask = (input_ids > 0).float() ## batch seq_len
         # 注意力矩阵mask: [batch_size, 1, 1, seq_length]
         extended_attention_mask = extended_attention_mask.unsqueeze(1).unsqueeze(2)
         if attention_mask is not None :

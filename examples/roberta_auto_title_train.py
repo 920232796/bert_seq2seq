@@ -13,6 +13,7 @@ model_path = "./state_dict/roberta_wwm_pytorch_model.bin"  # 模型位置
 model_save_path = "./state_dict/bert_auto_title_model.bin"
 batch_size = 16
 lr = 1e-5
+maxlen=256
 
 def read_file(src_dir, tgt_dir):
     src = []
@@ -50,7 +51,7 @@ class BertDataset(Dataset):
         # print(i)
         src = self.sents_src[i]
         tgt = self.sents_tgt[i]
-        token_ids, token_type_ids = self.tokenizer.encode(src, tgt)
+        token_ids, token_type_ids = self.tokenizer.encode(src, tgt, max_length=maxlen)
         output = {
             "token_ids": token_ids,
             "token_type_ids": token_type_ids,

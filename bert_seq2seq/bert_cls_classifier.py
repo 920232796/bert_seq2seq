@@ -23,17 +23,17 @@ class BertClsClassifier(BasicBert):
         return loss(predictions, labels)
     
     def forward(self, text, position_enc=None, labels=None, use_layer_num=-1):
-        if use_layer_num != -1:
-            raise Exception("暂时只支持用最后一层进行分类")
-        
+
         text = text.to(self.device)
         if position_enc is not None:
             position_enc = position_enc.to(self.device)
         if labels is not None:
             labels = labels.to(self.device)
-        _, pooled_out = self.bert(text, 
+        all_layers, pooled_out = self.bert(text, 
                                     output_all_encoded_layers=True)
-
+        if use_layer_num != -1:
+            pooled_out = all_layers[use_layer_num][:, 0]
+            
         predictions = self.final_dense(pooled_out)
         if labels is not None:
             ## 计算loss

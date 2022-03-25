@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "/Users/xingzhaohu/.local/share/virtualenvs/ml-5foBrNl9/bin/python"
+    "python.pythonPath": "/Users/xingzhaohu/.local/share/virtualenvs/ml-5foBrNl9/bin/python",
+    "git.ignoreLimitWarning": true
 }

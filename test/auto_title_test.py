@@ -6,7 +6,7 @@ auto_title_model = "./state_dict/bert_auto_title_model2.bin"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
-    vocab_path = "./state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
+    vocab_path = "../state_dict/roberta_wwm_vocab.txt"  # roberta模型字典的位置
     model_name = "roberta"  # 选择模型名字
     # 加载字典
     word2idx = load_chinese_base_vocab(vocab_path)
