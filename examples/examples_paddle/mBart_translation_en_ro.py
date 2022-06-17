@@ -64,8 +64,7 @@ class EnRoDataset(Dataset):
 model = MBartForConditionalGeneration.from_pretrained(opt.model_name)
 tokenizer = MBartTokenizer.from_pretrained(opt.model_name,src_lang=opt.src_lang,tgt_lang=opt.tgt_lang)
 dataset_en,dataset_ro = read_dataset(opt.datapath_en,opt.datapath_ro)
-print(dataset_en[999])
-print(dataset_ro[999])
+
 dataset = EnRoDataset(
     dataset_en,
     dataset_ro)
